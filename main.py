@@ -37,9 +37,6 @@ from prompt_generator import PromptPerNode
 import graphviz # Import graphviz for visualization
 """#### Instructor for General LLM Call"""
 
-! pip install instructor
-# ! pip install openai
-! pip install pydantic
 
 import os
 from google.colab import userdata
@@ -51,7 +48,6 @@ import pandas as pd
 import instructor
 from pydantic import BaseModel
 from google.genai import types
-!pip install jsonref
 
 import json, time
 import pandas as pd
