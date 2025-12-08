@@ -2,3 +2,5 @@ instructor
 pydantic
 jsonref
 graphviz
+pandas
+google-genai

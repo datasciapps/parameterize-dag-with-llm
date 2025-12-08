@@ -1,4 +1,4 @@
-
+import pandas as pd
 
 def split_equation(equation_str_to_split, verbose=False): # Renamed for clarity
   if verbose:

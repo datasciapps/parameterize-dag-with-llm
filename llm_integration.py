@@ -1,3 +1,6 @@
+from pydantic import BaseModel
+import pandas as pd
+
 # Pydantic model for LLM response
 class LLMParamResponse(BaseModel):
     plausibility: str

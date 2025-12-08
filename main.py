@@ -29,9 +29,10 @@ Things added:
 
 from collections import deque
 import graphviz
-from IPython.display import Image, display # Import Image and display
+# from IPython.display import Image, display # Import Image and display
 
-from dag_module import DAGNode, GeneralDAG
+from dag_module import DAGNode, DAG
+from dag_traversal_utility import GeneralDAGData
 from prompt_generator import PromptPerNode
 
 import graphviz # Import graphviz for visualization
@@ -39,9 +40,9 @@ import graphviz # Import graphviz for visualization
 
 
 import os
-from google.colab import userdata
+# from google.colab import userdata
 # from google.colab import drive # Drive is not used in this context
-os.environ["GEMINI_API_KEY"] = userdata.get("GOOGLE_API_KEY")
+# os.environ["GEMINI_API_KEY"] = userdata.get("GOOGLE_API_KEY")
 import pandas as pd
 
 ### ---- instructor based LLM calling ----
@@ -75,7 +76,7 @@ import re
 import json
 import pandas as pd # Ensure pandas is imported as it's used in split_equations_to_terms
 
-from llm_integrationn import LLMParamResponse, run_llm_elicitation
+from llm_integration import LLMParamResponse, run_llm_elicitation
 from llm_response_parser import split_equation, split_equations_to_terms
 
 
@@ -258,7 +259,6 @@ def compute_graph_statistics(all_effect_sizes_map, dag_data: GeneralDAGData, nor
 # compute_graph_statistics(all_effect_sizes_map)
 
 import graphviz
-from IPython.display import Image, display
 import json # Import json for printing data
 import numpy as np # Import numpy for handling numpy types in JSON serialization
 from datetime import datetime # Import datetime for timestamping
