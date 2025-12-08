@@ -48,12 +48,10 @@ import pandas as pd
 ### ---- instructor based LLM calling ----
 import instructor
 from pydantic import BaseModel
-from google.genai import types
 
 import json, time
 import pandas as pd
 from google import genai
-from google.genai import types
 
 # Imports for instructor and pydantic model
 import instructor
@@ -445,7 +443,7 @@ def visualize_full_dag_effects(all_scenarios: list[dict], all_coefficients_dfs: 
 #### Main DAG Parameterization
 """
 
-def parameterize_dag(education_wage_data: GeneralDAGData)->dict:
+def parameterize_dag(education_wage_data: GeneralDAGData, include_hard_constraints: bool)->dict:
     all_llm_responses_dfs = [] # This will store the *final* LLM response for each scenario (after validation passes)
     all_coefficients_dfs = [] # This will store the *final* coefficients for each scenario (after validation passes)
     all_scenario_validation_success = [] # New list to store validation success status for each scenario
@@ -455,7 +453,7 @@ def parameterize_dag(education_wage_data: GeneralDAGData)->dict:
     # Traverses raw edge format DAG and provides a list so that we can call the LLM calling later.
     dag_relationships = education_wage_dag.traverse_nodes()
     print("\n--- DAG Parent-Child Relationships ---")
-    scenarios = compile_dag_metadata(education_wage_data, dag_relationships)
+    scenarios = compile_dag_metadata(education_wage_data, dag_relationships, include_hard_constraints)
 
     MAX_RETRIES = 5 # Set the maximum number of retries for LLM elicitation per scenario
 
@@ -653,7 +651,7 @@ cachexia1_exp1 = GeneralDAGData(
     phenomenon_overview="You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover."
 )
 
-cachexia1_exp1_results = parameterize_dag(cachexia1_exp1)
+cachexia1_exp1_results = parameterize_dag(cachexia1_exp1, include_hard_constraints=True)
 
 """##### Cachexia 1 disease-blind with arbitrary bounds"""
 

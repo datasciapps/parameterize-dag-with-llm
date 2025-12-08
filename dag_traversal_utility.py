@@ -12,7 +12,7 @@ class GeneralDAGData:
         self.ground_truth_effect_sizes = ground_truth_effect_sizes
         self.phenomenon_overview = phenomenon_overview
 
-def compile_dag_metadata(dag_data: GeneralDAGData, dag_relationships: list[dict]) -> list[dict]:
+def compile_dag_metadata(dag_data: GeneralDAGData, dag_relationships: list[dict], include_hard_constraints: bool) -> list[dict]:
     scenarios = []
     for relation in dag_relationships:
         print(relation)
@@ -24,7 +24,7 @@ def compile_dag_metadata(dag_data: GeneralDAGData, dag_relationships: list[dict]
             "node_descriptions": dag_data.node_descriptions, # Include node descriptions here
             "node_lower_bounds": dag_data.node_lower_bound,
             "node_upper_bounds": dag_data.node_upper_bound,
-            "include_constraints_in_prompt": INCLUDE_HARD_CONSTRAINTS
+            "include_constraints_in_prompt": include_hard_constraints
         }
         print(compiled_variable_description)
         if len(relation["direct_parent_variables"]) > 0:
