@@ -74,3 +74,5 @@ Successfully installed cachetools-6.2.2 google-auth-2.43.0 google-genai-1.53.0 p
 
 Successfully installed ruff-0.14.8
 tabulate
+
+sudo apt install graphviz
