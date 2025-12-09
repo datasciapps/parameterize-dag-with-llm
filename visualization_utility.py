@@ -1,8 +1,6 @@
 import pandas as pd
-from custom_display_utility import display
+from custom_display_utility import display, export_graph_snapshot_to_json
 from dag_traversal_utility import GeneralDAGData
-import datetime
-import json
 import numpy as np
 import graphviz
 
@@ -196,19 +194,12 @@ def visualize_full_dag_effects(
         "l2_norm_value": l2_norm_value,
     }
 
-    # Generate a timestamp for the JSON filename
-    raise NotImplementedError # File name generation logic not implemented yet
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    json_filename = f"full_dag_visualization_snapshot_{timestamp}.json"
+    export_graph_snapshot_to_json(
+        json_output_data=json_output_data,
+        exp_id=exp_id,
+        console_output_json=console_output_json,
+    ) 
 
-    if save_json_to_file:
-        with open(json_filename, "w") as f:
-            json.dump(json_output_data, f, indent=2, cls=CustomJsonEncoder)
-        print(f"Visualization data saved to '{json_filename}'")
-
-    if console_output_json:
-        print("\n--- Visualization Data (JSON) ---")
-        print(json.dumps(json_output_data, indent=2, cls=CustomJsonEncoder))
 
 
 def compute_graph_statistics(
@@ -245,15 +236,3 @@ def compute_graph_statistics(
 # compute_graph_statistics(all_effect_sizes_map)
 
 
-
-# Custom JSON encoder to handle non-serializable types like numpy floats and sets
-class CustomJsonEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.float64):
-            return float(obj)
-        if isinstance(obj, set):
-            return list(obj)
-        # Convert tuple keys in dictionaries to strings
-        if isinstance(obj, dict):
-            return {str(k): v for k, v in obj.items()}
-        return json.JSONEncoder.default(self, obj)

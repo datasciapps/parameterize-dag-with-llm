@@ -1,4 +1,7 @@
+import json
 import os
+
+import numpy as np
 
 def _unique_path(path: str) -> str:
     """Return a filesystem path that does not yet exist by appending _1, _2, ... before the extension.
@@ -61,3 +64,33 @@ def display(object_to_display, output_file_postfix: str,  exp_id: str) -> None:
     else:
         print(type(object_to_display))
         raise NotImplementedError("Custom display function is not implemented yet.")
+
+def export_graph_snapshot_to_json(json_output_data: dict, exp_id: str, console_output_json: bool = False) -> None:
+    print("[Exporting Graph Snapshot to JSON]")
+    os.makedirs("./output", exist_ok=True)
+    # Construct the base path *without* the initial _1 for _unique_path to handle
+    base_json_file_path = os.path.join(".", "output", f"{exp_id}graph_snapshot.json")
+        
+    # _unique_path will now return a path ending in _1.csv, _2.csv, etc.
+    json_file_path = _unique_path(base_json_file_path)
+
+    with open(json_file_path, "w") as f:
+        json.dump(json_output_data, f, indent=2, cls=CustomJsonEncoder)
+    print(f"[Exporting Graph Snapshot to JSON] Visualization data saved to : {json_file_path}")
+
+    if console_output_json:
+        print("\n--- Visualization Data (JSON) ---")
+        print(json.dumps(json_output_data, indent=2, cls=CustomJsonEncoder))
+
+
+# Custom JSON encoder to handle non-serializable types like numpy floats and sets
+class CustomJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.float64):
+            return float(obj)
+        if isinstance(obj, set):
+            return list(obj)
+        # Convert tuple keys in dictionaries to strings
+        if isinstance(obj, dict):
+            return {str(k): v for k, v in obj.items()}
+        return json.JSONEncoder.default(self, obj)
