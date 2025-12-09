@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 import json
+from custom_display_utility import display
 
 
 def split_equation(equation_str_to_split, verbose=False):  # Renamed for clarity
@@ -133,3 +134,63 @@ def split_equations_to_terms(
     if verbose:
         print(split_terms)
     return split_terms
+
+
+def extract_coefficient(term, variable_name):
+    # This regex looks for a number (int or float, possibly negative)
+    # followed by '*' and then the variable_name.
+    # It also handles cases like '-0.5*SIBLINGS' where the '-' is part of the number.
+    match = re.match(
+        r"([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\*" + re.escape(variable_name), term
+    )
+    if match:
+        try:
+            return float(match.group(1))
+        except ValueError:
+            return None
+    return None
+
+
+def extract_intercept(term):
+    if "*1" in term:
+        value_str = term.split("*1")[0]
+        try:
+            # Handle potential leading '+' or '-' in the constant term
+            if value_str.startswith("+"):
+                value_str = value_str[1:]
+            return float(value_str)
+        except ValueError:
+            return None  # Handle cases where conversion to float fails
+    return None
+
+
+def convert_terms_to_coeffient_df(
+    split_terms: list[list[str]], scenario_parents: list[str], exp_id: str, verbose=False
+) -> pd.DataFrame:
+    coefficients_list = []
+
+    for terms in split_terms:
+        coefficients = {}
+        for term in terms:
+            if "*1" in term:
+                coefficients["beta_0"] = extract_intercept(term)
+            for parent_var_name in scenario_parents:
+                coeff = extract_coefficient(term, parent_var_name)
+                if coeff is not None:
+                    coefficients[f"beta_{parent_var_name}"] = coeff
+
+        # Assert that all scenario_parents have a corresponding beta coefficient
+        for parent_var_name in scenario_parents:
+            assert f"beta_{parent_var_name}" in coefficients, (
+                f"Missing coefficient for parent variable '{parent_var_name}' in LLM response: {terms}"
+            )
+
+        coefficients_list.append(coefficients)
+
+    coefficients_df = pd.DataFrame(coefficients_list)
+    if verbose:
+        display(coefficients_df, "coeff_df", exp_id=exp_id)
+    else:
+        display(coefficients_df.head(), "coeff_df_head", exp_id=exp_id)
+    return coefficients_df
+

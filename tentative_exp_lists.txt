@@ -1,0 +1,2223 @@
+"""This will be moved into some yaml files. ##### Cachexia 1 disease-blind with arbitrary bounds"""
+
+# Toggle for hard constraints
+INCLUDE_HARD_CONSTRAINTS = True
+
+# Cachexia1 DAG Data
+cachexia1_exp2 = GeneralDAGData(
+    all_nodes={"A", "B", "F", "GC", "GM", "V"},
+    raw_edges=[
+        ("A", "GC"),
+        ("B", "V"),
+        ("F", "GM"),
+        ("GC", "B"),
+        ("GC", "V"),
+        ("GM", "A"),
+        ("GM", "B"),
+        ("GM", "V"),
+    ],
+    node_descriptions={
+        "A": "Adipate",
+        "B": "Betaine",
+        "F": "Fumarate",
+        "GC": "Glucose",
+        "GM": "Glutamine",
+        "V": "Valine",
+    },
+    primary_domain_name="metabolic systems",
+    secondary_domain_name="biochemistry",
+    node_lower_bound={"A": 0, "B": 0, "F": 0, "GC": 0, "GM": 0, "V": 0},
+    node_upper_bound={"A": 100, "B": 100, "F": 100, "GC": 100, "GM": 100, "V": 100},
+    ground_truth_effect_sizes={
+        ("GM", "A"): 0.0674,
+        ("GC", "B"): 0.0181,
+        ("GM", "B"): 0.1104,
+        ("A", "GC"): 13.4753,
+        ("F", "GM"): 10.7348,
+        ("B", "V"): 0.1104,
+        ("GC", "V"): 0.0068,
+        ("GM", "V"): 0.0436,
+    },
+    phenomenon_overview=None,
+)
+
+cachexia1_exp2_results = parameterize_dag(cachexia1_exp2)
+
+"""#### Main Loops for Cachexia with Real Bounds and Units
+
+##### Cachexia 1 - disease-blind - real bounds and units
+"""
+
+# Toggle for hard constraints
+INCLUDE_HARD_CONSTRAINTS = True
+
+# Cachexia1 DAG Data
+cachexia1_real_unit_and_data = GeneralDAGData(
+    all_nodes={"A", "B", "F", "GC", "GM", "V"},
+    raw_edges=[
+        ("A", "GC"),
+        ("B", "V"),
+        ("F", "GM"),
+        ("GC", "B"),
+        ("GC", "V"),
+        ("GM", "A"),
+        ("GM", "B"),
+        ("GM", "V"),
+    ],
+    node_descriptions={
+        "A": "Adipate (micromolar, µM)",
+        "B": "Betaine  (micromolar, µM)",
+        "F": "Fumarate  (micromolar, µM)",
+        "GC": "Glucose  (micromolar, µM)",
+        "GM": "Glutamine  (micromolar, µM)",
+        "V": "Valine  (micromolar, µM)",
+    },
+    primary_domain_name="metabolic systems",
+    secondary_domain_name="biochemistry",
+    node_lower_bound={"A": 1.6, "B": 2.3, "F": 0.8, "GC": 26.9, "GM": 15.1, "V": 4.1},
+    node_upper_bound={
+        "A": 325.6,
+        "B": 788.8,
+        "F": 96.6,
+        "GC": 8724.8,
+        "GM": 1684.0,
+        "V": 160.1,
+    },
+    ground_truth_effect_sizes={
+        ("GM", "A"): 0.0674,
+        ("GC", "B"): 0.0181,
+        ("GM", "B"): 0.1104,
+        ("A", "GC"): 13.4753,
+        ("F", "GM"): 10.7348,
+        ("B", "V"): 0.1104,
+        ("GC", "V"): 0.0068,
+        ("GM", "V"): 0.0436,
+    },
+    phenomenon_overview=None,
+)
+
+cachexia1_real_unit_and_data_results = parameterize_dag(cachexia1_real_unit_and_data)
+
+"""##### Cachexia 1 - disease-informed - real bounds and units"""
+
+# Toggle for hard constraints
+INCLUDE_HARD_CONSTRAINTS = True
+
+# Cachexia1 DAG Data
+cachexia1_real_unit_and_data_d_informed = GeneralDAGData(
+    all_nodes={"A", "B", "F", "GC", "GM", "V"},
+    raw_edges=[
+        ("A", "GC"),
+        ("B", "V"),
+        ("F", "GM"),
+        ("GC", "B"),
+        ("GC", "V"),
+        ("GM", "A"),
+        ("GM", "B"),
+        ("GM", "V"),
+    ],
+    node_descriptions={
+        "A": "Adipate (micromolar, µM)",
+        "B": "Betaine  (micromolar, µM)",
+        "F": "Fumarate  (micromolar, µM)",
+        "GC": "Glucose  (micromolar, µM)",
+        "GM": "Glutamine  (micromolar, µM)",
+        "V": "Valine  (micromolar, µM)",
+    },
+    primary_domain_name="metabolic systems",
+    secondary_domain_name="biochemistry",
+    node_lower_bound={"A": 1.6, "B": 2.3, "F": 0.8, "GC": 26.9, "GM": 15.1, "V": 4.1},
+    node_upper_bound={
+        "A": 325.6,
+        "B": 788.8,
+        "F": 96.6,
+        "GC": 8724.8,
+        "GM": 1684.0,
+        "V": 160.1,
+    },
+    ground_truth_effect_sizes={
+        ("GM", "A"): 0.0674,
+        ("GC", "B"): 0.0181,
+        ("GM", "B"): 0.1104,
+        ("A", "GC"): 13.4753,
+        ("F", "GM"): 10.7348,
+        ("B", "V"): 0.1104,
+        ("GC", "V"): 0.0068,
+        ("GM", "V"): 0.0436,
+    },
+    phenomenon_overview="You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover.",
+)
+
+cachexia1_real_unit_and_data_d_informed_results = parameterize_dag(
+    cachexia1_real_unit_and_data_d_informed
+)
+
+"""##### Cachexia 1 disease-informed - real bounds & tweaked units"""
+
+# Toggle for hard constraints
+INCLUDE_HARD_CONSTRAINTS = True
+
+# Cachexia1 DAG Data
+cachexia1_real_unit_and_data_d_informed = GeneralDAGData(
+    all_nodes={"A", "B", "F", "GC", "GM", "V"},
+    raw_edges=[
+        ("A", "GC"),
+        ("B", "V"),
+        ("F", "GM"),
+        ("GC", "B"),
+        ("GC", "V"),
+        ("GM", "A"),
+        ("GM", "B"),
+        ("GM", "V"),
+    ],
+    node_descriptions={
+        "A": "Adipate (nanomolar, nM)",
+        "B": "Betaine  (nanomolar, nM)",
+        "F": "Fumarate  (nanomolar, nM)",
+        "GC": "Glucose  (nanomolar, nM)",
+        "GM": "Glutamine  (nanomolar, nM)",
+        "V": "Valine  (nanomolar, nM)",
+    },
+    primary_domain_name="metabolic systems",
+    secondary_domain_name="biochemistry",
+    node_lower_bound={
+        "A": 1.6 * 1000,
+        "B": 2.3 * 1000,
+        "F": 0.8 * 1000,
+        "GC": 26.9 * 1000,
+        "GM": 15.1 * 1000,
+        "V": 4.1 * 1000,
+    },
+    node_upper_bound={
+        "A": 325.6 * 1000,
+        "B": 788.8 * 1000,
+        "F": 96.6 * 1000,
+        "GC": 8724.8 * 1000,
+        "GM": 1684.0 * 1000,
+        "V": 160.1 * 1000,
+    },
+    ground_truth_effect_sizes={
+        (
+            "GM",
+            "A",
+        ): 0.0674,  # Assuming that changing units from micro to nano does not change effect size (or regression coefficients)
+        ("GC", "B"): 0.0181,
+        ("GM", "B"): 0.1104,
+        ("A", "GC"): 13.4753,
+        ("F", "GM"): 10.7348,
+        ("B", "V"): 0.1104,
+        ("GC", "V"): 0.0068,
+        ("GM", "V"): 0.0436,
+    },
+    phenomenon_overview="You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover.",
+)
+
+cachexia1_real_unit_and_data_d_informed_results = parameterize_dag(
+    cachexia1_real_unit_and_data_d_informed
+)
+
+"""##### Cachexia 1 disease-informed - real bounds & tweaked units with higher resolution prompt"""
+
+# Toggle for hard constraints
+INCLUDE_HARD_CONSTRAINTS = True
+
+# Cachexia1 DAG Data
+cachexia1_real_unit_and_data_d_informed = GeneralDAGData(
+    all_nodes={"A", "B", "F", "GC", "GM", "V"},
+    raw_edges=[
+        ("A", "GC"),
+        ("B", "V"),
+        ("F", "GM"),
+        ("GC", "B"),
+        ("GC", "V"),
+        ("GM", "A"),
+        ("GM", "B"),
+        ("GM", "V"),
+    ],
+    node_descriptions={
+        "A": "Adipate (nanomolar, nM)",
+        "B": "Betaine  (nanomolar, nM)",
+        "F": "Fumarate  (nanomolar, nM)",
+        "GC": "Glucose  (nanomolar, nM)",
+        "GM": "Glutamine  (nanomolar, nM)",
+        "V": "Valine  (nanomolar, nM)",
+    },
+    primary_domain_name="metabolic systems",
+    secondary_domain_name="biochemistry",
+    node_lower_bound={
+        "A": 1.6 * 1000,
+        "B": 2.3 * 1000,
+        "F": 0.8 * 1000,
+        "GC": 26.9 * 1000,
+        "GM": 15.1 * 1000,
+        "V": 4.1 * 1000,
+    },
+    node_upper_bound={
+        "A": 325.6 * 1000,
+        "B": 788.8 * 1000,
+        "F": 96.6 * 1000,
+        "GC": 8724.8 * 1000,
+        "GM": 1684.0 * 1000,
+        "V": 160.1 * 1000,
+    },
+    ground_truth_effect_sizes={
+        (
+            "GM",
+            "A",
+        ): 0.0674,  # Assuming that changing units from micro to nano does not change effect size (or regression coefficients)
+        ("GC", "B"): 0.0181,
+        ("GM", "B"): 0.1104,
+        ("A", "GC"): 13.4753,
+        ("F", "GM"): 10.7348,
+        ("B", "V"): 0.1104,
+        ("GC", "V"): 0.0068,
+        ("GM", "V"): 0.0436,
+    },
+    phenomenon_overview="You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover. For highest precision, please consider at least four decimal points for your parameterization results or even more.",
+)
+
+cachexia1_real_unit_and_data_d_informed_results = parameterize_dag(
+    cachexia1_real_unit_and_data_d_informed
+)
+
+"""#### Main Loops for Credit Card Expenditure
+
+##### Units and crafted hard constraints
+"""
+
+# Toggle for hard constraints
+INCLUDE_HARD_CONSTRAINTS = True
+
+# Expenditure DAG Data with estimated bounds and domain information
+expenditure_dag_data = GeneralDAGData(
+    all_nodes={
+        "Card",
+        "Reports",
+        "Age",
+        "Income",
+        "Share",
+        "Expenditure",
+        "Owner",
+        "Selfemp",
+        "Dependents",
+        "Months",
+        "Majorcards",
+        "Active",
+    },
+    raw_edges=[
+        ("Card", "Reports"),
+        ("Card", "Share"),
+        ("Card", "Owner"),
+        ("Card", "Majorcards"),
+        ("Age", "Income"),
+        ("Age", "Share"),
+        ("Age", "Owner"),
+        ("Age", "Months"),
+        ("Income", "Expenditure"),
+        ("Income", "Selfemp"),
+        ("Income", "Dependents"),
+        ("Income", "Majorcards"),
+        ("Income", "Active"),
+        ("Share", "Expenditure"),
+        ("Owner", "Income"),
+        ("Owner", "Dependents"),
+        ("Owner", "Active"),
+        ("Months", "Owner"),
+        ("Majorcards", "Active"),
+        ("Active", "Reports"),
+    ],
+    node_descriptions={
+        "Card": "Whether the application for credit card was accepted or not (Categorical/Binary).",
+        "Reports": "The number of major derogatory reports (Count).",
+        "Age": "The age in years plus twelfths of a year (Unit: Years + fractions).",
+        "Income": "The yearly income in $10,000 (Unit: 10,000 USD).",
+        "Share": "The ratio of monthly credit card expenditure to yearly income (Ratio).",
+        "Expenditure": "The average monthly credit card expenditure (Monetary/Continuous).",
+        "Owner": "Whether the person owns their home or they rent (Categorical/Binary).",
+        "Selfemp": "Whether the person is self employed or not (Categorical/Binary).",
+        "Dependents": "The number of dependents + 1 (Count).",
+        "Months": "The number of months living at current address (Unit: Months).",
+        "Majorcards": "The number of major credit cards held (Count).",
+        "Active": "The number of active credit accounts (Count).",
+    },
+    primary_domain_name="Finance",
+    secondary_domain_name="Consumer Behavior",
+    node_lower_bound={
+        "Card": 0,
+        "Reports": 0,
+        "Age": 18,
+        "Income": 0.0,
+        "Share": 0.0,
+        "Expenditure": 0.0,
+        "Owner": 0,
+        "Selfemp": 0,
+        "Dependents": 1,
+        "Months": 0,
+        "Majorcards": 0,
+        "Active": 0,
+    },
+    node_upper_bound={
+        "Card": 1,
+        "Reports": 10,
+        "Age": 100,
+        "Income": 500.0,  # 500 units * $10,000 = $5,000,000
+        "Share": 1.0,
+        "Expenditure": 250000.0,  # Assuming max monthly expenditure could be $250k
+        "Owner": 1,
+        "Selfemp": 1,
+        "Dependents": 10,
+        "Months": 1000,  # Approx 83 years at address
+        "Majorcards": 5,
+        "Active": 10,
+    },
+    ground_truth_effect_sizes={
+        ("Card", "Reports"): -1.52254735864156,
+        ("Active", "Reports"): 0.0524304077175797,
+        ("Age", "Income"): 0.0396322368121011,
+        ("Owner", "Income"): 0.81007553939645,
+        ("Card", "Share"): 0.0880188466837473,
+        ("Age", "Share"): -0.00108166463383845,
+        ("Income", "Expenditure"): 52.6677840700376,
+        ("Share", "Expenditure"): 2463.53664138429,
+        ("Card", "Owner"): 0.175729766661258,
+        ("Age", "Owner"): 0.0159375978980603,
+        ("Months", "Owner"): 0.000724193422780255,
+        ("Income", "Selfemp"): 0.0168077274438035,
+        ("Income", "Dependents"): 0.178844201299536,
+        ("Owner", "Dependents"): 0.578697741529175,
+        ("Age", "Months"): 2.85155286459752,
+        ("Card", "Majorcards"): 0.0912752579655268,
+        ("Income", "Majorcards"): 0.0223298793850125,
+        ("Income", "Active"): 0.345808846307825,
+        ("Owner", "Active"): 3.03113288530365,
+        ("Majorcards", "Active"): 1.53996015363929,
+    },
+    phenomenon_overview="This dataset focuses on factors influencing credit card behavior and expenditure patterns, providing insights into consumer finance decisions.",
+)
+
+expenditure_results = parameterize_dag(expenditure_dag_data)
+
+"""##### Ablation, arbitrary hard constraints [0, 100]"""
+
+# Toggle for hard constraints
+INCLUDE_HARD_CONSTRAINTS = True
+
+# Expenditure DAG Data with estimated bounds and domain information
+expenditure_dag_data = GeneralDAGData(
+    all_nodes={
+        "Card",
+        "Reports",
+        "Age",
+        "Income",
+        "Share",
+        "Expenditure",
+        "Owner",
+        "Selfemp",
+        "Dependents",
+        "Months",
+        "Majorcards",
+        "Active",
+    },
+    raw_edges=[
+        ("Card", "Reports"),
+        ("Card", "Share"),
+        ("Card", "Owner"),
+        ("Card", "Majorcards"),
+        ("Age", "Income"),
+        ("Age", "Share"),
+        ("Age", "Owner"),
+        ("Age", "Months"),
+        ("Income", "Expenditure"),
+        ("Income", "Selfemp"),
+        ("Income", "Dependents"),
+        ("Income", "Majorcards"),
+        ("Income", "Active"),
+        ("Share", "Expenditure"),
+        ("Owner", "Income"),
+        ("Owner", "Dependents"),
+        ("Owner", "Active"),
+        ("Months", "Owner"),
+        ("Majorcards", "Active"),
+        ("Active", "Reports"),
+    ],
+    node_descriptions={
+        "Card": "Whether the application for credit card was accepted or not (Categorical/Binary).",
+        "Reports": "The number of major derogatory reports (Count).",
+        "Age": "The age in years plus twelfths of a year (Unit: Years + fractions).",
+        "Income": "The yearly income in $10,000 (Unit: 10,000 USD).",
+        "Share": "The ratio of monthly credit card expenditure to yearly income (Ratio).",
+        "Expenditure": "The average monthly credit card expenditure (Monetary/Continuous).",
+        "Owner": "Whether the person owns their home or they rent (Categorical/Binary).",
+        "Selfemp": "Whether the person is self employed or not (Categorical/Binary).",
+        "Dependents": "The number of dependents + 1 (Count).",
+        "Months": "The number of months living at current address (Unit: Months).",
+        "Majorcards": "The number of major credit cards held (Count).",
+        "Active": "The number of active credit accounts (Count).",
+    },
+    primary_domain_name="Finance",
+    secondary_domain_name="Consumer Behavior",
+    node_lower_bound={
+        "Card": 0,
+        "Reports": 0,
+        "Age": 0,
+        "Income": 0.0,
+        "Share": 0.0,
+        "Expenditure": 0.0,
+        "Owner": 0,
+        "Selfemp": 0,
+        "Dependents": 0,
+        "Months": 0,
+        "Majorcards": 0,
+        "Active": 0,
+    },
+    node_upper_bound={
+        "Card": 100,
+        "Reports": 100,
+        "Age": 100,
+        "Income": 100,
+        "Share": 100,
+        "Expenditure": 100,
+        "Owner": 100,
+        "Selfemp": 100,
+        "Dependents": 100,
+        "Months": 100,
+        "Majorcards": 100,
+        "Active": 100,
+    },
+    ground_truth_effect_sizes={
+        ("Card", "Reports"): -1.52254735864156,
+        ("Active", "Reports"): 0.0524304077175797,
+        ("Age", "Income"): 0.0396322368121011,
+        ("Owner", "Income"): 0.81007553939645,
+        ("Card", "Share"): 0.0880188466837473,
+        ("Age", "Share"): -0.00108166463383845,
+        ("Income", "Expenditure"): 52.6677840700376,
+        ("Share", "Expenditure"): 2463.53664138429,
+        ("Card", "Owner"): 0.175729766661258,
+        ("Age", "Owner"): 0.0159375978980603,
+        ("Months", "Owner"): 0.000724193422780255,
+        ("Income", "Selfemp"): 0.0168077274438035,
+        ("Income", "Dependents"): 0.178844201299536,
+        ("Owner", "Dependents"): 0.578697741529175,
+        ("Age", "Months"): 2.85155286459752,
+        ("Card", "Majorcards"): 0.0912752579655268,
+        ("Income", "Majorcards"): 0.0223298793850125,
+        ("Income", "Active"): 0.345808846307825,
+        ("Owner", "Active"): 3.03113288530365,
+        ("Majorcards", "Active"): 1.53996015363929,
+    },
+    phenomenon_overview="This dataset focuses on factors influencing credit card behavior and expenditure patterns, providing insights into consumer finance decisions.",
+)
+
+expenditure_results = parameterize_dag(expenditure_dag_data)
+
+"""#### Other DAGs with [0, 100] constraints
+
+https://link.springer.com/article/10.1007/s00291-020-00588-8
+
+##### foodsecurity
+"""
+
+foodsecurity_dag_data = GeneralDAGData(
+    all_nodes={"Cost", "Educational_Attainment", "Health", "Social_Cohesion"},
+    raw_edges=[
+        ("Educational_Attainment", "Social_Cohesion"),
+        ("Health", "Cost"),
+        ("Health", "Educational_Attainment"),
+        ("Health", "Social_Cohesion"),
+    ],
+    node_descriptions={
+        "Cost": "Cost of food (e.g., affordability, access).",
+        "Educational_Attainment": "Level of education achieved.",
+        "Health": "Overall health status of individuals.",
+        "Social_Cohesion": "Strength of community ties and social support.",
+    },
+    primary_domain_name="Public Health",
+    secondary_domain_name="Socioeconomics",
+    node_lower_bound={
+        "Cost": 0.0,
+        "Educational_Attainment": 0.0,
+        "Health": 0.0,
+        "Social_Cohesion": 0.0,
+    },
+    node_upper_bound={
+        "Cost": 100.0,
+        "Educational_Attainment": 100.0,
+        "Health": 100.0,
+        "Social_Cohesion": 100.0,
+    },
+    ground_truth_effect_sizes={
+        ("Health", "Cost"): 10.0,
+        ("Health", "Educational_Attainment"): 7.0,
+        ("Educational_Attainment", "Social_Cohesion"): 10.0,
+        ("Health", "Social_Cohesion"): 17.0,
+    },
+    phenomenon_overview=None,
+)
+
+foodsecurity_exp_results = parameterize_dag(foodsecurity_dag_data)
+
+"""##### algal2"""
+
+algal2_dag_data = GeneralDAGData(
+    all_nodes={
+        "ChiA",
+        "ChiA_PS",
+        "Colour",
+        "Colour_PS",
+        "Cyanobacteria",
+        "RainSum",
+        "TP",
+        "TP_PS",
+        "WindSpeed",
+    },
+    raw_edges=[
+        ("ChiA", "Cyanobacteria"),
+        ("ChiA_PS", "ChiA"),
+        ("Colour", "Cyanobacteria"),
+        ("Colour_PS", "Colour"),
+        ("RainSum", "Colour"),
+        ("TP", "ChiA"),
+        ("TP_PS", "ChiA_PS"),
+        ("TP_PS", "TP"),
+        ("WindSpeed", "ChiA"),
+    ],
+    node_descriptions={
+        "ChiA": "Chlorophyll A concentration",
+        "ChiA_PS": "Chlorophyll A concentration, previous sample",
+        "Colour": "Water color",
+        "Colour_PS": "Water color, previous sample",
+        "Cyanobacteria": "Cyanobacteria count",
+        "RainSum": "Sum of rainfall",
+        "TP": "Total Phosphorus concentration",
+        "TP_PS": "Total Phosphorus concentration, previous sample",
+        "WindSpeed": "Wind speed",
+    },
+    primary_domain_name="Ecology",
+    secondary_domain_name="Environmental Science",
+    node_lower_bound={
+        "ChiA": 0.0,
+        "ChiA_PS": 0.0,
+        "Colour": 0.0,
+        "Colour_PS": 0.0,
+        "Cyanobacteria": 0.0,
+        "RainSum": 0.0,
+        "TP": 0.0,
+        "TP_PS": 0.0,
+        "WindSpeed": 0.0,
+    },
+    node_upper_bound={
+        "ChiA": 100.0,
+        "ChiA_PS": 100.0,
+        "Colour": 100.0,
+        "Colour_PS": 100.0,
+        "Cyanobacteria": 100.0,
+        "RainSum": 100.0,
+        "TP": 100.0,
+        "TP_PS": 100.0,
+        "WindSpeed": 100.0,
+    },
+    ground_truth_effect_sizes={
+        ("ChiA_PS", "ChiA"): 0.33,
+        ("TP", "ChiA"): 0.47,
+        ("WindSpeed", "ChiA"): -5.1,
+        ("TP_PS", "ChiA_PS"): 0.62,
+        ("Colour_PS", "Colour"): 0.81,
+        ("RainSum", "Colour"): 0.028,
+        ("ChiA", "Cyanobacteria"): 0.17,
+        ("Colour", "Cyanobacteria"): -0.024,
+        ("TP_PS", "TP"): 0.61,
+    },
+    phenomenon_overview="This network describes relationships between various environmental factors and algal blooms in a body of water.",
+)
+
+algal2_exp_results = parameterize_dag(algal2_dag_data)
+
+"""##### lexical
+
+```
+=======================================================
+Processing network: lexical
+=======================================================
+
+--- Class of the bnRep network (lexical) ---
+[1] "bn.fit"      "bn.fit.gnet"
+
+--- Ground Truth Effect Sizes ---
+ground_truth_effect_sizes={
+        ('prev_heard', 'area'): 1.279619,
+        ('prev_used', 'area'): -0.5456541,
+        ('aoa', 'genre_disp'): 0.1493371,
+        ('log_freq', 'genre_disp'): 0.1369712,
+        ('log_range', 'genre_disp'): 0.2290909,
+        ('prev_heard', 'genre_disp'): 0.4137189,
+        ('prev_heard', 'log_freq'): -0.2389613,
+        ('prev_used', 'log_freq'): 0.6522685,
+        ('log_freq', 'log_range'): 0.453501,
+        ('prev_used', 'log_range'): 0.2927989,
+        ('aoa', 'prev_heard'): -0.422608,
+        ('prev_heard', 'prev_used'): 0.9072148,
+        ('aoa', 'social_disp'): -0.1212857,
+        ('area', 'social_disp'): 0.604543,
+    },
+
+--- All Nodes ---
+all_nodes={"aoa", "area", "genre_disp", "log_freq", "log_range", "prev_heard", "prev_used", "social_disp"},
+
+--- Raw Edges ---
+raw_edges=[
+        ("aoa", "genre_disp"),
+        ("aoa", "prev_heard"),
+        ("aoa", "social_disp"),
+        ("area", "social_disp"),
+        ("log_freq", "genre_disp"),
+        ("log_freq", "log_range"),
+        ("log_range", "genre_disp"),
+        ("prev_heard", "area"),
+        ("prev_heard", "genre_disp"),
+        ("prev_heard", "log_freq"),
+        ("prev_heard", "prev_used"),
+        ("prev_used", "area"),
+        ("prev_used", "log_freq"),
+        ("prev_used", "log_range")
+    ],
+
+```
+"""
+
+lexical_dag_data = GeneralDAGData(
+    all_nodes={
+        "aoa",
+        "area",
+        "genre_disp",
+        "log_freq",
+        "log_range",
+        "prev_heard",
+        "prev_used",
+        "social_disp",
+    },
+    raw_edges=[
+        ("aoa", "genre_disp"),
+        ("aoa", "prev_heard"),
+        ("aoa", "social_disp"),
+        ("area", "social_disp"),
+        ("log_freq", "genre_disp"),
+        ("log_freq", "log_range"),
+        ("log_range", "genre_disp"),
+        ("prev_heard", "area"),
+        ("prev_heard", "genre_disp"),
+        ("prev_heard", "log_freq"),
+        ("prev_heard", "prev_used"),
+        ("prev_used", "area"),
+        ("prev_used", "log_freq"),
+        ("prev_used", "log_range"),
+    ],
+    node_descriptions={
+        "aoa": "Age of Acquisition",
+        "area": "Area of usage",
+        "genre_disp": "Genre Dispersion",
+        "log_freq": "Log Frequency",
+        "log_range": "Log Range",
+        "prev_heard": "Previously Heard",
+        "prev_used": "Previously Used",
+        "social_disp": "Social Dispersion",
+    },
+    primary_domain_name="Linguistics",
+    secondary_domain_name="Cognitive Science",
+    node_lower_bound={
+        "aoa": 0.0,
+        "area": 0.0,
+        "genre_disp": 0.0,
+        "log_freq": 0.0,
+        "log_range": 0.0,
+        "prev_heard": 0.0,
+        "prev_used": 0.0,
+        "social_disp": 0.0,
+    },
+    node_upper_bound={
+        "aoa": 100.0,
+        "area": 100.0,
+        "genre_disp": 100.0,
+        "log_freq": 100.0,
+        "log_range": 100.0,
+        "prev_heard": 100.0,
+        "prev_used": 100.0,
+        "social_disp": 100.0,
+    },
+    ground_truth_effect_sizes={
+        ("prev_heard", "area"): 1.279619,
+        ("prev_used", "area"): -0.5456541,
+        ("aoa", "genre_disp"): 0.1493371,
+        ("log_freq", "genre_disp"): 0.1369712,
+        ("log_range", "genre_disp"): 0.2290909,
+        ("prev_heard", "genre_disp"): 0.4137189,
+        ("prev_heard", "log_freq"): -0.2389613,
+        ("prev_used", "log_freq"): 0.6522685,
+        ("log_freq", "log_range"): 0.453501,
+        ("prev_used", "log_range"): 0.2927989,
+        ("aoa", "prev_heard"): -0.422608,
+        ("prev_heard", "prev_used"): 0.9072148,
+        ("aoa", "social_disp"): -0.1212857,
+        ("area", "social_disp"): 0.604543,
+    },
+    phenomenon_overview="This network models lexical properties and their relationships.",
+)
+
+lexical_exp_results = parameterize_dag(lexical_dag_data)
+
+"""##### liquefaction
+
+```
+=======================================================
+Processing network: liquefaction
+=======================================================
+
+--- Class of the bnRep network (liquefaction) ---
+[1] "bn.fit"      "bn.fit.gnet"
+
+--- Ground Truth Effect Sizes ---
+ground_truth_effect_sizes={
+        ('lnR', 'lnamax'): -0.307873843121311,
+        ('Mw', 'lnamax'): 0.41908404951763,
+        ('lnR', 'lnt'): -0.729126859129163,
+        ('Mw', 'lnt'): 1.91326821221389,
+        ('Sigmav', 'N160'): 0.00907224603603644,
+        ('Ds', 'S'): -0.00832616014865797,
+        ('GWT', 'S'): 0.000777814682337057,
+        ('lnamax', 'S'): 0.0938939306816531,
+        ('lnR', 'S'): -0.00306747566719272,
+        ('lnt', 'S'): -0.010246146273104,
+        ('Mw', 'S'): 0.0534088869851398,
+        ('N160', 'S'): -0.00871964886165512,
+        ('Ts', 'S'): 0.0164373806481002,
+        ('Ds', 'Sigmav'): 8.65954393507753,
+        ('GWT', 'Sigmav'): 8.63429241267473,
+    },
+
+--- All Nodes ---
+all_nodes={"Ds", "GWT", "lnamax", "lnR", "lnt", "Mw", "N160", "S", "Sigmav", "Ts"},
+
+--- Raw Edges ---
+raw_edges=[
+        ("Ds", "S"),
+        ("Ds", "Sigmav"),
+        ("GWT", "S"),
+        ("GWT", "Sigmav"),
+        ("lnamax", "S"),
+        ("lnR", "lnamax"),
+        ("lnR", "lnt"),
+        ("lnR", "S"),
+        ("lnt", "S"),
+        ("Mw", "lnamax"),
+        ("Mw", "lnt"),
+        ("Mw", "S"),
+        ("N160", "S"),
+        ("Sigmav", "N160"),
+        ("Ts", "S")
+    ],
+
+```
+"""
+
+liquefaction_dag_data = GeneralDAGData(
+    all_nodes={"Ds", "GWT", "lnamax", "lnR", "lnt", "Mw", "N160", "S", "Sigmav", "Ts"},
+    raw_edges=[
+        ("Ds", "S"),
+        ("Ds", "Sigmav"),
+        ("GWT", "S"),
+        ("GWT", "Sigmav"),
+        ("lnamax", "S"),
+        ("lnR", "lnamax"),
+        ("lnR", "lnt"),
+        ("lnR", "S"),
+        ("lnt", "S"),
+        ("Mw", "lnamax"),
+        ("Mw", "lnt"),
+        ("Mw", "S"),
+        ("N160", "S"),
+        ("Sigmav", "N160"),
+        ("Ts", "S"),
+    ],
+    node_descriptions={
+        "Ds": "Soil depth",
+        "GWT": "Groundwater table depth",
+        "lnamax": "Log of peak ground acceleration",
+        "lnR": "Log of epicentral distance",
+        "lnt": "Log of earthquake duration",
+        "Mw": "Moment magnitude of earthquake",
+        "N160": "Standard Penetration Test N-value (normalized)",
+        "S": "Liquefaction potential index",
+        "Sigmav": "Vertical effective stress",
+        "Ts": "Soil type",
+    },
+    primary_domain_name="Geotechnical Engineering",
+    secondary_domain_name="Seismology",
+    node_lower_bound={
+        "Ds": 0.0,
+        "GWT": 0.0,
+        "lnamax": 0.0,
+        "lnR": 0.0,
+        "lnt": 0.0,
+        "Mw": 0.0,
+        "N160": 0.0,
+        "S": 0.0,
+        "Sigmav": 0.0,
+        "Ts": 0.0,
+    },
+    node_upper_bound={
+        "Ds": 100.0,
+        "GWT": 100.0,
+        "lnamax": 100.0,
+        "lnR": 100.0,
+        "lnt": 100.0,
+        "Mw": 100.0,
+        "N160": 100.0,
+        "S": 100.0,
+        "Sigmav": 100.0,
+        "Ts": 100.0,
+    },
+    ground_truth_effect_sizes={
+        ("lnR", "lnamax"): -0.307873843121311,
+        ("Mw", "lnamax"): 0.41908404951763,
+        ("lnR", "lnt"): -0.729126859129163,
+        ("Mw", "lnt"): 1.91326821221389,
+        ("Sigmav", "N160"): 0.00907224603603644,
+        ("Ds", "S"): -0.00832616014865797,
+        ("GWT", "S"): 0.000777814682337057,
+        ("lnamax", "S"): 0.0938939306816531,
+        ("lnR", "S"): -0.00306747566719272,
+        ("lnt", "S"): -0.010246146273104,
+        ("Mw", "S"): 0.0534088869851398,
+        ("N160", "S"): -0.00871964886165512,
+        ("Ts", "S"): 0.0164373806481002,
+        ("Ds", "Sigmav"): 8.65954393507753,
+        ("GWT", "Sigmav"): 8.63429241267473,
+    },
+    phenomenon_overview="This network models factors influencing soil liquefaction potential during earthquakes.",
+)
+liquefaction_exp_results = parameterize_dag(liquefaction_dag_data)
+
+"""##### stocks"""
+
+stocks_dag_data = GeneralDAGData(
+    all_nodes={
+        "AEFES",
+        "AKSEN",
+        "CCOLA",
+        "ENJSA",
+        "KERVT",
+        "LKMNH",
+        "MPARK",
+        "ODAS",
+        "PENGD",
+        "TUKAS",
+        "ULKER",
+        "ULUUN",
+        "ZOREN",
+    },
+    raw_edges=[
+        ("AEFES", "CCOLA"),
+        ("AEFES", "ENJSA"),
+        ("AEFES", "MPARK"),
+        ("AKSEN", "ENJSA"),
+        ("AKSEN", "MPARK"),
+        ("KERVT", "ENJSA"),
+        ("KERVT", "PENGD"),
+        ("KERVT", "TUKAS"),
+        ("KERVT", "ULKER"),
+        ("LKMNH", "MPARK"),
+        ("LKMNH", "ULUUN"),
+        ("ODAS", "AKSEN"),
+        ("ODAS", "MPARK"),
+        ("ODAS", "ZOREN"),
+        ("PENGD", "TUKAS"),
+        ("TUKAS", "ODAS"),
+        ("ULKER", "CCOLA"),
+        ("ULKER", "MPARK"),
+        ("ULUUN", "KERVT"),
+        ("ZOREN", "AEFES"),
+        ("ZOREN", "AKSEN"),
+        ("ZOREN", "ENJSA"),
+        ("ZOREN", "ULKER"),
+    ],
+    node_descriptions={
+        "AEFES": "Stock price of AEFES",
+        "AKSEN": "Stock price of AKSEN",
+        "CCOLA": "Stock price of CCOLA",
+        "ENJSA": "Stock price of ENJSA",
+        "KERVT": "Stock price of KERVT",
+        "LKMNH": "Stock price of LKMNH",
+        "MPARK": "Stock price of MPARK",
+        "ODAS": "Stock price of ODAS",
+        "PENGD": "Stock price of PENGD",
+        "TUKAS": "Stock price of TUKAS",
+        "ULKER": "Stock price of ULKER",
+        "ULUUN": "Stock price of ULUUN",
+        "ZOREN": "Stock price of ZOREN",
+    },
+    primary_domain_name="Finance",
+    secondary_domain_name="Market Analysis",
+    node_lower_bound={
+        "AEFES": 0.0,
+        "AKSEN": 0.0,
+        "CCOLA": 0.0,
+        "ENJSA": 0.0,
+        "KERVT": 0.0,
+        "LKMNH": 0.0,
+        "MPARK": 0.0,
+        "ODAS": 0.0,
+        "PENGD": 0.0,
+        "TUKAS": 0.0,
+        "ULKER": 0.0,
+        "ULUUN": 0.0,
+        "ZOREN": 0.0,
+    },
+    node_upper_bound={
+        "AEFES": 100.0,
+        "AKSEN": 100.0,
+        "CCOLA": 100.0,
+        "ENJSA": 100.0,
+        "KERVT": 100.0,
+        "LKMNH": 100.0,
+        "MPARK": 100.0,
+        "ODAS": 100.0,
+        "PENGD": 100.0,
+        "TUKAS": 100.0,
+        "ULKER": 100.0,
+        "ULUUN": 100.0,
+        "ZOREN": 100.0,
+    },
+    ground_truth_effect_sizes={
+        ("ZOREN", "AEFES"): 0.28504,
+        ("ODAS", "AKSEN"): 0.232151,
+        ("ZOREN", "AKSEN"): 0.296668,
+        ("AEFES", "CCOLA"): 0.351159,
+        ("ULKER", "CCOLA"): 0.225405,
+        ("AEFES", "ENJSA"): 0.148784,
+        ("AKSEN", "ENJSA"): 0.134633,
+        ("KERVT", "ENJSA"): 0.113066,
+        ("ZOREN", "ENJSA"): 0.184162,
+        ("ULUUN", "KERVT"): 0.284235,
+        ("AEFES", "MPARK"): 0.205706,
+        ("AKSEN", "MPARK"): 0.117322,
+        ("LKMNH", "MPARK"): 0.29696,
+        ("ODAS", "MPARK"): 0.0683476,
+        ("ULKER", "MPARK"): 0.192566,
+        ("TUKAS", "ODAS"): 0.324198,
+        ("KERVT", "PENGD"): 0.680582,
+        ("KERVT", "TUKAS"): 0.355931,
+        ("PENGD", "TUKAS"): 0.110216,
+        ("KERVT", "ULKER"): 0.206911,
+        ("ZOREN", "ULKER"): 0.191251,
+        ("LKMNH", "ULUUN"): 0.235237,
+        ("ODAS", "ZOREN"): 0.450508,
+    },
+    phenomenon_overview="This network models the relationships between various stock prices.",
+)
+
+stocks_exp_results = parameterize_dag(stocks_dag_data)
+
+
+"""```
+
+=======================================================
+Processing network: stocks
+=======================================================
+
+--- Class of the bnRep network (stocks) ---
+[1] "bn.fit"      "bn.fit.gnet"
+
+--- Ground Truth Effect Sizes ---
+ground_truth_effect_sizes={
+        ('ZOREN', 'AEFES'): 0.28504,
+        ('ODAS', 'AKSEN'): 0.232151,
+        ('ZOREN', 'AKSEN'): 0.296668,
+        ('AEFES', 'CCOLA'): 0.351159,
+        ('ULKER', 'CCOLA'): 0.225405,
+        ('AEFES', 'ENJSA'): 0.148784,
+        ('AKSEN', 'ENJSA'): 0.134633,
+        ('KERVT', 'ENJSA'): 0.113066,
+        ('ZOREN', 'ENJSA'): 0.184162,
+        ('ULUUN', 'KERVT'): 0.284235,
+        ('AEFES', 'MPARK'): 0.205706,
+        ('AKSEN', 'MPARK'): 0.117322,
+        ('LKMNH', 'MPARK'): 0.29696,
+        ('ODAS', 'MPARK'): 0.0683476,
+        ('ULKER', 'MPARK'): 0.192566,
+        ('TUKAS', 'ODAS'): 0.324198,
+        ('KERVT', 'PENGD'): 0.680582,
+        ('KERVT', 'TUKAS'): 0.355931,
+        ('PENGD', 'TUKAS'): 0.110216,
+        ('KERVT', 'ULKER'): 0.206911,
+        ('ZOREN', 'ULKER'): 0.191251,
+        ('LKMNH', 'ULUUN'): 0.235237,
+        ('ODAS', 'ZOREN'): 0.450508,
+    },
+
+--- All Nodes ---
+all_nodes={"AEFES", "AKSEN", "CCOLA", "ENJSA", "KERVT", "LKMNH", "MPARK", "ODAS", "PENGD", "TUKAS", "ULKER", "ULUUN", "ZOREN"},
+
+--- Raw Edges ---
+raw_edges=[
+        ("AEFES", "CCOLA"),
+        ("AEFES", "ENJSA"),
+        ("AEFES", "MPARK"),
+        ("AKSEN", "ENJSA"),
+        ("AKSEN", "MPARK"),
+        ("KERVT", "ENJSA"),
+        ("KERVT", "PENGD"),
+        ("KERVT", "TUKAS"),
+        ("KERVT", "ULKER"),
+        ("LKMNH", "MPARK"),
+        ("LKMNH", "ULUUN"),
+        ("ODAS", "AKSEN"),
+        ("ODAS", "MPARK"),
+        ("ODAS", "ZOREN"),
+        ("PENGD", "TUKAS"),
+        ("TUKAS", "ODAS"),
+        ("ULKER", "CCOLA"),
+        ("ULKER", "MPARK"),
+        ("ULUUN", "KERVT"),
+        ("ZOREN", "AEFES"),
+        ("ZOREN", "AKSEN"),
+        ("ZOREN", "ENJSA"),
+        ("ZOREN", "ULKER")
+    ],
+```
+
+#### turbine1
+
+```
+=======================================================
+Processing network: turbine1
+=======================================================
+
+--- Class of the bnRep network (turbine1) ---
+[1] "bn.fit"      "bn.fit.gnet"
+
+--- Ground Truth Effect Sizes ---
+ground_truth_effect_sizes={
+        ('TwrBsMxt', 'PtfmRoll'): 3.207186e-05,
+        ('TwrBsFxt', 'PtfmSurge'): 0.0104914489,
+        ('YawBrFxp', 'PtfmSurge'): -0.0113494099,
+        ('YawBrMxp', 'PtfmSurge'): -0.0006205644,
+        ('TwrBsFyt', 'PtfmSway'): 0.003894343,
+        ('YawBrMyp', 'PtfmSway'): -3.246104e-05,
+        ('PtfmSurge', 'TTDspFA'): 1.41667e-07,
+        ('TwrBsFxt', 'TTDspFA'): 9.849973e-05,
+        ('YawBrFxp', 'TTDspFA'): 0.0003382452,
+        ('PtfmPitch', 'TTDspPtch'): -0.004537201,
+        ('TwrBsMyt', 'TTDspPtch'): 6.906587e-06,
+        ('YawBrMyp', 'TTDspPtch'): 1.207271e-05,
+        ('PtfmRoll', 'TTDspRoll'): -0.006269582,
+        ('TwrBsMxt', 'TTDspRoll'): 7.226258e-06,
+        ('YawBrMxp', 'TTDspRoll'): 1.501368e-05,
+        ('TwrBsFyt', 'TTDspSS'): 0.00037893559,
+        ('TwrBsFxt', 'YawBrFxp'): 0.7626502,
+        ('TTDspSS', 'YawBrFyp'): 2443.0219893,
+        ('TwrBsFyt', 'YawBrFyp'): -0.1350949,
+        ('TwrBsMxt', 'YawBrMxp'): 0.02512427,
+    },
+
+--- All Nodes ---
+all_nodes={"PtfmPitch", "PtfmRoll", "PtfmSurge", "PtfmSway", "TTDspFA", "TTDspPtch", "TTDspRoll", "TTDspSS", "TwrBsFxt", "TwrBsFyt", "TwrBsMxt", "TwrBsMyt", "YawBrFxp", "YawBrFyp", "YawBrMxp", "YawBrMyp"},
+
+--- Raw Edges ---
+raw_edges=[
+        ("PtfmPitch", "TTDspPtch"),
+        ("PtfmRoll", "TTDspRoll"),
+        ("PtfmSurge", "TTDspFA"),
+        ("TTDspSS", "YawBrFyp"),
+        ("TwrBsFxt", "PtfmSurge"),
+        ("TwrBsFxt", "TTDspFA"),
+        ("TwrBsFxt", "YawBrFxp"),
+        ("TwrBsFyt", "PtfmSway"),
+        ("TwrBsFyt", "TTDspSS"),
+        ("TwrBsFyt", "YawBrFyp"),
+        ("TwrBsMxt", "PtfmRoll"),
+        ("TwrBsMxt", "TTDspRoll"),
+        ("TwrBsMxt", "YawBrMxp"),
+        ("TwrBsMyt", "TTDspPtch"),
+        ("YawBrFxp", "PtfmSurge"),
+        ("YawBrFxp", "TTDspFA"),
+        ("YawBrMxp", "PtfmSurge"),
+        ("YawBrMxp", "TTDspRoll"),
+        ("YawBrMyp", "PtfmSway"),
+        ("YawBrMyp", "TTDspPtch")
+    ],
+
+```
+"""
+
+suffocation_dag_data = GeneralDAGData(
+    all_nodes={
+        "N10",
+        "N11",
+        "N12",
+        "N13",
+        "N14",
+        "N16",
+        "N17",
+        "N18",
+        "N20",
+        "N22",
+        "N23",
+        "N24",
+        "N25",
+        "N26",
+        "N27",
+        "N28",
+        "N29",
+        "N30",
+        "N32",
+        "N33",
+        "N34",
+        "N35",
+        "N36",
+        "N37",
+        "N38",
+        "N39",
+        "N4",
+        "N40",
+        "N5",
+        "N8",
+        "OI",
+        "PersonnelSuffocation",
+        "UA",
+        "UP",
+        "US",
+    },
+    raw_edges=[
+        ("N10", "OI"),
+        ("N11", "OI"),
+        ("N12", "OI"),
+        ("N13", "OI"),
+        ("N14", "OI"),
+        ("N16", "US"),
+        ("N17", "US"),
+        ("N18", "US"),
+        ("N20", "UA"),
+        ("N22", "UA"),
+        ("N23", "UA"),
+        ("N24", "UA"),
+        ("N25", "UA"),
+        ("N26", "UA"),
+        ("N27", "UA"),
+        ("N28", "UA"),
+        ("N29", "UA"),
+        ("N30", "UA"),
+        ("N32", "UA"),
+        ("N33", "UP"),
+        ("N34", "US"),
+        ("N35", "US"),
+        ("N36", "US"),
+        ("N37", "US"),
+        ("N38", "US"),
+        ("N39", "US"),
+        ("N4", "US"),
+        ("N40", "UP"),
+        ("N5", "UP"),
+        ("N8", "UA"),
+        ("OI", "PersonnelSuffocation"),
+        ("UA", "PersonnelSuffocation"),
+        ("UP", "PersonnelSuffocation"),
+        ("US", "PersonnelSuffocation"),
+    ],
+    node_descriptions={
+        "N10": "Factor N10",
+        "N11": "Factor N11",
+        "N12": "Factor N12",
+        "N13": "Factor N13",
+        "N14": "Factor N14",
+        "N16": "Factor N16",
+        "N17": "Factor N17",
+        "N18": "Factor N18",
+        "N20": "Factor N20",
+        "N22": "Factor N22",
+        "N23": "Factor N23",
+        "N24": "Factor N24",
+        "N25": "Factor N25",
+        "N26": "Factor N26",
+        "N27": "Factor N27",
+        "N28": "Factor N28",
+        "N29": "Factor N29",
+        "N30": "Factor N30",
+        "N32": "Factor N32",
+        "N33": "Factor N33",
+        "N34": "Factor N34",
+        "N35": "Factor N35",
+        "N36": "Factor N36",
+        "N37": "Factor N37",
+        "N38": "Factor N38",
+        "N39": "Factor N39",
+        "N4": "Factor N4",
+        "N40": "Factor N40",
+        "N5": "Factor N5",
+        "N8": "Factor N8",
+        "OI": "Oxygen Index",
+        "PersonnelSuffocation": "Personnel Suffocation",
+        "UA": "Unsafe Acts",
+        "UP": "Unsafe Procedures",
+        "US": "Unsafe Systems",
+    },
+    primary_domain_name="Safety Engineering",
+    secondary_domain_name="Risk Assessment",
+    node_lower_bound={
+        "N10": 0.0,
+        "N11": 0.0,
+        "N12": 0.0,
+        "N13": 0.0,
+        "N14": 0.0,
+        "N16": 0.0,
+        "N17": 0.0,
+        "N18": 0.0,
+        "N20": 0.0,
+        "N22": 0.0,
+        "N23": 0.0,
+        "N24": 0.0,
+        "N25": 0.0,
+        "N26": 0.0,
+        "N27": 0.0,
+        "N28": 0.0,
+        "N29": 0.0,
+        "N30": 0.0,
+        "N32": 0.0,
+        "N33": 0.0,
+        "N34": 0.0,
+        "N35": 0.0,
+        "N36": 0.0,
+        "N37": 0.0,
+        "N38": 0.0,
+        "N39": 0.0,
+        "N4": 0.0,
+        "N40": 0.0,
+        "N5": 0.0,
+        "N8": 0.0,
+        "OI": 0.0,
+        "PersonnelSuffocation": 0.0,
+        "UA": 0.0,
+        "UP": 0.0,
+        "US": 0.0,
+    },
+    node_upper_bound={
+        "N10": 100.0,
+        "N11": 100.0,
+        "N12": 100.0,
+        "N13": 100.0,
+        "N14": 100.0,
+        "N16": 100.0,
+        "N17": 100.0,
+        "N18": 100.0,
+        "N20": 100.0,
+        "N22": 100.0,
+        "N23": 100.0,
+        "N24": 100.0,
+        "N25": 100.0,
+        "N26": 100.0,
+        "N27": 100.0,
+        "N28": 100.0,
+        "N29": 100.0,
+        "N30": 100.0,
+        "N32": 100.0,
+        "N33": 100.0,
+        "N34": 100.0,
+        "N35": 100.0,
+        "N36": 100.0,
+        "N37": 100.0,
+        "N38": 100.0,
+        "N39": 100.0,
+        "N4": 100.0,
+        "N40": 100.0,
+        "N5": 100.0,
+        "N8": 100.0,
+        "OI": 100.0,
+        "PersonnelSuffocation": 100.0,
+        "UA": 100.0,
+        "UP": 100.0,
+        "US": 100.0,
+    },
+    ground_truth_effect_sizes={
+        ("N10", "OI"): 0.2026,
+        ("N11", "OI"): 0.153,
+        ("N12", "OI"): 0.1454,
+        ("N13", "OI"): 0.403,
+        ("N14", "OI"): 0.0959,
+        ("OI", "PersonnelSuffocation"): 0.1383,
+        ("UA", "PersonnelSuffocation"): 0.3455,
+        ("UP", "PersonnelSuffocation"): 0.0935,
+        ("US", "PersonnelSuffocation"): 0.4227,
+        ("N20", "UA"): 0.0904,
+        ("N22", "UA"): 0.0671,
+        ("N23", "UA"): 0.0671,
+        ("N24", "UA"): 0.0671,
+        ("N25", "UA"): 0.1148,
+        ("N26", "UA"): 0.0935,
+        ("N27", "UA"): 0.0888,
+        ("N28", "UA"): 0.0671,
+        ("N29", "UA"): 0.1148,
+        ("N30", "UA"): 0.0671,
+        ("N32", "UA"): 0.0764,
+        ("N8", "UA"): 0.0858,
+        ("N33", "UP"): 0.2702,
+        ("N40", "UP"): 0.5166,
+        ("N5", "UP"): 0.2132,
+        ("N16", "US"): 0.1299,
+        ("N17", "US"): 0.1299,
+        ("N18", "US"): 0.1299,
+        ("N34", "US"): 0.0769,
+        ("N35", "US"): 0.075,
+        ("N36", "US"): 0.075,
+        ("N37", "US"): 0.1162,
+        ("N38", "US"): 0.075,
+        ("N39", "US"): 0.075,
+        ("N4", "US"): 0.1173,
+    },
+    phenomenon_overview="This network models factors contributing to personnel suffocation incidents.",
+)
+
+suffocation_exp_results = parameterize_dag(suffocation_dag_data)
+
+
+turbine1_dag_data = GeneralDAGData(
+    all_nodes={
+        "PtfmPitch",
+        "PtfmRoll",
+        "PtfmSurge",
+        "PtfmSway",
+        "TTDspFA",
+        "TTDspPtch",
+        "TTDspRoll",
+        "TTDspSS",
+        "TwrBsFxt",
+        "TwrBsFyt",
+        "TwrBsMxt",
+        "TwrBsMyt",
+        "YawBrFxp",
+        "YawBrFyp",
+        "YawBrMxp",
+        "YawBrMyp",
+    },
+    raw_edges=[
+        ("PtfmPitch", "TTDspPtch"),
+        ("PtfmRoll", "TTDspRoll"),
+        ("PtfmSurge", "TTDspFA"),
+        ("TTDspSS", "YawBrFyp"),
+        ("TwrBsFxt", "PtfmSurge"),
+        ("TwrBsFxt", "TTDspFA"),
+        ("TwrBsFxt", "YawBrFxp"),
+        ("TwrBsFyt", "PtfmSway"),
+        ("TwrBsFyt", "TTDspSS"),
+        ("TwrBsFyt", "YawBrFyp"),
+        ("TwrBsMxt", "PtfmRoll"),
+        ("TwrBsMxt", "TTDspRoll"),
+        ("TwrBsMxt", "YawBrMxp"),
+        ("TwrBsMyt", "TTDspPtch"),
+        ("YawBrFxp", "PtfmSurge"),
+        ("YawBrFxp", "TTDspFA"),
+        ("YawBrMxp", "PtfmSurge"),
+        ("YawBrMxp", "TTDspRoll"),
+        ("YawBrMyp", "PtfmSway"),
+        ("YawBrMyp", "TTDspPtch"),
+    ],
+    node_descriptions={
+        "PtfmPitch": "Platform Pitch",
+        "PtfmRoll": "Platform Roll",
+        "PtfmSurge": "Platform Surge",
+        "PtfmSway": "Platform Sway",
+        "TTDspFA": "Tower Top Displacement Fore-Aft",
+        "TTDspPtch": "Tower Top Displacement Pitch",
+        "TTDspRoll": "Tower Top Displacement Roll",
+        "TTDspSS": "Tower Top Displacement Side-Side",
+        "TwrBsFxt": "Tower Base Force X-axis",
+        "TwrBsFyt": "Tower Base Force Y-axis",
+        "TwrBsMxt": "Tower Base Moment X-axis",
+        "TwrBsMyt": "Tower Base Moment Y-axis",
+        "YawBrFxp": "Yaw Bearing Force X-axis",
+        "YawBrFyp": "Yaw Bearing Force Y-axis",
+        "YawBrMxp": "Yaw Bearing Moment X-axis",
+        "YawBrMyp": "Yaw Bearing Moment Y-axis",
+    },
+    primary_domain_name="Mechanical Engineering",
+    secondary_domain_name="Renewable Energy",
+    node_lower_bound={
+        "PtfmPitch": 0.0,
+        "PtfmRoll": 0.0,
+        "PtfmSurge": 0.0,
+        "PtfmSway": 0.0,
+        "TTDspFA": 0.0,
+        "TTDspPtch": 0.0,
+        "TTDspRoll": 0.0,
+        "TTDspSS": 0.0,
+        "TwrBsFxt": 0.0,
+        "TwrBsFyt": 0.0,
+        "TwrBsMxt": 0.0,
+        "TwrBsMyt": 0.0,
+        "YawBrFxp": 0.0,
+        "YawBrFyp": 0.0,
+        "YawBrMxp": 0.0,
+        "YawBrMyp": 0.0,
+    },
+    node_upper_bound={
+        "PtfmPitch": 100.0,
+        "PtfmRoll": 100.0,
+        "PtfmSurge": 100.0,
+        "PtfmSway": 100.0,
+        "TTDspFA": 100.0,
+        "TTDspPtch": 100.0,
+        "TTDspRoll": 100.0,
+        "TTDspSS": 100.0,
+        "TwrBsFxt": 100.0,
+        "TwrBsFyt": 100.0,
+        "TwrBsMxt": 100.0,
+        "TwrBsMyt": 100.0,
+        "YawBrFxp": 100.0,
+        "YawBrFyp": 100.0,
+        "YawBrMxp": 100.0,
+        "YawBrMyp": 100.0,
+    },
+    ground_truth_effect_sizes={
+        ("TwrBsMxt", "PtfmRoll"): 3.207186e-05,
+        ("TwrBsFxt", "PtfmSurge"): 0.0104914489,
+        ("YawBrFxp", "PtfmSurge"): -0.0113494099,
+        ("YawBrMxp", "PtfmSurge"): -0.0006205644,
+        ("TwrBsFyt", "PtfmSway"): 0.003894343,
+        ("YawBrMyp", "PtfmSway"): -3.246104e-05,
+        ("PtfmSurge", "TTDspFA"): 1.41667e-07,
+        ("TwrBsFxt", "TTDspFA"): 9.849973e-05,
+        ("YawBrFxp", "TTDspFA"): 0.0003382452,
+        ("PtfmPitch", "TTDspPtch"): -0.004537201,
+        ("TwrBsMyt", "TTDspPtch"): 6.906587e-06,
+        ("YawBrMyp", "TTDspPtch"): 1.207271e-05,
+        ("PtfmRoll", "TTDspRoll"): -0.006269582,
+        ("TwrBsMxt", "TTDspRoll"): 7.226258e-06,
+        ("YawBrMxp", "TTDspRoll"): 1.501368e-05,
+        ("TwrBsFyt", "TTDspSS"): 0.00037893559,
+        ("TwrBsFxt", "YawBrFxp"): 0.7626502,
+        ("TTDspSS", "YawBrFyp"): 2443.0219893,
+        ("TwrBsFyt", "YawBrFyp"): -0.1350949,
+        ("TwrBsMxt", "YawBrMxp"): 0.02512427,
+    },
+    phenomenon_overview="This network models the dynamics of a wind turbine.",
+)
+turbine1_exp_results = parameterize_dag(turbine1_dag_data)
+
+"""#### turbine2
+
+```
+=======================================================
+Processing network: turbine2
+=======================================================
+
+--- Class of the bnRep network (turbine2) ---
+[1] "bn.fit"      "bn.fit.gnet"
+
+--- Ground Truth Effect Sizes ---
+ground_truth_effect_sizes={
+        ('TwrBsMxt', 'PtfmRoll'): 3.207186e-05,
+        ('TwrBsFxt', 'PtfmSurge'): 0.0104914489,
+        ('YawBrFxp', 'PtfmSurge'): -0.0113494099,
+        ('YawBrMxp', 'PtfmSurge'): -0.0006205644,
+        ('TwrBsFyt', 'PtfmSway'): 0.003894343,
+        ('YawBrMyp', 'PtfmSway'): -3.246104e-05,
+        ('PtfmSurge', 'TTDspFA'): 1.41667e-07,
+        ('TwrBsFxt', 'TTDspFA'): 9.849973e-05,
+        ('YawBrFxp', 'TTDspFA'): 0.0003382452,
+        ('PtfmPitch', 'TTDspPtch'): 0.008012841,
+        ('TwrBsMyt', 'TTDspPtch'): 6.906587e-06,
+        ('YawBrMyp', 'TTDspPtch'): 1.207271e-05,
+        ('PtfmRoll', 'TTDspRoll'): -0.006269582,
+        ('TwrBsMxt', 'TTDspRoll'): 7.226258e-06,
+        ('YawBrMxp', 'TTDspRoll'): 1.501368e-05,
+        ('TwrBsFyt', 'TTDspSS'): 0.00037893559,
+        ('TwrBsFxt', 'YawBrFxp'): 0.7626502,
+        ('TTDspSS', 'YawBrFyp'): 2443.0219893,
+        ('TwrBsFyt', 'YawBrFyp'): -0.1350949,
+        ('TwrBsMxt', 'YawBrMxp'): 0.02512427,
+    },
+
+--- All Nodes ---
+all_nodes={"PtfmPitch", "PtfmRoll", "PtfmSurge", "PtfmSway", "TTDspFA", "TTDspPtch", "TTDspRoll", "TTDspSS", "TwrBsFxt", "TwrBsFyt", "TwrBsMxt", "TwrBsMyt", "YawBrFxp", "YawBrFyp", "YawBrMxp", "YawBrMyp"},
+
+--- Raw Edges ---
+raw_edges=[
+        ("PtfmPitch", "TTDspPtch"),
+        ("PtfmRoll", "TTDspRoll"),
+        ("PtfmSurge", "TTDspFA"),
+        ("TTDspSS", "YawBrFyp"),
+        ("TwrBsFxt", "PtfmSurge"),
+        ("TwrBsFxt", "TTDspFA"),
+        ("TwrBsFxt", "YawBrFxp"),
+        ("TwrBsFyt", "PtfmSway"),
+        ("TwrBsFyt", "TTDspSS"),
+        ("TwrBsFyt", "YawBrFyp"),
+        ("TwrBsMxt", "PtfmRoll"),
+        ("TwrBsMxt", "TTDspRoll"),
+        ("TwrBsMxt", "YawBrMxp"),
+        ("TwrBsMyt", "TTDspPtch"),
+        ("YawBrFxp", "PtfmSurge"),
+        ("YawBrFxp", "TTDspFA"),
+        ("YawBrMxp", "PtfmSurge"),
+        ("YawBrMxp", "TTDspRoll"),
+        ("YawBrMyp", "PtfmSway"),
+        ("YawBrMyp", "TTDspPtch")
+    ],
+
+[ ]
+
+```
+"""
+
+turbine2_dag_data = GeneralDAGData(
+    all_nodes={
+        "PtfmPitch",
+        "PtfmRoll",
+        "PtfmSurge",
+        "PtfmSway",
+        "TTDspFA",
+        "TTDspPtch",
+        "TTDspRoll",
+        "TTDspSS",
+        "TwrBsFxt",
+        "TwrBsFyt",
+        "TwrBsMxt",
+        "TwrBsMyt",
+        "YawBrFxp",
+        "YawBrFyp",
+        "YawBrMxp",
+        "YawBrMyp",
+    },
+    raw_edges=[
+        ("PtfmPitch", "TTDspPtch"),
+        ("PtfmRoll", "TTDspRoll"),
+        ("PtfmSurge", "TTDspFA"),
+        ("TTDspSS", "YawBrFyp"),
+        ("TwrBsFxt", "PtfmSurge"),
+        ("TwrBsFxt", "TTDspFA"),
+        ("TwrBsFxt", "YawBrFxp"),
+        ("TwrBsFyt", "PtfmSway"),
+        ("TwrBsFyt", "TTDspSS"),
+        ("TwrBsFyt", "YawBrFyp"),
+        ("TwrBsMxt", "PtfmRoll"),
+        ("TwrBsMxt", "TTDspRoll"),
+        ("TwrBsMxt", "YawBrMxp"),
+        ("TwrBsMyt", "TTDspPtch"),
+        ("YawBrFxp", "PtfmSurge"),
+        ("YawBrFxp", "TTDspFA"),
+        ("YawBrMxp", "PtfmSurge"),
+        ("YawBrMxp", "TTDspRoll"),
+        ("YawBrMyp", "PtfmSway"),
+        ("YawBrMyp", "TTDspPtch"),
+    ],
+    node_descriptions={
+        "PtfmPitch": "Platform Pitch",
+        "PtfmRoll": "Platform Roll",
+        "PtfmSurge": "Platform Surge",
+        "PtfmSway": "Platform Sway",
+        "TTDspFA": "Tower Top Displacement Fore-Aft",
+        "TTDspPtch": "Tower Top Displacement Pitch",
+        "TTDspRoll": "Tower Top Displacement Roll",
+        "TTDspSS": "Tower Top Displacement Side-Side",
+        "TwrBsFxt": "Tower Base Force X-axis",
+        "TwrBsFyt": "Tower Base Force Y-axis",
+        "TwrBsMxt": "Tower Base Moment X-axis",
+        "TwrBsMyt": "Tower Base Moment Y-axis",
+        "YawBrFxp": "Yaw Bearing Force X-axis",
+        "YawBrFyp": "Yaw Bearing Force Y-axis",
+        "YawBrMxp": "Yaw Bearing Moment X-axis",
+        "YawBrMyp": "Yaw Bearing Moment Y-axis",
+    },
+    primary_domain_name="Mechanical Engineering",
+    secondary_domain_name="Renewable Energy",
+    node_lower_bound={
+        "PtfmPitch": 0.0,
+        "PtfmRoll": 0.0,
+        "PtfmSurge": 0.0,
+        "PtfmSway": 0.0,
+        "TTDspFA": 0.0,
+        "TTDspPtch": 0.0,
+        "TTDspRoll": 0.0,
+        "TTDspSS": 0.0,
+        "TwrBsFxt": 0.0,
+        "TwrBsFyt": 0.0,
+        "TwrBsMxt": 0.0,
+        "TwrBsMyt": 0.0,
+        "YawBrFxp": 0.0,
+        "YawBrFyp": 0.0,
+        "YawBrMxp": 0.0,
+        "YawBrMyp": 0.0,
+    },
+    node_upper_bound={
+        "PtfmPitch": 100.0,
+        "PtfmRoll": 100.0,
+        "PtfmSurge": 100.0,
+        "PtfmSway": 100.0,
+        "TTDspFA": 100.0,
+        "TTDspPtch": 100.0,
+        "TTDspRoll": 100.0,
+        "TTDspSS": 100.0,
+        "TwrBsFxt": 100.0,
+        "TwrBsFyt": 100.0,
+        "TwrBsMxt": 100.0,
+        "TwrBsMyt": 100.0,
+        "YawBrFxp": 100.0,
+        "YawBrFyp": 100.0,
+        "YawBrMxp": 100.0,
+        "YawBrMyp": 100.0,
+    },
+    ground_truth_effect_sizes={
+        ("TwrBsMxt", "PtfmRoll"): 3.207186e-05,
+        ("TwrBsFxt", "PtfmSurge"): 0.0104914489,
+        ("YawBrFxp", "PtfmSurge"): -0.0113494099,
+        ("YawBrMxp", "PtfmSurge"): -0.0006205644,
+        ("TwrBsFyt", "PtfmSway"): 0.003894343,
+        ("YawBrMyp", "PtfmSway"): -3.246104e-05,
+        ("PtfmSurge", "TTDspFA"): 1.41667e-07,
+        ("TwrBsFxt", "TTDspFA"): 9.849973e-05,
+        ("YawBrFxp", "TTDspFA"): 0.0003382452,
+        ("PtfmPitch", "TTDspPtch"): 0.008012841,
+        ("TwrBsMyt", "TTDspPtch"): 6.906587e-06,
+        ("YawBrMyp", "TTDspPtch"): 1.207271e-05,
+        ("PtfmRoll", "TTDspRoll"): -0.006269582,
+        ("TwrBsMxt", "TTDspRoll"): 7.226258e-06,
+        ("YawBrMxp", "TTDspRoll"): 1.501368e-05,
+        ("TwrBsFyt", "TTDspSS"): 0.00037893559,
+        ("TwrBsFxt", "YawBrFxp"): 0.7626502,
+        ("TTDspSS", "YawBrFyp"): 2443.0219893,
+        ("TwrBsFyt", "YawBrFyp"): -0.1350949,
+        ("TwrBsMxt", "YawBrMxp"): 0.02512427,
+    },
+    phenomenon_overview="This network models the dynamics of a wind turbine.",
+)
+
+turbine2_exp_results = parameterize_dag(turbine2_dag_data)
+
+
+"""#### suffocation
+
+```
+=======================================================
+Processing network: suffocation
+=======================================================
+
+--- Class of the bnRep network (suffocation) ---
+[1] "bn.fit"      "bn.fit.gnet"
+
+--- Ground Truth Effect Sizes ---
+ground_truth_effect_sizes={
+        ('N10', 'OI'): 0.2026,
+        ('N11', 'OI'): 0.153,
+        ('N12', 'OI'): 0.1454,
+        ('N13', 'OI'): 0.403,
+        ('N14', 'OI'): 0.0959,
+        ('OI', 'PersonnelSuffocation'): 0.1383,
+        ('UA', 'PersonnelSuffocation'): 0.3455,
+        ('UP', 'PersonnelSuffocation'): 0.0935,
+        ('US', 'PersonnelSuffocation'): 0.4227,
+        ('N20', 'UA'): 0.0904,
+        ('N22', 'UA'): 0.0671,
+        ('N23', 'UA'): 0.0671,
+        ('N24', 'UA'): 0.0671,
+        ('N25', 'UA'): 0.1148,
+        ('N26', 'UA'): 0.0935,
+        ('N27', 'UA'): 0.0888,
+        ('N28', 'UA'): 0.0671,
+        ('N29', 'UA'): 0.1148,
+        ('N30', 'UA'): 0.0671,
+        ('N32', 'UA'): 0.0764,
+        ('N8', 'UA'): 0.0858,
+        ('N33', 'UP'): 0.2702,
+        ('N40', 'UP'): 0.5166,
+        ('N5', 'UP'): 0.2132,
+        ('N16', 'US'): 0.1299,
+        ('N17', 'US'): 0.1299,
+        ('N18', 'US'): 0.1299,
+        ('N34', 'US'): 0.0769,
+        ('N35', 'US'): 0.075,
+        ('N36', 'US'): 0.075,
+        ('N37', 'US'): 0.1162,
+        ('N38', 'US'): 0.075,
+        ('N39', 'US'): 0.075,
+        ('N4', 'US'): 0.1173,
+    },
+
+--- All Nodes ---
+all_nodes={"N10", "N11", "N12", "N13", "N14", "N16", "N17", "N18", "N20", "N22", "N23", "N24", "N25", "N26", "N27", "N28", "N29", "N30", "N32", "N33", "N34", "N35", "N36", "N37", "N38", "N39", "N4", "N40", "N5", "N8", "OI", "PersonnelSuffocation", "UA", "UP", "US"},
+
+--- Raw Edges ---
+raw_edges=[
+        ("N10", "OI"),
+        ("N11", "OI"),
+        ("N12", "OI"),
+        ("N13", "OI"),
+        ("N14", "OI"),
+        ("N16", "US"),
+        ("N17", "US"),
+        ("N18", "US"),
+        ("N20", "UA"),
+        ("N22", "UA"),
+        ("N23", "UA"),
+        ("N24", "UA"),
+        ("N25", "UA"),
+        ("N26", "UA"),
+        ("N27", "UA"),
+        ("N28", "UA"),
+        ("N29", "UA"),
+        ("N30", "UA"),
+        ("N32", "UA"),
+        ("N33", "UP"),
+        ("N34", "US"),
+        ("N35", "US"),
+        ("N36", "US"),
+        ("N37", "US"),
+        ("N38", "US"),
+        ("N39", "US"),
+        ("N4", "US"),
+        ("N40", "UP"),
+        ("N5", "UP"),
+        ("N8", "UA"),
+        ("OI", "PersonnelSuffocation"),
+        ("UA", "PersonnelSuffocation"),
+        ("UP", "PersonnelSuffocation"),
+        ("US", "PersonnelSuffocation")
+    ],
+```
+
+##### Expenditure with Distracting Edges
+"""
+
+INCLUDE_HARD_CONSTRAINTS = True
+
+expenditure_dag_data_distracted = GeneralDAGData(
+    all_nodes={
+        "Card",
+        "Reports",
+        "Age",
+        "Income",
+        "Share",
+        "Expenditure",
+        "Owner",
+        "Selfemp",
+        "Dependents",
+        "Months",
+        "Majorcards",
+        "Active",
+    },
+    raw_edges=[
+        ("Card", "Reports"),
+        ("Card", "Share"),
+        ("Card", "Owner"),
+        ("Card", "Majorcards"),
+        ("Age", "Income"),
+        ("Age", "Share"),
+        ("Age", "Owner"),
+        ("Age", "Months"),
+        ("Income", "Expenditure"),
+        ("Income", "Selfemp"),
+        ("Income", "Dependents"),
+        ("Income", "Majorcards"),
+        ("Income", "Active"),
+        ("Share", "Expenditure"),
+        ("Owner", "Income"),
+        ("Owner", "Dependents"),
+        ("Owner", "Active"),
+        ("Months", "Owner"),
+        ("Majorcards", "Active"),
+        ("Active", "Reports"),
+        # --- NEW EDGES ADDED ---
+        ("Age", "Card"),
+        ("Months", "Card"),
+        ("Expenditure", "Majorcards"),
+        ("Dependents", "Reports"),
+        ("Owner", "Share"),
+    ],
+    node_descriptions={
+        "Card": "Whether the application for credit card was accepted or not (Categorical/Binary).",
+        "Reports": "The number of major derogatory reports (Count).",
+        "Age": "The age in years plus twelfths of a year (Unit: Years + fractions).",
+        "Income": "The yearly income in $10,000 (Unit: 10,000 USD).",
+        "Share": "The ratio of monthly credit card expenditure to yearly income (Ratio).",
+        "Expenditure": "The average monthly credit card expenditure (Monetary/Continuous).",
+        "Owner": "Whether the person owns their home or they rent (Categorical/Binary).",
+        "Selfemp": "Whether the person is self employed or not (Categorical/Binary).",
+        "Dependents": "The number of dependents + 1 (Count).",
+        "Months": "The number of months living at current address (Unit: Months).",
+        "Majorcards": "The number of major credit cards held (Count).",
+        "Active": "The number of active credit accounts (Count).",
+    },
+    primary_domain_name="Finance",
+    secondary_domain_name="Consumer Behavior",
+    node_lower_bound={
+        "Card": 0,
+        "Reports": 0,
+        "Age": 18,
+        "Income": 0.0,
+        "Share": 0.0,
+        "Expenditure": 0.0,
+        "Owner": 0,
+        "Selfemp": 0,
+        "Dependents": 1,
+        "Months": 0,
+        "Majorcards": 0,
+        "Active": 0,
+    },
+    node_upper_bound={
+        "Card": 1,
+        "Reports": 10,
+        "Age": 100,
+        "Income": 500.0,
+        "Share": 1.0,
+        "Expenditure": 250000.0,
+        "Owner": 1,
+        "Selfemp": 1,
+        "Dependents": 10,
+        "Months": 1000,
+        "Majorcards": 5,
+        "Active": 10,
+    },
+    ground_truth_effect_sizes={
+        ("Card", "Reports"): -1.52254735864156,
+        ("Active", "Reports"): 0.0524304077175797,
+        ("Age", "Income"): 0.0396322368121011,
+        ("Owner", "Income"): 0.81007553939645,
+        ("Card", "Share"): 0.0880188466837473,
+        ("Age", "Share"): -0.00108166463383845,
+        ("Income", "Expenditure"): 52.6677840700376,
+        ("Share", "Expenditure"): 2463.53664138429,
+        ("Card", "Owner"): 0.175729766661258,
+        ("Age", "Owner"): 0.0159375978980603,
+        ("Months", "Owner"): 0.000724193422780255,
+        ("Income", "Selfemp"): 0.0168077274438035,
+        ("Income", "Dependents"): 0.178844201299536,
+        ("Owner", "Dependents"): 0.578697741529175,
+        ("Age", "Months"): 2.85155286459752,
+        ("Card", "Majorcards"): 0.0912752579655268,
+        ("Income", "Majorcards"): 0.0223298793850125,
+        ("Income", "Active"): 0.345808846307825,
+        ("Owner", "Active"): 3.03113288530365,
+        ("Majorcards", "Active"): 1.53996015363929,
+        # --- NEW EFFECT SIZES (GROUND-TRUTH ZEROS) ADDED ---
+        ("Age", "Card"): 0.0,
+        ("Months", "Card"): 0.0,
+        ("Expenditure", "Majorcards"): 0.0,
+        ("Dependents", "Reports"): 0.0,
+        ("Owner", "Share"): 0.0,
+    },
+    phenomenon_overview="This dataset focuses on factors influencing credit card behavior and expenditure patterns, providing insights into consumer finance decisions.",
+)
+
+expenditure_results_distracted = parameterize_dag(expenditure_dag_data_distracted)
+
+
+"""#### DEBUG - to be removed - dammy DAG visualization test"""
+
+
+# Use the already defined expenditure_dag_data for DAG and ground truth
+# Assuming expenditure_dag_data is available in the global scope from previous execution
+# If not, you might need to run the cell defining expenditure_dag_data first.
+
+# 1. Create dummy scenarios (a subset of what would be generated by compile_dag_metadata)
+# Let's pick a few relationships from expenditure_dag_data
+
+dummy_scenarios_for_viz = [
+    {
+        "primary_domain_name": expenditure_dag_data.primary_domain_name,
+        "secondary_domain_name": expenditure_dag_data.secondary_domain_name,
+        "target_variable_name": "Months",
+        "direct_parent_variables": ["Age"],
+        "node_descriptions": expenditure_dag_data.node_descriptions,
+        "node_lower_bounds": expenditure_dag_data.node_lower_bound,
+        "node_upper_bounds": expenditure_dag_data.node_upper_bound,
+        "include_constraints_in_prompt": True,
+    },
+    {
+        "primary_domain_name": expenditure_dag_data.primary_domain_name,
+        "secondary_domain_name": expenditure_dag_data.secondary_domain_name,
+        "target_variable_name": "Share",
+        "direct_parent_variables": ["Card", "Age"],
+        "node_descriptions": expenditure_dag_data.node_descriptions,
+        "node_lower_bounds": expenditure_dag_data.node_lower_bound,
+        "node_upper_bounds": expenditure_dag_data.node_upper_bound,
+        "include_constraints_in_prompt": True,
+    },
+    {
+        "primary_domain_name": expenditure_dag_data.primary_domain_name,
+        "secondary_domain_name": expenditure_dag_data.secondary_domain_name,
+        "target_variable_name": "Reports",
+        "direct_parent_variables": ["Card", "Active"],
+        "node_descriptions": expenditure_dag_data.node_descriptions,
+        "node_lower_bounds": expenditure_dag_data.node_lower_bound,
+        "node_upper_bounds": expenditure_dag_data.node_upper_bound,
+        "include_constraints_in_prompt": True,
+    },
+]
+
+# 2. Create dummy all_coefficients_dfs
+# These should correspond to the scenarios above
+coeff_df_months = pd.DataFrame([{"beta_0": 10.0, "beta_Age": 2.5}])
+coeff_df_share = pd.DataFrame([{"beta_0": 0.05, "beta_Card": 0.1, "beta_Age": -0.002}])
+coeff_df_reports = pd.DataFrame(
+    [{"beta_0": 0.1, "beta_Card": -1.0, "beta_Active": 0.02}]
+)
+
+dummy_all_coefficients_dfs = [coeff_df_months, coeff_df_share, coeff_df_reports]
+
+# 3. Create dummy all_scenario_validation_success
+# Let's say the first two passed, and the last one failed
+dummy_all_scenario_validation_success = [True, True, False]
+
+
+print("\n--- Visualizing Dummy Expenditure DAG with dummy elicited effects --- ")
+visualize_full_dag_effects(
+    all_scenarios=dummy_scenarios_for_viz,
+    all_coefficients_dfs=dummy_all_coefficients_dfs,
+    dag_data=expenditure_dag_data,  # Use the real DAG data for comparison
+    all_scenario_validation_success=dummy_all_scenario_validation_success,
+)
+
+
+# Assuming expenditure_dag_data is available in the global scope
+
+# 1. Create dummy scenarios for all nodes that have direct parents
+dummy_scenarios_for_viz_complete = [
+    {
+        "primary_domain_name": expenditure_dag_data.primary_domain_name,
+        "secondary_domain_name": expenditure_dag_data.secondary_domain_name,
+        "target_variable_name": "Months",
+        "direct_parent_variables": ["Age"],
+        "node_descriptions": expenditure_dag_data.node_descriptions,
+        "node_lower_bounds": expenditure_dag_data.node_lower_bound,
+        "node_upper_bounds": expenditure_dag_data.node_upper_bound,
+        "include_constraints_in_prompt": True,
+    },
+    {
+        "primary_domain_name": expenditure_dag_data.primary_domain_name,
+        "secondary_domain_name": expenditure_dag_data.secondary_domain_name,
+        "target_variable_name": "Share",
+        "direct_parent_variables": ["Card", "Age"],
+        "node_descriptions": expenditure_dag_data.node_descriptions,
+        "node_lower_bounds": expenditure_dag_data.node_lower_bound,
+        "node_upper_bounds": expenditure_dag_data.node_upper_bound,
+        "include_constraints_in_prompt": True,
+    },
+    {
+        "primary_domain_name": expenditure_dag_data.primary_domain_name,
+        "secondary_domain_name": expenditure_dag_data.secondary_domain_name,
+        "target_variable_name": "Owner",
+        "direct_parent_variables": ["Card", "Age", "Months"],
+        "node_descriptions": expenditure_dag_data.node_descriptions,
+        "node_lower_bounds": expenditure_dag_data.node_lower_bound,
+        "node_upper_bounds": expenditure_dag_data.node_upper_bound,
+        "include_constraints_in_prompt": True,
+    },
+    {
+        "primary_domain_name": expenditure_dag_data.primary_domain_name,
+        "secondary_domain_name": expenditure_dag_data.secondary_domain_name,
+        "target_variable_name": "Income",
+        "direct_parent_variables": ["Age", "Owner"],
+        "node_descriptions": expenditure_dag_data.node_descriptions,
+        "node_lower_bounds": expenditure_dag_data.node_lower_bound,
+        "node_upper_bounds": expenditure_dag_data.node_upper_bound,
+        "include_constraints_in_prompt": True,
+    },
+    {
+        "primary_domain_name": expenditure_dag_data.primary_domain_name,
+        "secondary_domain_name": expenditure_dag_data.secondary_domain_name,
+        "target_variable_name": "Expenditure",
+        "direct_parent_variables": ["Income", "Share"],
+        "node_descriptions": expenditure_dag_data.node_descriptions,
+        "node_lower_bounds": expenditure_dag_data.node_lower_bound,
+        "node_upper_bounds": expenditure_dag_data.node_upper_bound,
+        "include_constraints_in_prompt": True,
+    },
+    {
+        "primary_domain_name": expenditure_dag_data.primary_domain_name,
+        "secondary_domain_name": expenditure_dag_data.secondary_domain_name,
+        "target_variable_name": "Selfemp",
+        "direct_parent_variables": ["Income"],
+        "node_descriptions": expenditure_dag_data.node_descriptions,
+        "node_lower_bounds": expenditure_dag_data.node_lower_bound,
+        "node_upper_bounds": expenditure_dag_data.node_upper_bound,
+        "include_constraints_in_prompt": True,
+    },
+    {
+        "primary_domain_name": expenditure_dag_data.primary_domain_name,
+        "secondary_domain_name": expenditure_dag_data.secondary_domain_name,
+        "target_variable_name": "Dependents",
+        "direct_parent_variables": ["Income", "Owner"],
+        "node_descriptions": expenditure_dag_data.node_descriptions,
+        "node_lower_bounds": expenditure_dag_data.node_lower_bound,
+        "node_upper_bounds": expenditure_dag_data.node_upper_bound,
+        "include_constraints_in_prompt": True,
+    },
+    {
+        "primary_domain_name": expenditure_dag_data.primary_domain_name,
+        "secondary_domain_name": expenditure_dag_data.secondary_domain_name,
+        "target_variable_name": "Majorcards",
+        "direct_parent_variables": ["Card", "Income"],
+        "node_descriptions": expenditure_dag_data.node_descriptions,
+        "node_lower_bounds": expenditure_dag_data.node_lower_bound,
+        "node_upper_bounds": expenditure_dag_data.node_upper_bound,
+        "include_constraints_in_prompt": True,
+    },
+    {
+        "primary_domain_name": expenditure_dag_data.primary_domain_name,
+        "secondary_domain_name": expenditure_dag_data.secondary_domain_name,
+        "target_variable_name": "Active",
+        "direct_parent_variables": ["Income", "Owner", "Majorcards"],
+        "node_descriptions": expenditure_dag_data.node_descriptions,
+        "node_lower_bounds": expenditure_dag_data.node_lower_bound,
+        "node_upper_bounds": expenditure_dag_data.node_upper_bound,
+        "include_constraints_in_prompt": True,
+    },
+    {
+        "primary_domain_name": expenditure_dag_data.primary_domain_name,
+        "secondary_domain_name": expenditure_dag_data.secondary_domain_name,
+        "target_variable_name": "Reports",
+        "direct_parent_variables": ["Card", "Active"],
+        "node_descriptions": expenditure_dag_data.node_descriptions,
+        "node_lower_bounds": expenditure_dag_data.node_lower_bound,
+        "node_upper_bounds": expenditure_dag_data.node_upper_bound,
+        "include_constraints_in_prompt": True,
+    },
+]
+
+# 2. Create dummy all_coefficients_dfs for all scenarios
+dummy_coeff_df_months = pd.DataFrame([{"beta_0": 10.0, "beta_Age": 2.5}])
+dummy_coeff_df_share = pd.DataFrame(
+    [{"beta_0": 0.05, "beta_Card": 0.1, "beta_Age": -0.002}]
+)
+dummy_coeff_df_owner = pd.DataFrame(
+    [{"beta_0": 0.1, "beta_Card": 0.2, "beta_Age": 0.01, "beta_Months": 0.005}]
+)
+dummy_coeff_df_income = pd.DataFrame(
+    [{"beta_0": 5.0, "beta_Age": 0.04, "beta_Owner": 0.8}]
+)
+dummy_coeff_df_expenditure = pd.DataFrame(
+    [{"beta_0": 100.0, "beta_Income": 50.0, "beta_Share": 2000.0}]
+)
+dummy_coeff_df_selfemp = pd.DataFrame([{"beta_0": 0.01, "beta_Income": 0.015}])
+dummy_coeff_df_dependents = pd.DataFrame(
+    [{"beta_0": 1.0, "beta_Income": 0.15, "beta_Owner": 0.5}]
+)
+dummy_coeff_df_majorcards = pd.DataFrame(
+    [{"beta_0": 0.5, "beta_Card": 0.08, "beta_Income": 0.02}]
+)
+dummy_coeff_df_active = pd.DataFrame(
+    [{"beta_0": 0.5, "beta_Income": 0.3, "beta_Owner": 3.0, "beta_Majorcards": 1.5}]
+)
+# MODIFIED: Changed beta_Active for Reports to create an order mismatch
+# GT order for Reports: |Card| (1.52) > |Active| (0.05)
+# New LLM order for Reports: |Card| (1.0) < |Active| (5.0) -> should be red
+dummy_coeff_df_reports = pd.DataFrame(
+    [{"beta_0": 0.1, "beta_Card": -1.0, "beta_Active": 5.0}]
+)
+
+dummy_all_coefficients_dfs_complete = [
+    dummy_coeff_df_months,
+    dummy_coeff_df_share,
+    dummy_coeff_df_owner,
+    dummy_coeff_df_income,
+    dummy_coeff_df_expenditure,
+    dummy_coeff_df_selfemp,
+    dummy_coeff_df_dependents,
+    dummy_coeff_df_majorcards,
+    dummy_coeff_df_active,
+    dummy_coeff_df_reports,
+]
+
+# 3. Create dummy all_scenario_validation_success (all True except Reports to show asterisk)
+dummy_all_scenario_validation_success_complete = [
+    True,
+    True,
+    True,
+    True,
+    True,
+    True,
+    True,
+    True,
+    True,
+    False,
+]
+
+
+print("\n--- Visualizing Complete Dummy Expenditure DAG with elicited effects --- ")
+visualize_full_dag_effects(
+    all_scenarios=dummy_scenarios_for_viz_complete,
+    all_coefficients_dfs=dummy_all_coefficients_dfs_complete,
+    dag_data=expenditure_dag_data,  # Use the real DAG data for comparison
+    all_scenario_validation_success=dummy_all_scenario_validation_success_complete,
+)
+
+
+
+
+def post_process_dag_visualization(
+    json_file_path: str, console_output_json: bool = False
+):
+    """Recreates the full DAG visualization from a saved JSON file.
+
+    Args:
+        json_file_path (str): Path to the JSON file containing visualization data.
+        console_output_json (bool): Whether to print the re-loaded JSON data to console.
+    """
+    print(f"Loading visualization data from '{json_file_path}'...")
+    with open(json_file_path, "r") as f:
+        loaded_data = json.load(f)
+
+    # Reconstruct dag_data object
+    loaded_dag_data_dict = loaded_data["dag_data"]
+
+    # Convert string keys for ground_truth_effect_sizes back to tuples
+    reconstructed_gt_effects = {}
+    for k_str, v in loaded_dag_data_dict["ground_truth_effect_sizes"].items():
+        # Assuming key format 'parent->child'
+        match = re.match(r"(.+)->(.+)", k_str)
+        if match:
+            parent, child = match.groups()
+            reconstructed_gt_effects[(parent, child)] = v
+        else:
+            print(f"Warning: Could not parse ground truth effect key: {k_str}")
+
+    reconstructed_dag_data = GeneralDAGData(
+        all_nodes=set(loaded_dag_data_dict["all_nodes"]),  # Convert list back to set
+        raw_edges=loaded_dag_data_dict["raw_edges"],
+        node_descriptions=loaded_dag_data_dict["node_descriptions"],
+        primary_domain_name=loaded_dag_data_dict["primary_domain_name"],
+        secondary_domain_name=loaded_dag_data_dict["secondary_domain_name"],
+        node_lower_bound=loaded_dag_data_dict["node_lower_bound"],
+        node_upper_bound=loaded_dag_data_dict["node_upper_bound"],
+        ground_truth_effect_sizes=reconstructed_gt_effects,
+        phenomenon_overview=loaded_dag_data_dict["phenomenon_overview"],
+    )
+
+    # Reconstruct all_coefficients_dfs
+    reconstructed_coefficients_dfs = []
+    for df_dict_list in loaded_data["all_coefficients_dfs"]:
+        if df_dict_list:
+            reconstructed_coefficients_dfs.append(pd.DataFrame(df_dict_list))
+        else:
+            reconstructed_coefficients_dfs.append(pd.DataFrame())  # Handle empty DFs
+
+    # The other lists can be used directly
+    reconstructed_scenarios = loaded_data["all_scenarios"]
+    reconstructed_validation_success = loaded_data["all_scenario_validation_success"]
+
+    print("Data successfully reloaded and reconstructed.")
+
+    # Call the original visualization function with the reconstructed data
+    visualize_full_dag_effects(
+        all_scenarios=reconstructed_scenarios,
+        all_coefficients_dfs=reconstructed_coefficients_dfs,
+        dag_data=reconstructed_dag_data,
+        all_scenario_validation_success=reconstructed_validation_success,
+        console_output_json=console_output_json,  # Pass through the flag
+        save_json_to_file=False,  # Prevent re-saving JSON when post-processing
+    )
+
+    print("Post-processed DAG visualization complete.")
+
+
+# Example usage (assuming 'full_dag_visualization_data.json' exists after a run):
+post_process_dag_visualization(
+    "full_dag_visualization_data.json", console_output_json=False
+)
