@@ -1,0 +1,38 @@
+# cachexia1_disease_blind_arbitrary_bounds.py
+{
+    "name": "cachexia1_disease_blind_arbitrary_bounds",
+    "all_nodes":{"A", "B", "F", "GC", "GM", "V"},
+    "raw_edges":[
+        ("A", "GC"),
+        ("B", "V"),
+        ("F", "GM"),
+        ("GC", "B"),
+        ("GC", "V"),
+        ("GM", "A"),
+        ("GM", "B"),
+        ("GM", "V"),
+    ],
+    "node_descriptions":{
+        "A": "Adipate",
+        "B": "Betaine",
+        "F": "Fumarate",
+        "GC": "Glucose",
+        "GM": "Glutamine",
+        "V": "Valine",
+    },
+    "primary_domain_name":"metabolic systems",
+    "secondary_domain_name":"biochemistry",
+    "node_lower_bound":{"A": 0, "B": 0, "F": 0, "GC": 0, "GM": 0, "V": 0},
+    "node_upper_bound":{"A": 100, "B": 100, "F": 100, "GC": 100, "GM": 100, "V": 100},
+    "ground_truth_effect_sizes":{
+        ("GM", "A"): 0.0674,
+        ("GC", "B"): 0.0181,
+        ("GM", "B"): 0.1104,
+        ("A", "GC"): 13.4753,
+        ("F", "GM"): 10.7348,
+        ("B", "V"): 0.1104,
+        ("GC", "V"): 0.0068,
+        ("GM", "V"): 0.0436,
+    },
+    "phenomenon_overview":None,
+}
