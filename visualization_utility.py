@@ -1,4 +1,5 @@
 import pandas as pd
+from custom_display_utility import display
 from dag_traversal_utility import GeneralDAGData
 import datetime
 import json
@@ -11,6 +12,7 @@ def visualize_full_dag_effects(
     all_coefficients_dfs: list[pd.DataFrame],
     dag_data: GeneralDAGData,
     all_scenario_validation_success: list[bool],
+    exp_id: str,
     console_output_json: bool = False,
     save_json_to_file: bool = True,
 ) -> None:
@@ -157,17 +159,14 @@ def visualize_full_dag_effects(
         edge_label = "\n".join(edge_label_parts) if edge_label_parts else ""
 
         dot.edge(parent_name, child_name, label=edge_label)
-
-    filename = "full_dag_with_effect_sizes"
-    format = "png"
-    try:
-        dot.render(filename, format=format, cleanup=True)
-        full_filename = f"{filename}.{format}"
-        print(f"Full DAG visualization with effect sizes saved to '{full_filename}'")
-        display(Image(filename=full_filename))
-    except Exception as e:
-        print(f"Error rendering full DAG visualization: {e}")
-
+    
+    display(dot, output_file_postfix="vis_full_dag_eff", exp_id=exp_id)
+    # filename = "full_dag_with_effect_sizes"
+    # format = "pdf"
+    # dot.render(filename, format=format, cleanup=True)
+    # full_filename = f"{filename}.{format}"
+    # print(f"Full DAG visualization with effect sizes saved to '{full_filename}'")
+    # display(Image(filename=full_filename))
     # Prepare data for JSON output
     json_output_data = {
         "all_scenarios": all_scenarios,
@@ -198,7 +197,8 @@ def visualize_full_dag_effects(
     }
 
     # Generate a timestamp for the JSON filename
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    raise NotImplementedError # File name generation logic not implemented yet
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     json_filename = f"full_dag_visualization_snapshot_{timestamp}.json"
 
     if save_json_to_file:

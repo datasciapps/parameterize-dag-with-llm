@@ -29,9 +29,8 @@ def parameterize_dag(
         education_wage_data.node_lower_bound,
         education_wage_data.node_upper_bound,
     )
-    education_wage_dag.visualize_dag(
-        filename="education_wage_dag", format="png", display_in_notebook=True
-    )
+
+    education_wage_dag.visualize_dag(exp_id=exp_id)
     # Traverses raw edge format DAG and provides a list so that we can call the LLM calling later.
     dag_relationships = education_wage_dag.traverse_nodes()
     print("\n--- DAG Parent-Child Relationships ---")
@@ -261,6 +260,7 @@ def parameterize_dag(
         all_coefficients_dfs,
         education_wage_data,
         all_scenario_validation_success,
+        exp_id=exp_id,
     )
     return {
         "all_llm_responses_dfs": all_llm_responses_dfs,

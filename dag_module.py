@@ -143,7 +143,7 @@ class DAG:
         return relationships_list
 
     def visualize_dag(
-        self, filename="dag_visualization", format="png", display_in_notebook=False
+        self, exp_id: str
     ):
         """Visualizes the DAG using graphviz and saves it to a file. Optionally displays it in the notebook."""
         dot = graphviz.Digraph(
@@ -156,12 +156,4 @@ class DAG:
         for node_name, node_obj in self.nodes.items():
             for child_node in node_obj.children:
                 dot.edge(node_name, child_node.name)
-
-        try:
-            dot.render(filename, format=format, cleanup=True)
-            full_filename = f"{filename}.{format}"
-            print(f"[DAG] DAG visualization saved to '{full_filename}'")
-            if display_in_notebook:
-                display(Image(filename=full_filename))
-        except Exception as e:
-            print(f"[DAG] Error rendering DAG visualization: {e}")
+        display(dot, output_file_postfix="vis_full_dag", exp_id=exp_id)
