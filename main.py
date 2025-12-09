@@ -23,69 +23,40 @@ Things added:
 - Not now, but batch prompt for the next generation
 """
 
-
-
-"""### Classes for handling DAG"""
-
-from collections import deque
 import graphviz
-# from IPython.display import Image, display # Import Image and display
 
-from dag_module import DAGNode, DAG
+# from IPython.display import Image, display # Import Image and display
+from dag_module import DAG
 from dag_traversal_utility import GeneralDAGData
 from prompt_generator import PromptPerNode
 
-import graphviz # Import graphviz for visualization
-"""#### Instructor for General LLM Call"""
-
-
-import os
 # from google.colab import userdata
 # from google.colab import drive # Drive is not used in this context
 # os.environ["GEMINI_API_KEY"] = userdata.get("GOOGLE_API_KEY")
 import pandas as pd
+import json
+from dag_traversal_utility import compile_dag_metadata
+import re
+from llm_integration import run_llm_elicitation
+from llm_response_parser import split_equations_to_terms
 
-### ---- instructor based LLM calling ----
-import instructor
-from pydantic import BaseModel
-
-import json, time
-import pandas as pd
-from google import genai
-
-# Imports for instructor and pydantic model
-import instructor
-from pydantic import BaseModel
-
-
-from dag_traversal_utility import GeneralDAGData, compile_dag_metadata
-
-import json, time
-import pandas as pd
-from google import genai
-from google.genai import types
-import os
 
 def response_sanity_check(parsed_dict: dict) -> None:
-  assert "plausibility" in parsed_dict.keys(), f"Response does not have plausibility key. Parsed dict: {parsed_dict}"
-  assert "proposed_lin_str_eq" in parsed_dict.keys(), f"Response does not have proposed_lin_str_eq key. Parsed dict: {parsed_dict}"
+    assert "plausibility" in parsed_dict.keys(), (
+        f"Response does not have plausibility key. Parsed dict: {parsed_dict}"
+    )
+    assert "proposed_lin_str_eq" in parsed_dict.keys(), (
+        f"Response does not have proposed_lin_str_eq key. Parsed dict: {parsed_dict}"
+    )
 
-import re
-import json
-import pandas as pd # Ensure pandas is imported as it's used in split_equations_to_terms
-
-from llm_integration import LLMParamResponse, run_llm_elicitation
-from llm_response_parser import split_equation, split_equations_to_terms
-
-
-import pandas as pd
-import re
 
 def extract_coefficient(term, variable_name):
     # This regex looks for a number (int or float, possibly negative)
     # followed by '*' and then the variable_name.
     # It also handles cases like '-0.5*SIBLINGS' where the '-' is part of the number.
-    match = re.match(r'([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\*' + re.escape(variable_name), term)
+    match = re.match(
+        r"([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\*" + re.escape(variable_name), term
+    )
     if match:
         try:
             return float(match.group(1))
@@ -93,70 +64,85 @@ def extract_coefficient(term, variable_name):
             return None
     return None
 
+
 def extract_intercept(term):
-    if '*1' in term:
-        value_str = term.split('*1')[0]
+    if "*1" in term:
+        value_str = term.split("*1")[0]
         try:
             # Handle potential leading '+' or '-' in the constant term
-            if value_str.startswith('+'):
+            if value_str.startswith("+"):
                 value_str = value_str[1:]
             return float(value_str)
         except ValueError:
             return None  # Handle cases where conversion to float fails
     return None
 
-def convert_terms_to_coeffient_df(split_terms: list[list[str]], scenario_parents: list[str], verbose = False) -> pd.DataFrame:
-  coefficients_list = []
 
-  for terms in split_terms:
-      coefficients = {}
-      for term in terms:
-          if '*1' in term:
-              coefficients['beta_0'] = extract_intercept(term)
-          for parent_var_name in scenario_parents:
-              coeff = extract_coefficient(term, parent_var_name)
-              if coeff is not None:
-                  coefficients[f'beta_{parent_var_name}'] = coeff
+def convert_terms_to_coeffient_df(
+    split_terms: list[list[str]], scenario_parents: list[str], verbose=False
+) -> pd.DataFrame:
+    coefficients_list = []
 
-      # Assert that all scenario_parents have a corresponding beta coefficient
-      for parent_var_name in scenario_parents:
-          assert f'beta_{parent_var_name}' in coefficients, \
-              f"Missing coefficient for parent variable '{parent_var_name}' in LLM response: {terms}"
+    for terms in split_terms:
+        coefficients = {}
+        for term in terms:
+            if "*1" in term:
+                coefficients["beta_0"] = extract_intercept(term)
+            for parent_var_name in scenario_parents:
+                coeff = extract_coefficient(term, parent_var_name)
+                if coeff is not None:
+                    coefficients[f"beta_{parent_var_name}"] = coeff
 
-      coefficients_list.append(coefficients)
+        # Assert that all scenario_parents have a corresponding beta coefficient
+        for parent_var_name in scenario_parents:
+            assert f"beta_{parent_var_name}" in coefficients, (
+                f"Missing coefficient for parent variable '{parent_var_name}' in LLM response: {terms}"
+            )
 
-  coefficients_df = pd.DataFrame(coefficients_list)
-  if verbose:
-    display(coefficients_df)
-  else:
-    display(coefficients_df.head())
-  return coefficients_df
+        coefficients_list.append(coefficients)
+
+    coefficients_df = pd.DataFrame(coefficients_list)
+    if verbose:
+        display(coefficients_df)
+    else:
+        display(coefficients_df.head())
+    return coefficients_df
+
 
 """### Validator"""
 
-def symbolic_range_validator(coefficients_df: pd.DataFrame,
-                             direct_parent_variables: list[str],
-                             target_variable_name: str,
-                             node_lower_bounds: dict,
-                             node_upper_bounds: dict,
-                             proposed_equation: str) -> dict:
+
+def symbolic_range_validator(
+    coefficients_df: pd.DataFrame,
+    direct_parent_variables: list[str],
+    target_variable_name: str,
+    node_lower_bounds: dict,
+    node_upper_bounds: dict,
+    proposed_equation: str,
+) -> dict:
     validation_messages = []
     is_validated = True
     summary_message = ""
 
-    validation_messages.append(f"[VALIDATOR] Running symbolic range validation for {target_variable_name}")
+    validation_messages.append(
+        f"[VALIDATOR] Running symbolic range validation for {target_variable_name}"
+    )
 
     if coefficients_df.empty or len(coefficients_df) == 0:
         msg = "[VALIDATOR] Warning: No coefficients found for validation."
         validation_messages.append(msg)
         summary_message = f"{msg}\nProposed Equation: {proposed_equation}"
-        return {"validation_message": "\n".join(validation_messages), "validated": False, "summary_message": summary_message}
+        return {
+            "validation_message": "\n".join(validation_messages),
+            "validated": False,
+            "summary_message": summary_message,
+        }
 
     # Assuming the first row contains the coefficients from the LLM
     llm_coefficients = coefficients_df.iloc[0]
 
     # 2. Extract intercept (beta_0)
-    intercept = llm_coefficients.get('beta_0', 0.0)
+    intercept = llm_coefficients.get("beta_0", 0.0)
 
     # 3. Initialize min_predicted_target and max_predicted_target with the intercept value
     min_predicted_target = intercept
@@ -164,7 +150,7 @@ def symbolic_range_validator(coefficients_df: pd.DataFrame,
 
     # 4. Iterate through each parent_variable in direct_parent_variables
     for parent_variable in direct_parent_variables:
-        coefficient = llm_coefficients.get(f'beta_{parent_variable}')
+        coefficient = llm_coefficients.get(f"beta_{parent_variable}")
 
         if coefficient is None:
             msg = f"[VALIDATOR] Warning: Coefficient for parent variable '{parent_variable}' not found. Skipping."
@@ -178,7 +164,7 @@ def symbolic_range_validator(coefficients_df: pd.DataFrame,
         if parent_lower_bound is None or parent_upper_bound is None:
             msg = f"[VALIDATOR] Warning: Bounds for parent variable '{parent_variable}' not found. Skipping calculation for this parent."
             validation_messages.append(msg)
-            is_validated = True # If no comparisons possible due to no parent ranges available, treat as success
+            is_validated = True  # If no comparisons possible due to no parent ranges available, treat as success
             # continue
 
         if coefficient >= 0:
@@ -192,7 +178,9 @@ def symbolic_range_validator(coefficients_df: pd.DataFrame,
     target_hard_lower_bound = node_lower_bounds.get(target_variable_name)
     target_hard_upper_bound = node_upper_bounds.get(target_variable_name)
 
-    validation_messages.append(f"[VALIDATOR] Predicted range for '{target_variable_name}': [{min_predicted_target:.2f}, {max_predicted_target:.2f}]")
+    validation_messages.append(
+        f"[VALIDATOR] Predicted range for '{target_variable_name}': [{min_predicted_target:.2f}, {max_predicted_target:.2f}]"
+    )
 
     if target_hard_lower_bound is None or target_hard_upper_bound is None:
         msg = f"[VALIDATOR] Warning: Hard constraints for target variable '{target_variable_name}' not found. Cannot compare. Validation considered passed as no constraints were violated."
@@ -200,15 +188,21 @@ def symbolic_range_validator(coefficients_df: pd.DataFrame,
         # is_validated remains True as per user request if no constraints are present
         summary_message = f"[VALIDATOR] PASSED (No Constraints): No hard constraints for '{target_variable_name}' were found for comparison.\nProposed Equation: {proposed_equation}"
     else:
-        validation_messages.append(f"[VALIDATOR] Hard constraint range for '{target_variable_name}': [{target_hard_lower_bound}, {target_hard_upper_bound}]")
+        validation_messages.append(
+            f"[VALIDATOR] Hard constraint range for '{target_variable_name}': [{target_hard_lower_bound}, {target_hard_upper_bound}]"
+        )
 
         # 6. Compare predicted range with hard constraints and 7. print inconsistencies
         inconsistencies = []
         if min_predicted_target < target_hard_lower_bound:
-            inconsistencies.append(f"Predicted minimum ({min_predicted_target:.2f}) for '{target_variable_name}' is below its hard lower bound ({target_hard_lower_bound}).")
+            inconsistencies.append(
+                f"Predicted minimum ({min_predicted_target:.2f}) for '{target_variable_name}' is below its hard lower bound ({target_hard_lower_bound})."
+            )
             is_validated = False
         if max_predicted_target > target_hard_upper_bound:
-            inconsistencies.append(f"Predicted maximum ({max_predicted_target:.2f}) for '{target_variable_name}' is above its hard upper bound ({target_hard_upper_bound}).")
+            inconsistencies.append(
+                f"Predicted maximum ({max_predicted_target:.2f}) for '{target_variable_name}' is above its hard upper bound ({target_hard_upper_bound})."
+            )
             is_validated = False
 
         if inconsistencies:
@@ -218,7 +212,12 @@ def symbolic_range_validator(coefficients_df: pd.DataFrame,
             summary_message = f"[VALIDATOR] CONSISTENT: Predicted range [{min_predicted_target:.2f}, {max_predicted_target:.2f}] for '{target_variable_name}' is within its hard constraints.\nProposed Equation: {proposed_equation}"
             validation_messages.append(summary_message)
 
-    return {"validation_message": "\n".join(validation_messages), "validated": is_validated, "summary_message": summary_message}
+    return {
+        "validation_message": "\n".join(validation_messages),
+        "validated": is_validated,
+        "summary_message": summary_message,
+    }
+
 
 """### Visualization and Analysis
 #### Fully Parameterized DAG Visualizagtion
@@ -226,7 +225,10 @@ def symbolic_range_validator(coefficients_df: pd.DataFrame,
 
 import numpy as np
 
-def compute_graph_statistics(all_effect_sizes_map, dag_data: GeneralDAGData, normalize_effect_per_node = False)->dict:
+
+def compute_graph_statistics(
+    all_effect_sizes_map, dag_data: GeneralDAGData, normalize_effect_per_node=False
+) -> dict:
     # --- Comparison Logic --- (using L2 norm as requested)
     differences_squared = []
 
@@ -235,31 +237,30 @@ def compute_graph_statistics(all_effect_sizes_map, dag_data: GeneralDAGData, nor
         raise NotImplementedError
     for (parent, child), llm_effect in all_effect_sizes_map.items():
         ground_truth_key = (parent, child)
-        assert ground_truth_key in dag_data.ground_truth_effect_sizes, f"Warning: Ground truth for {parent} -> {child} not found. LLM effect: {llm_effect:.2f}"
+        assert ground_truth_key in dag_data.ground_truth_effect_sizes, (
+            f"Warning: Ground truth for {parent} -> {child} not found. LLM effect: {llm_effect:.2f}"
+        )
         gt_effect = dag_data.ground_truth_effect_sizes[ground_truth_key]
         diff = llm_effect - gt_effect
         differences_squared.append(diff**2)
-        print(f"Effect {parent} -> {child}: LLM={llm_effect:.2f}, GT={gt_effect:.2f}, Diff={diff:.2f}")
+        print(
+            f"Effect {parent} -> {child}: LLM={llm_effect:.2f}, GT={gt_effect:.2f}, Diff={diff:.2f}"
+        )
 
     # Calculate the L2 norm (Euclidean distance)
     if differences_squared:
         l2_norm = np.sqrt(np.sum(differences_squared))
         print(f"\nCalculated L2 Norm of differences: {l2_norm:.4f}")
-        return {
-            "l2_norm": str(l2_norm)
-        }
+        return {"l2_norm": str(l2_norm)}
     else:
         print("No common effects to compare. L2 Norm cannot be calculated.")
-        return {
-            "l2_norm": str(None)
-        }
+        return {"l2_norm": str(None)}
+
 
 # compute_graph_statistics(all_effect_sizes_map)
 
-import graphviz
-import json # Import json for printing data
-import numpy as np # Import numpy for handling numpy types in JSON serialization
-from datetime import datetime # Import datetime for timestamping
+from datetime import datetime  # Import datetime for timestamping
+
 
 # Custom JSON encoder to handle non-serializable types like numpy floats and sets
 class CustomJsonEncoder(json.JSONEncoder):
@@ -273,7 +274,15 @@ class CustomJsonEncoder(json.JSONEncoder):
             return {str(k): v for k, v in obj.items()}
         return json.JSONEncoder.default(self, obj)
 
-def visualize_full_dag_effects(all_scenarios: list[dict], all_coefficients_dfs: list[pd.DataFrame], dag_data: GeneralDAGData, all_scenario_validation_success: list[bool], console_output_json: bool = False, save_json_to_file: bool = True)->None:
+
+def visualize_full_dag_effects(
+    all_scenarios: list[dict],
+    all_coefficients_dfs: list[pd.DataFrame],
+    dag_data: GeneralDAGData,
+    all_scenario_validation_success: list[bool],
+    console_output_json: bool = False,
+    save_json_to_file: bool = True,
+) -> None:
     # Aggregate all effect sizes into a single dictionary (parent_name, child_name): effect_size
     all_effect_sizes_map = {}
 
@@ -282,20 +291,24 @@ def visualize_full_dag_effects(all_scenarios: list[dict], all_coefficients_dfs: 
     gt_effects_by_target = {node_name: {} for node_name in dag_data.all_nodes}
 
     for i, scenario_data in enumerate(all_scenarios):
-        target_variable = scenario_data['target_variable_name']
+        target_variable = scenario_data["target_variable_name"]
         coefficients_df = all_coefficients_dfs[i]
 
         if not coefficients_df.empty:
             for col in coefficients_df.columns:
-                if col.startswith('beta_') and col != 'beta_0':
-                    parent_variable = col.replace('beta_', '')
+                if col.startswith("beta_") and col != "beta_0":
+                    parent_variable = col.replace("beta_", "")
                     effect_size = coefficients_df.loc[0, col]
-                    all_effect_sizes_map[(parent_variable, target_variable)] = effect_size
-                    llm_effects_by_target[target_variable][parent_variable] = effect_size
+                    all_effect_sizes_map[(parent_variable, target_variable)] = (
+                        effect_size
+                    )
+                    llm_effects_by_target[target_variable][parent_variable] = (
+                        effect_size
+                    )
 
     # Populate gt_effects_by_target from dag_data.ground_truth_effect_sizes
     for (parent, child), gt_effect in dag_data.ground_truth_effect_sizes.items():
-        if child in gt_effects_by_target: # Ensure child is a node in the DAG
+        if child in gt_effects_by_target:  # Ensure child is a node in the DAG
             gt_effects_by_target[child][parent] = gt_effect
 
     print("Aggregated Effect Sizes:", all_effect_sizes_map)
@@ -312,87 +325,110 @@ def visualize_full_dag_effects(all_scenarios: list[dict], all_coefficients_dfs: 
         f"- Lightgray: Single parent, no parents, or insufficient data for comparison"
     )
 
-    dot = graphviz.Digraph(comment='Causal DAG', graph_attr={'rankdir': 'TB', 'overlap': 'false'})
-    dot.attr(label=statistics_label_text, labelloc='t', labeljust='l', fontsize='12')
+    dot = graphviz.Digraph(
+        comment="Causal DAG", graph_attr={"rankdir": "TB", "overlap": "false"}
+    )
+    dot.attr(label=statistics_label_text, labelloc="t", labeljust="l", fontsize="12")
 
     # Determine node colors based on effect size ordering
     node_colors = {}
     for node_name in dag_data.all_nodes:
         # Find scenario data for the current node as target
-        current_scenario = next((s for s in all_scenarios if s['target_variable_name'] == node_name), None)
+        current_scenario = next(
+            (s for s in all_scenarios if s["target_variable_name"] == node_name), None
+        )
 
         if current_scenario:
-            direct_parents = current_scenario['direct_parent_variables']
+            direct_parents = current_scenario["direct_parent_variables"]
         else:
             # If it's a root node, it won't be a target in any scenario
             direct_parents = []
 
         if len(direct_parents) <= 1:
-            node_colors[node_name] = 'lightgray' # Changed black to lightgray
+            node_colors[node_name] = "lightgray"  # Changed black to lightgray
         else:
-            current_target_gt_effects_for_node = {p: gt_effects_by_target[node_name].get(p) for p in direct_parents}
-            current_target_llm_effects_for_node = {p: llm_effects_by_target[node_name].get(p) for p in direct_parents}
+            current_target_gt_effects_for_node = {
+                p: gt_effects_by_target[node_name].get(p) for p in direct_parents
+            }
+            current_target_llm_effects_for_node = {
+                p: llm_effects_by_target[node_name].get(p) for p in direct_parents
+            }
 
             # Filter out parents for which we don't have both GT and LLM effects
             # This ensures we only compare effects that are present in both ground truth and LLM output
             comparable_parents = [
-                p for p in direct_parents
-                if current_target_gt_effects_for_node[p] is not None and current_target_llm_effects_for_node[p] is not None
+                p
+                for p in direct_parents
+                if current_target_gt_effects_for_node[p] is not None
+                and current_target_llm_effects_for_node[p] is not None
             ]
 
-            if len(comparable_parents) < len(direct_parents) or len(comparable_parents) < 2: # Need at least two parents to compare order
-                node_colors[node_name] = 'lightgray'
+            if (
+                len(comparable_parents) < len(direct_parents)
+                or len(comparable_parents) < 2
+            ):  # Need at least two parents to compare order
+                node_colors[node_name] = "lightgray"
             else:
                 # Sort parents by GT effect size (descending)
                 sorted_gt_parents = sorted(
                     comparable_parents,
                     key=lambda p: current_target_gt_effects_for_node[p],
-                    reverse=True
+                    reverse=True,
                 )
                 # Sort parents by LLM effect size (descending)
                 sorted_llm_parents = sorted(
                     comparable_parents,
                     key=lambda p: current_target_llm_effects_for_node[p],
-                    reverse=True
+                    reverse=True,
                 )
 
                 if sorted_gt_parents == sorted_llm_parents:
-                    node_colors[node_name] = 'lightgreen' # Changed green to lightgreen
+                    node_colors[node_name] = "lightgreen"  # Changed green to lightgreen
                 else:
-                    node_colors[node_name] = 'lightcoral' # Changed red to lightcoral
+                    node_colors[node_name] = "lightcoral"  # Changed red to lightcoral
 
     for node_name in dag_data.all_nodes:
-        color = node_colors.get(node_name, 'lightgray') # Default to lightgray if not determined (e.g., root nodes without direct parents)
-        dot.node(node_name, node_name, style='filled', fillcolor=color)
+        color = node_colors.get(
+            node_name, "lightgray"
+        )  # Default to lightgray if not determined (e.g., root nodes without direct parents)
+        dot.node(node_name, node_name, style="filled", fillcolor=color)
 
     for parent_name, child_name in dag_data.raw_edges:
         edge_label_parts = []
 
         scenario_index_for_child = -1
         for idx, scenario_data in enumerate(all_scenarios):
-            if scenario_data['target_variable_name'] == child_name:
+            if scenario_data["target_variable_name"] == child_name:
                 scenario_index_for_child = idx
                 break
 
         is_edge_scenario_successful = True
         if scenario_index_for_child != -1:
-            is_edge_scenario_successful = all_scenario_validation_success[scenario_index_for_child]
+            is_edge_scenario_successful = all_scenario_validation_success[
+                scenario_index_for_child
+            ]
 
         if (parent_name, child_name) in all_effect_sizes_map:
             llm_effect_size = all_effect_sizes_map[(parent_name, child_name)]
             prefix = "" if is_edge_scenario_successful else "*"
-            edge_label_parts.append(f"{prefix}LLM={llm_effect_size:e}") # Changed to scientific notation
+            edge_label_parts.append(
+                f"{prefix}LLM={llm_effect_size:e}"
+            )  # Changed to scientific notation
 
         if (parent_name, child_name) in dag_data.ground_truth_effect_sizes:
-            gt_effect_size = dag_data.ground_truth_effect_sizes[(parent_name, child_name)]
-            edge_label_parts.append(f"GT={gt_effect_size:e}") # Changed to scientific notation
+            gt_effect_size = dag_data.ground_truth_effect_sizes[
+                (parent_name, child_name)
+            ]
+            edge_label_parts.append(
+                f"GT={gt_effect_size:e}"
+            )  # Changed to scientific notation
 
         edge_label = "\n".join(edge_label_parts) if edge_label_parts else ""
 
         dot.edge(parent_name, child_name, label=edge_label)
 
-    filename = 'full_dag_with_effect_sizes'
-    format = 'png'
+    filename = "full_dag_with_effect_sizes"
+    format = "png"
     try:
         dot.render(filename, format=format, cleanup=True)
         full_filename = f"{filename}.{format}"
@@ -404,7 +440,7 @@ def visualize_full_dag_effects(all_scenarios: list[dict], all_coefficients_dfs: 
     # Prepare data for JSON output
     json_output_data = {
         "all_scenarios": all_scenarios,
-        "all_coefficients_dfs": [df.to_dict('records') for df in all_coefficients_dfs],
+        "all_coefficients_dfs": [df.to_dict("records") for df in all_coefficients_dfs],
         "dag_data": {
             "all_nodes": list(dag_data.all_nodes),
             "raw_edges": dag_data.raw_edges,
@@ -413,24 +449,29 @@ def visualize_full_dag_effects(all_scenarios: list[dict], all_coefficients_dfs: 
             "secondary_domain_name": dag_data.secondary_domain_name,
             "node_lower_bound": dag_data.node_lower_bound,
             "node_upper_bound": dag_data.node_upper_bound,
-            "ground_truth_effect_sizes": {f"{k[0]}->{k[1]}": v for k, v in dag_data.ground_truth_effect_sizes.items()},
-            "phenomenon_overview": dag_data.phenomenon_overview
+            "ground_truth_effect_sizes": {
+                f"{k[0]}->{k[1]}": v
+                for k, v in dag_data.ground_truth_effect_sizes.items()
+            },
+            "phenomenon_overview": dag_data.phenomenon_overview,
         },
         "all_scenario_validation_success": all_scenario_validation_success,
-        "all_effect_sizes_map": {f"{k[0]}->{k[1]}": v for k, v in all_effect_sizes_map.items()},
+        "all_effect_sizes_map": {
+            f"{k[0]}->{k[1]}": v for k, v in all_effect_sizes_map.items()
+        },
         "llm_effects_by_target": llm_effects_by_target,
         "gt_effects_by_target": gt_effects_by_target,
         "node_colors": node_colors,
         "statistics_label_text": statistics_label_text,
-        "l2_norm_value": l2_norm_value
+        "l2_norm_value": l2_norm_value,
     }
 
     # Generate a timestamp for the JSON filename
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    json_filename = f'full_dag_visualization_snapshot_{timestamp}.json'
+    json_filename = f"full_dag_visualization_snapshot_{timestamp}.json"
 
     if save_json_to_file:
-        with open(json_filename, 'w') as f:
+        with open(json_filename, "w") as f:
             json.dump(json_output_data, f, indent=2, cls=CustomJsonEncoder)
         print(f"Visualization data saved to '{json_filename}'")
 
@@ -438,85 +479,127 @@ def visualize_full_dag_effects(all_scenarios: list[dict], all_coefficients_dfs: 
         print("\n--- Visualization Data (JSON) ---")
         print(json.dumps(json_output_data, indent=2, cls=CustomJsonEncoder))
 
+
 """### Main Loop
 
 #### Main DAG Parameterization
 """
 
-def parameterize_dag(education_wage_data: GeneralDAGData, include_hard_constraints: bool)->dict:
-    all_llm_responses_dfs = [] # This will store the *final* LLM response for each scenario (after validation passes)
-    all_coefficients_dfs = [] # This will store the *final* coefficients for each scenario (after validation passes)
-    all_scenario_validation_success = [] # New list to store validation success status for each scenario
 
-    education_wage_dag = DAG(education_wage_data.all_nodes, education_wage_data.raw_edges, education_wage_data.node_descriptions, education_wage_data.node_lower_bound, education_wage_data.node_upper_bound)
-    education_wage_dag.visualize_dag(filename='education_wage_dag', format='png', display_in_notebook=True)
+def parameterize_dag(
+    education_wage_data: GeneralDAGData, include_hard_constraints: bool
+) -> dict:
+    all_llm_responses_dfs = []  # This will store the *final* LLM response for each scenario (after validation passes)
+    all_coefficients_dfs = []  # This will store the *final* coefficients for each scenario (after validation passes)
+    all_scenario_validation_success = []  # New list to store validation success status for each scenario
+
+    education_wage_dag = DAG(
+        education_wage_data.all_nodes,
+        education_wage_data.raw_edges,
+        education_wage_data.node_descriptions,
+        education_wage_data.node_lower_bound,
+        education_wage_data.node_upper_bound,
+    )
+    education_wage_dag.visualize_dag(
+        filename="education_wage_dag", format="png", display_in_notebook=True
+    )
     # Traverses raw edge format DAG and provides a list so that we can call the LLM calling later.
     dag_relationships = education_wage_dag.traverse_nodes()
     print("\n--- DAG Parent-Child Relationships ---")
-    scenarios = compile_dag_metadata(education_wage_data, dag_relationships, include_hard_constraints)
+    scenarios = compile_dag_metadata(
+        education_wage_data, dag_relationships, include_hard_constraints
+    )
 
-    MAX_RETRIES = 5 # Set the maximum number of retries for LLM elicitation per scenario
+    MAX_RETRIES = (
+        5  # Set the maximum number of retries for LLM elicitation per scenario
+    )
 
     for scenario_idx, scenario_to_process in enumerate(scenarios):
-        print(f"\n{'='*80}")
-        print(f"[SCENARIO {scenario_idx}] Starting processing for target variable: {scenario_to_process['target_variable_name']}")
-        print(f"{'='*80}\n")
+        print(f"\n{'=' * 80}")
+        print(
+            f"[SCENARIO {scenario_idx}] Starting processing for target variable: {scenario_to_process['target_variable_name']}"
+        )
+        print(f"{'=' * 80}\n")
 
-        current_feedback_message = None # Initialize feedback for the current scenario
+        current_feedback_message = None  # Initialize feedback for the current scenario
 
         iteration_count = 0
-        scenario_iteration_history = [] # New list to store history for *this* scenario's iterations
+        scenario_iteration_history = []  # New list to store history for *this* scenario's iterations
 
         # Variables to store the *last successfully validated* results for visualization outside the loop
         last_validated_coefficients_df = None
         last_validated_llm_responses_df = None
-        current_scenario_succeeded = False # Flag to track if this scenario ultimately succeeded validation
+        current_scenario_succeeded = (
+            False  # Flag to track if this scenario ultimately succeeded validation
+        )
 
         while iteration_count < MAX_RETRIES:
             iteration_count += 1
-            print(f"\n[SCENARIO {scenario_idx}, ITERATION {iteration_count}] Eliciting LLM response...")
+            print(
+                f"\n[SCENARIO {scenario_idx}, ITERATION {iteration_count}] Eliciting LLM response..."
+            )
 
             prompt_generator = PromptPerNode(
                 primary_domain_name=scenario_to_process["primary_domain_name"],
                 secondary_domain_name=scenario_to_process["secondary_domain_name"],
                 target_variable_name=scenario_to_process["target_variable_name"],
                 direct_parent_variables=scenario_to_process["direct_parent_variables"],
-                node_descriptions=scenario_to_process["node_descriptions"], # Include node descriptions here
+                node_descriptions=scenario_to_process[
+                    "node_descriptions"
+                ],  # Include node descriptions here
                 node_lower_bounds=scenario_to_process["node_lower_bounds"],
                 node_upper_bounds=scenario_to_process["node_upper_bounds"],
                 include_constraints_in_prompt=INCLUDE_HARD_CONSTRAINTS,
-                feedback_message=current_feedback_message, # Pass feedback message to the prompt generator
-                phenomenon_overview=education_wage_data.phenomenon_overview # Pass phenomenon_overview
+                feedback_message=current_feedback_message,  # Pass feedback message to the prompt generator
+                phenomenon_overview=education_wage_data.phenomenon_overview,  # Pass phenomenon_overview
             )
             full_prompt = prompt_generator.get_full_prompt()
 
             # --- LLM Loop ---
             elicitation_prompt = prompt_generator.get_full_prompt()
-            llm_responses_df = run_llm_elicitation(num_responses_per_prompt=1, wait_sec_per_chat=2, elicitation_prompt=elicitation_prompt, debug_print=True)
+            llm_responses_df = run_llm_elicitation(
+                num_responses_per_prompt=1,
+                wait_sec_per_chat=2,
+                elicitation_prompt=elicitation_prompt,
+                debug_print=True,
+            )
             llm_responses_df["scenario_idx"] = scenario_idx
             display(llm_responses_df)
 
             from datetime import datetime
+
             timestamp = datetime.now().strftime("%Y%m%d_%H%M")
             # llm_responses_df.to_csv(f'llm_responses_{scenario_idx}_{timestamp}.csv', index=False) # Keep this for saving individual responses for debugging if needed
 
-            print(f"[SCENARIO {scenario_idx}, ITERATION {iteration_count}] --- Splitting equation terms ---")
-            split_terms = split_equations_to_terms(llm_responses_df, scenario_to_process["target_variable_name"], verbose=True)
+            print(
+                f"[SCENARIO {scenario_idx}, ITERATION {iteration_count}] --- Splitting equation terms ---"
+            )
+            split_terms = split_equations_to_terms(
+                llm_responses_df,
+                scenario_to_process["target_variable_name"],
+                verbose=True,
+            )
 
-            print(f"[SCENARIO {scenario_idx}, ITERATION {iteration_count}] --- Converting terms to coefficients DataFrame ---")
-            coefficients_df = convert_terms_to_coeffient_df(split_terms, scenario_to_process['direct_parent_variables'], verbose=True)
+            print(
+                f"[SCENARIO {scenario_idx}, ITERATION {iteration_count}] --- Converting terms to coefficients DataFrame ---"
+            )
+            coefficients_df = convert_terms_to_coeffient_df(
+                split_terms,
+                scenario_to_process["direct_parent_variables"],
+                verbose=True,
+            )
 
-            validation_result = None # Initialize to None
+            validation_result = None  # Initialize to None
 
             if not coefficients_df.empty:
-                proposed_equation_str = llm_responses_df.iloc[0]['proposed_lin_str_eq']
+                proposed_equation_str = llm_responses_df.iloc[0]["proposed_lin_str_eq"]
                 validation_result = symbolic_range_validator(
                     coefficients_df,
-                    scenario_to_process['direct_parent_variables'],
-                    scenario_to_process['target_variable_name'],
+                    scenario_to_process["direct_parent_variables"],
+                    scenario_to_process["target_variable_name"],
                     scenario_to_process["node_lower_bounds"],
                     scenario_to_process["node_upper_bounds"],
-                    proposed_equation=proposed_equation_str # Pass the proposed equation
+                    proposed_equation=proposed_equation_str,  # Pass the proposed equation
                 )
                 print("--- Full Validation Log ---")
                 print(validation_result["validation_message"])
@@ -524,46 +607,77 @@ def parameterize_dag(education_wage_data: GeneralDAGData, include_hard_constrain
                 print(validation_result["summary_message"])
 
                 # Store iteration history
-                scenario_iteration_history.append({
-                    "iteration_num": iteration_count,
-                    "llm_response_df": llm_responses_df.copy(), # Store a copy to avoid modification issues
-                    "coefficients_df": coefficients_df.copy(),
-                    "validation_result": validation_result.copy() # Store a copy
-                })
+                scenario_iteration_history.append(
+                    {
+                        "iteration_num": iteration_count,
+                        "llm_response_df": llm_responses_df.copy(),  # Store a copy to avoid modification issues
+                        "coefficients_df": coefficients_df.copy(),
+                        "validation_result": validation_result.copy(),  # Store a copy
+                    }
+                )
 
                 if validation_result["validated"]:
-                    print(f"[SCENARIO {scenario_idx}, ITERATION {iteration_count}] Validation passed - moving on to next scenario")
-                    all_llm_responses_dfs.append(llm_responses_df) # Now append the validated response
-                    all_coefficients_dfs.append(coefficients_df) # Now append the validated coefficients
-                    last_validated_coefficients_df = coefficients_df # Store for outside visualization
-                    last_validated_llm_responses_df = llm_responses_df # Store for outside visualization
-                    current_scenario_succeeded = True # Mark as successful
-                    break # Exit while loop for current scenario
+                    print(
+                        f"[SCENARIO {scenario_idx}, ITERATION {iteration_count}] Validation passed - moving on to next scenario"
+                    )
+                    all_llm_responses_dfs.append(
+                        llm_responses_df
+                    )  # Now append the validated response
+                    all_coefficients_dfs.append(
+                        coefficients_df
+                    )  # Now append the validated coefficients
+                    last_validated_coefficients_df = (
+                        coefficients_df  # Store for outside visualization
+                    )
+                    last_validated_llm_responses_df = (
+                        llm_responses_df  # Store for outside visualization
+                    )
+                    current_scenario_succeeded = True  # Mark as successful
+                    break  # Exit while loop for current scenario
                 else:
-                    print(f"[SCENARIO {scenario_idx}, ITERATION {iteration_count}] Validation failed - elicitation needs to be done again")
-                    current_feedback_message = validation_result["summary_message"] # Update feedback for next iteration
+                    print(
+                        f"[SCENARIO {scenario_idx}, ITERATION {iteration_count}] Validation failed - elicitation needs to be done again"
+                    )
+                    current_feedback_message = validation_result[
+                        "summary_message"
+                    ]  # Update feedback for next iteration
                     # Continue loop for next iteration
             else:
-                print(f"[SCENARIO {scenario_idx}, ITERATION {iteration_count}] Warning: Coefficients DataFrame is empty. Cannot perform validation. Retrying LLM.")
+                print(
+                    f"[SCENARIO {scenario_idx}, ITERATION {iteration_count}] Warning: Coefficients DataFrame is empty. Cannot perform validation. Retrying LLM."
+                )
                 summary_message_empty_coeff = "Warning: Coefficients DataFrame is empty. Cannot perform validation. Retrying LLM."
                 # If coefficients_df is empty, proposed_lin_str_eq might not be directly available, or could be malformed.
                 # Attempt to get it if possible, otherwise note its absence.
-                proposed_equation_str = llm_responses_df.iloc[0]['proposed_lin_str_eq'] if not llm_responses_df.empty and 'proposed_lin_str_eq' in llm_responses_df.iloc[0] else "N/A (equation parsing failed)"
+                proposed_equation_str = (
+                    llm_responses_df.iloc[0]["proposed_lin_str_eq"]
+                    if not llm_responses_df.empty
+                    and "proposed_lin_str_eq" in llm_responses_df.iloc[0]
+                    else "N/A (equation parsing failed)"
+                )
                 summary_message_empty_coeff_with_eq = f"{summary_message_empty_coeff}\nProposed Equation: {proposed_equation_str}"
 
-                scenario_iteration_history.append({
-                    "iteration_num": iteration_count,
-                    "llm_response_df": llm_responses_df.copy(),
-                    "coefficients_df": coefficients_df.copy(), # Might be empty
-                    "validation_result": {"validation_message": summary_message_empty_coeff_with_eq, "validated": False, "summary_message": summary_message_empty_coeff_with_eq}
-                })
-                current_feedback_message = summary_message_empty_coeff_with_eq # Update feedback for next iteration
+                scenario_iteration_history.append(
+                    {
+                        "iteration_num": iteration_count,
+                        "llm_response_df": llm_responses_df.copy(),
+                        "coefficients_df": coefficients_df.copy(),  # Might be empty
+                        "validation_result": {
+                            "validation_message": summary_message_empty_coeff_with_eq,
+                            "validated": False,
+                            "summary_message": summary_message_empty_coeff_with_eq,
+                        },
+                    }
+                )
+                current_feedback_message = summary_message_empty_coeff_with_eq  # Update feedback for next iteration
                 # Continue loop for next iteration
 
         # After the while loop finishes:
         # If no successful validation occurred, use the last proposal from iteration history
         if not current_scenario_succeeded and scenario_iteration_history:
-            print(f"\n[SCENARIO {scenario_idx}] Max retries ({MAX_RETRIES}) reached without successful validation. Using the last proposal.")
+            print(
+                f"\n[SCENARIO {scenario_idx}] Max retries ({MAX_RETRIES}) reached without successful validation. Using the last proposal."
+            )
             last_iteration_data = scenario_iteration_history[-1]
             last_validated_coefficients_df = last_iteration_data["coefficients_df"]
             last_validated_llm_responses_df = last_iteration_data["llm_response_df"]
@@ -572,38 +686,63 @@ def parameterize_dag(education_wage_data: GeneralDAGData, include_hard_constrain
             all_coefficients_dfs.append(last_validated_coefficients_df)
             # current_scenario_succeeded remains False
         elif not current_scenario_succeeded and not scenario_iteration_history:
-            print(f"\n[SCENARIO {scenario_idx}] No proposals generated for this scenario after all retries.")
+            print(
+                f"\n[SCENARIO {scenario_idx}] No proposals generated for this scenario after all retries."
+            )
 
         # Record the final success status for this scenario
         all_scenario_validation_success.append(current_scenario_succeeded)
 
         # --- Visualization and Effect Sizes (This block will now always execute if there's any proposal) ---
-        if last_validated_coefficients_df is not None and not last_validated_coefficients_df.empty:
+        if (
+            last_validated_coefficients_df is not None
+            and not last_validated_coefficients_df.empty
+        ):
             effect_sizes = {}
-            for parent_var_name in scenario_to_process['direct_parent_variables']:
-                col_name = f'beta_{parent_var_name}'
+            for parent_var_name in scenario_to_process["direct_parent_variables"]:
+                col_name = f"beta_{parent_var_name}"
                 if col_name in last_validated_coefficients_df.columns:
-                    effect_sizes[parent_var_name] = last_validated_coefficients_df.loc[0, col_name]
+                    effect_sizes[parent_var_name] = last_validated_coefficients_df.loc[
+                        0, col_name
+                    ]
 
-            print(f"[EFFECT_SIZES {scenario_idx}] Extracted for scenario:", effect_sizes)
-            print(f"\n[VISUALIZATION {scenario_idx}] --- Parent-Child Relationship with Effect Sizes ---")
-            display(prompt_generator.visualize_parent_child_relationship(effect_sizes=effect_sizes))
+            print(
+                f"[EFFECT_SIZES {scenario_idx}] Extracted for scenario:", effect_sizes
+            )
+            print(
+                f"\n[VISUALIZATION {scenario_idx}] --- Parent-Child Relationship with Effect Sizes ---"
+            )
+            display(
+                prompt_generator.visualize_parent_child_relationship(
+                    effect_sizes=effect_sizes
+                )
+            )
         else:
-            print(f"[SCENARIO {scenario_idx}] No valid or last-resort coefficients obtained for this scenario after all retries, skipping visualization.")
+            print(
+                f"[SCENARIO {scenario_idx}] No valid or last-resort coefficients obtained for this scenario after all retries, skipping visualization."
+            )
 
         # Optional: print or save the iteration history for this scenario
         print(f"\n[SCENARIO {scenario_idx}] Iteration history for this scenario:")
         for entry in scenario_iteration_history:
-            print(f"  Iteration {entry['iteration_num']}: Validated = {entry['validation_result']['validated']}, Summary = {entry['validation_result']['summary_message']}")
+            print(
+                f"  Iteration {entry['iteration_num']}: Validated = {entry['validation_result']['validated']}, Summary = {entry['validation_result']['summary_message']}"
+            )
 
-    visualize_full_dag_effects(scenarios, all_coefficients_dfs, education_wage_data, all_scenario_validation_success)
+    visualize_full_dag_effects(
+        scenarios,
+        all_coefficients_dfs,
+        education_wage_data,
+        all_scenario_validation_success,
+    )
     return {
         "all_llm_responses_dfs": all_llm_responses_dfs,
         "all_coefficients_dfs": all_coefficients_dfs,
         "all_scenario_validation_success": all_scenario_validation_success,
         "scenarios": scenarios,
-        "education_wage_data": education_wage_data
-        }
+        "education_wage_data": education_wage_data,
+    }
+
 
 """#### Main Loops for Cachexia Arbitrary Bounds
 
@@ -648,7 +787,7 @@ cachexia1_exp1 = GeneralDAGData(
         ("GC", "V"): 0.0068,
         ("GM", "V"): 0.0436,
     },
-    phenomenon_overview="You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover."
+    phenomenon_overview="You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover.",
 )
 
 cachexia1_exp1_results = parameterize_dag(cachexia1_exp1, include_hard_constraints=True)
@@ -693,7 +832,7 @@ cachexia1_exp2 = GeneralDAGData(
         ("GC", "V"): 0.0068,
         ("GM", "V"): 0.0436,
     },
-    phenomenon_overview=None
+    phenomenon_overview=None,
 )
 
 cachexia1_exp2_results = parameterize_dag(cachexia1_exp2)
@@ -730,7 +869,14 @@ cachexia1_real_unit_and_data = GeneralDAGData(
     primary_domain_name="metabolic systems",
     secondary_domain_name="biochemistry",
     node_lower_bound={"A": 1.6, "B": 2.3, "F": 0.8, "GC": 26.9, "GM": 15.1, "V": 4.1},
-    node_upper_bound={"A": 325.6, "B": 788.8, "F": 96.6, "GC": 8724.8, "GM": 1684.0, "V": 160.1},
+    node_upper_bound={
+        "A": 325.6,
+        "B": 788.8,
+        "F": 96.6,
+        "GC": 8724.8,
+        "GM": 1684.0,
+        "V": 160.1,
+    },
     ground_truth_effect_sizes={
         ("GM", "A"): 0.0674,
         ("GC", "B"): 0.0181,
@@ -741,7 +887,7 @@ cachexia1_real_unit_and_data = GeneralDAGData(
         ("GC", "V"): 0.0068,
         ("GM", "V"): 0.0436,
     },
-    phenomenon_overview=None
+    phenomenon_overview=None,
 )
 
 cachexia1_real_unit_and_data_results = parameterize_dag(cachexia1_real_unit_and_data)
@@ -775,7 +921,14 @@ cachexia1_real_unit_and_data_d_informed = GeneralDAGData(
     primary_domain_name="metabolic systems",
     secondary_domain_name="biochemistry",
     node_lower_bound={"A": 1.6, "B": 2.3, "F": 0.8, "GC": 26.9, "GM": 15.1, "V": 4.1},
-    node_upper_bound={"A": 325.6, "B": 788.8, "F": 96.6, "GC": 8724.8, "GM": 1684.0, "V": 160.1},
+    node_upper_bound={
+        "A": 325.6,
+        "B": 788.8,
+        "F": 96.6,
+        "GC": 8724.8,
+        "GM": 1684.0,
+        "V": 160.1,
+    },
     ground_truth_effect_sizes={
         ("GM", "A"): 0.0674,
         ("GC", "B"): 0.0181,
@@ -786,10 +939,12 @@ cachexia1_real_unit_and_data_d_informed = GeneralDAGData(
         ("GC", "V"): 0.0068,
         ("GM", "V"): 0.0436,
     },
-    phenomenon_overview="You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover."
+    phenomenon_overview="You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover.",
 )
 
-cachexia1_real_unit_and_data_d_informed_results = parameterize_dag(cachexia1_real_unit_and_data_d_informed)
+cachexia1_real_unit_and_data_d_informed_results = parameterize_dag(
+    cachexia1_real_unit_and_data_d_informed
+)
 
 """##### Cachexia 1 disease-informed - real bounds & tweaked units"""
 
@@ -819,10 +974,27 @@ cachexia1_real_unit_and_data_d_informed = GeneralDAGData(
     },
     primary_domain_name="metabolic systems",
     secondary_domain_name="biochemistry",
-    node_lower_bound={"A": 1.6*1000, "B": 2.3*1000, "F": 0.8*1000, "GC": 26.9*1000, "GM": 15.1*1000, "V": 4.1*1000},
-    node_upper_bound={"A": 325.6*1000, "B": 788.8*1000, "F": 96.6*1000, "GC": 8724.8*1000, "GM": 1684.0*1000, "V": 160.1*1000},
+    node_lower_bound={
+        "A": 1.6 * 1000,
+        "B": 2.3 * 1000,
+        "F": 0.8 * 1000,
+        "GC": 26.9 * 1000,
+        "GM": 15.1 * 1000,
+        "V": 4.1 * 1000,
+    },
+    node_upper_bound={
+        "A": 325.6 * 1000,
+        "B": 788.8 * 1000,
+        "F": 96.6 * 1000,
+        "GC": 8724.8 * 1000,
+        "GM": 1684.0 * 1000,
+        "V": 160.1 * 1000,
+    },
     ground_truth_effect_sizes={
-        ("GM", "A"): 0.0674, # Assuming that changing units from micro to nano does not change effect size (or regression coefficients)
+        (
+            "GM",
+            "A",
+        ): 0.0674,  # Assuming that changing units from micro to nano does not change effect size (or regression coefficients)
         ("GC", "B"): 0.0181,
         ("GM", "B"): 0.1104,
         ("A", "GC"): 13.4753,
@@ -831,10 +1003,12 @@ cachexia1_real_unit_and_data_d_informed = GeneralDAGData(
         ("GC", "V"): 0.0068,
         ("GM", "V"): 0.0436,
     },
-    phenomenon_overview="You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover."
+    phenomenon_overview="You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover.",
 )
 
-cachexia1_real_unit_and_data_d_informed_results = parameterize_dag(cachexia1_real_unit_and_data_d_informed)
+cachexia1_real_unit_and_data_d_informed_results = parameterize_dag(
+    cachexia1_real_unit_and_data_d_informed
+)
 
 """##### Cachexia 1 disease-informed - real bounds & tweaked units with higher resolution prompt"""
 
@@ -864,10 +1038,27 @@ cachexia1_real_unit_and_data_d_informed = GeneralDAGData(
     },
     primary_domain_name="metabolic systems",
     secondary_domain_name="biochemistry",
-    node_lower_bound={"A": 1.6*1000, "B": 2.3*1000, "F": 0.8*1000, "GC": 26.9*1000, "GM": 15.1*1000, "V": 4.1*1000},
-    node_upper_bound={"A": 325.6*1000, "B": 788.8*1000, "F": 96.6*1000, "GC": 8724.8*1000, "GM": 1684.0*1000, "V": 160.1*1000},
+    node_lower_bound={
+        "A": 1.6 * 1000,
+        "B": 2.3 * 1000,
+        "F": 0.8 * 1000,
+        "GC": 26.9 * 1000,
+        "GM": 15.1 * 1000,
+        "V": 4.1 * 1000,
+    },
+    node_upper_bound={
+        "A": 325.6 * 1000,
+        "B": 788.8 * 1000,
+        "F": 96.6 * 1000,
+        "GC": 8724.8 * 1000,
+        "GM": 1684.0 * 1000,
+        "V": 160.1 * 1000,
+    },
     ground_truth_effect_sizes={
-        ("GM", "A"): 0.0674, # Assuming that changing units from micro to nano does not change effect size (or regression coefficients)
+        (
+            "GM",
+            "A",
+        ): 0.0674,  # Assuming that changing units from micro to nano does not change effect size (or regression coefficients)
         ("GC", "B"): 0.0181,
         ("GM", "B"): 0.1104,
         ("A", "GC"): 13.4753,
@@ -876,10 +1067,12 @@ cachexia1_real_unit_and_data_d_informed = GeneralDAGData(
         ("GC", "V"): 0.0068,
         ("GM", "V"): 0.0436,
     },
-    phenomenon_overview="You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover. For highest precision, please consider at least four decimal points for your parameterization results or even more."
+    phenomenon_overview="You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover. For highest precision, please consider at least four decimal points for your parameterization results or even more.",
 )
 
-cachexia1_real_unit_and_data_d_informed_results = parameterize_dag(cachexia1_real_unit_and_data_d_informed)
+cachexia1_real_unit_and_data_d_informed_results = parameterize_dag(
+    cachexia1_real_unit_and_data_d_informed
+)
 
 """#### Main Loops for Credit Card Expenditure
 
@@ -892,8 +1085,18 @@ INCLUDE_HARD_CONSTRAINTS = True
 # Expenditure DAG Data with estimated bounds and domain information
 expenditure_dag_data = GeneralDAGData(
     all_nodes={
-        "Card", "Reports", "Age", "Income", "Share", "Expenditure",
-        "Owner", "Selfemp", "Dependents", "Months", "Majorcards", "Active"
+        "Card",
+        "Reports",
+        "Age",
+        "Income",
+        "Share",
+        "Expenditure",
+        "Owner",
+        "Selfemp",
+        "Dependents",
+        "Months",
+        "Majorcards",
+        "Active",
     },
     raw_edges=[
         ("Card", "Reports"),
@@ -915,7 +1118,7 @@ expenditure_dag_data = GeneralDAGData(
         ("Owner", "Active"),
         ("Months", "Owner"),
         ("Majorcards", "Active"),
-        ("Active", "Reports")
+        ("Active", "Reports"),
     ],
     node_descriptions={
         "Card": "Whether the application for credit card was accepted or not (Categorical/Binary).",
@@ -929,44 +1132,61 @@ expenditure_dag_data = GeneralDAGData(
         "Dependents": "The number of dependents + 1 (Count).",
         "Months": "The number of months living at current address (Unit: Months).",
         "Majorcards": "The number of major credit cards held (Count).",
-        "Active": "The number of active credit accounts (Count)."
+        "Active": "The number of active credit accounts (Count).",
     },
     primary_domain_name="Finance",
     secondary_domain_name="Consumer Behavior",
     node_lower_bound={
-        "Card": 0, "Reports": 0, "Age": 18, "Income": 0.0, "Share": 0.0,
-        "Expenditure": 0.0, "Owner": 0, "Selfemp": 0, "Dependents": 1, "Months": 0,
-        "Majorcards": 0, "Active": 0
+        "Card": 0,
+        "Reports": 0,
+        "Age": 18,
+        "Income": 0.0,
+        "Share": 0.0,
+        "Expenditure": 0.0,
+        "Owner": 0,
+        "Selfemp": 0,
+        "Dependents": 1,
+        "Months": 0,
+        "Majorcards": 0,
+        "Active": 0,
     },
     node_upper_bound={
-        "Card": 1, "Reports": 10, "Age": 100, "Income": 500.0, # 500 units * $10,000 = $5,000,000
-        "Share": 1.0, "Expenditure": 250000.0, # Assuming max monthly expenditure could be $250k
-        "Owner": 1, "Selfemp": 1, "Dependents": 10, "Months": 1000, # Approx 83 years at address
-        "Majorcards": 5, "Active": 10
+        "Card": 1,
+        "Reports": 10,
+        "Age": 100,
+        "Income": 500.0,  # 500 units * $10,000 = $5,000,000
+        "Share": 1.0,
+        "Expenditure": 250000.0,  # Assuming max monthly expenditure could be $250k
+        "Owner": 1,
+        "Selfemp": 1,
+        "Dependents": 10,
+        "Months": 1000,  # Approx 83 years at address
+        "Majorcards": 5,
+        "Active": 10,
     },
     ground_truth_effect_sizes={
-        ('Card', 'Reports'): -1.52254735864156,
-        ('Active', 'Reports'): 0.0524304077175797,
-        ('Age', 'Income'): 0.0396322368121011,
-        ('Owner', 'Income'): 0.81007553939645,
-        ('Card', 'Share'): 0.0880188466837473,
-        ('Age', 'Share'): -0.00108166463383845,
-        ('Income', 'Expenditure'): 52.6677840700376,
-        ('Share', 'Expenditure'): 2463.53664138429,
-        ('Card', 'Owner'): 0.175729766661258,
-        ('Age', 'Owner'): 0.0159375978980603,
-        ('Months', 'Owner'): 0.000724193422780255,
-        ('Income', 'Selfemp'): 0.0168077274438035,
-        ('Income', 'Dependents'): 0.178844201299536,
-        ('Owner', 'Dependents'): 0.578697741529175,
-        ('Age', 'Months'): 2.85155286459752,
-        ('Card', 'Majorcards'): 0.0912752579655268,
-        ('Income', 'Majorcards'): 0.0223298793850125,
-        ('Income', 'Active'): 0.345808846307825,
-        ('Owner', 'Active'): 3.03113288530365,
-        ('Majorcards', 'Active'): 1.53996015363929,
+        ("Card", "Reports"): -1.52254735864156,
+        ("Active", "Reports"): 0.0524304077175797,
+        ("Age", "Income"): 0.0396322368121011,
+        ("Owner", "Income"): 0.81007553939645,
+        ("Card", "Share"): 0.0880188466837473,
+        ("Age", "Share"): -0.00108166463383845,
+        ("Income", "Expenditure"): 52.6677840700376,
+        ("Share", "Expenditure"): 2463.53664138429,
+        ("Card", "Owner"): 0.175729766661258,
+        ("Age", "Owner"): 0.0159375978980603,
+        ("Months", "Owner"): 0.000724193422780255,
+        ("Income", "Selfemp"): 0.0168077274438035,
+        ("Income", "Dependents"): 0.178844201299536,
+        ("Owner", "Dependents"): 0.578697741529175,
+        ("Age", "Months"): 2.85155286459752,
+        ("Card", "Majorcards"): 0.0912752579655268,
+        ("Income", "Majorcards"): 0.0223298793850125,
+        ("Income", "Active"): 0.345808846307825,
+        ("Owner", "Active"): 3.03113288530365,
+        ("Majorcards", "Active"): 1.53996015363929,
     },
-    phenomenon_overview="This dataset focuses on factors influencing credit card behavior and expenditure patterns, providing insights into consumer finance decisions."
+    phenomenon_overview="This dataset focuses on factors influencing credit card behavior and expenditure patterns, providing insights into consumer finance decisions.",
 )
 
 expenditure_results = parameterize_dag(expenditure_dag_data)
@@ -979,8 +1199,18 @@ INCLUDE_HARD_CONSTRAINTS = True
 # Expenditure DAG Data with estimated bounds and domain information
 expenditure_dag_data = GeneralDAGData(
     all_nodes={
-        "Card", "Reports", "Age", "Income", "Share", "Expenditure",
-        "Owner", "Selfemp", "Dependents", "Months", "Majorcards", "Active"
+        "Card",
+        "Reports",
+        "Age",
+        "Income",
+        "Share",
+        "Expenditure",
+        "Owner",
+        "Selfemp",
+        "Dependents",
+        "Months",
+        "Majorcards",
+        "Active",
     },
     raw_edges=[
         ("Card", "Reports"),
@@ -1002,7 +1232,7 @@ expenditure_dag_data = GeneralDAGData(
         ("Owner", "Active"),
         ("Months", "Owner"),
         ("Majorcards", "Active"),
-        ("Active", "Reports")
+        ("Active", "Reports"),
     ],
     node_descriptions={
         "Card": "Whether the application for credit card was accepted or not (Categorical/Binary).",
@@ -1016,44 +1246,61 @@ expenditure_dag_data = GeneralDAGData(
         "Dependents": "The number of dependents + 1 (Count).",
         "Months": "The number of months living at current address (Unit: Months).",
         "Majorcards": "The number of major credit cards held (Count).",
-        "Active": "The number of active credit accounts (Count)."
+        "Active": "The number of active credit accounts (Count).",
     },
     primary_domain_name="Finance",
     secondary_domain_name="Consumer Behavior",
     node_lower_bound={
-        "Card": 0, "Reports": 0, "Age": 0, "Income": 0.0, "Share": 0.0,
-        "Expenditure": 0.0, "Owner": 0, "Selfemp": 0, "Dependents": 0, "Months": 0,
-        "Majorcards": 0, "Active": 0
+        "Card": 0,
+        "Reports": 0,
+        "Age": 0,
+        "Income": 0.0,
+        "Share": 0.0,
+        "Expenditure": 0.0,
+        "Owner": 0,
+        "Selfemp": 0,
+        "Dependents": 0,
+        "Months": 0,
+        "Majorcards": 0,
+        "Active": 0,
     },
     node_upper_bound={
-        "Card": 100, "Reports": 100, "Age": 100, "Income": 100,
-        "Share": 100, "Expenditure": 100,
-        "Owner": 100, "Selfemp": 100, "Dependents": 100, "Months": 100,
-        "Majorcards": 100, "Active": 100
+        "Card": 100,
+        "Reports": 100,
+        "Age": 100,
+        "Income": 100,
+        "Share": 100,
+        "Expenditure": 100,
+        "Owner": 100,
+        "Selfemp": 100,
+        "Dependents": 100,
+        "Months": 100,
+        "Majorcards": 100,
+        "Active": 100,
     },
     ground_truth_effect_sizes={
-        ('Card', 'Reports'): -1.52254735864156,
-        ('Active', 'Reports'): 0.0524304077175797,
-        ('Age', 'Income'): 0.0396322368121011,
-        ('Owner', 'Income'): 0.81007553939645,
-        ('Card', 'Share'): 0.0880188466837473,
-        ('Age', 'Share'): -0.00108166463383845,
-        ('Income', 'Expenditure'): 52.6677840700376,
-        ('Share', 'Expenditure'): 2463.53664138429,
-        ('Card', 'Owner'): 0.175729766661258,
-        ('Age', 'Owner'): 0.0159375978980603,
-        ('Months', 'Owner'): 0.000724193422780255,
-        ('Income', 'Selfemp'): 0.0168077274438035,
-        ('Income', 'Dependents'): 0.178844201299536,
-        ('Owner', 'Dependents'): 0.578697741529175,
-        ('Age', 'Months'): 2.85155286459752,
-        ('Card', 'Majorcards'): 0.0912752579655268,
-        ('Income', 'Majorcards'): 0.0223298793850125,
-        ('Income', 'Active'): 0.345808846307825,
-        ('Owner', 'Active'): 3.03113288530365,
-        ('Majorcards', 'Active'): 1.53996015363929,
+        ("Card", "Reports"): -1.52254735864156,
+        ("Active", "Reports"): 0.0524304077175797,
+        ("Age", "Income"): 0.0396322368121011,
+        ("Owner", "Income"): 0.81007553939645,
+        ("Card", "Share"): 0.0880188466837473,
+        ("Age", "Share"): -0.00108166463383845,
+        ("Income", "Expenditure"): 52.6677840700376,
+        ("Share", "Expenditure"): 2463.53664138429,
+        ("Card", "Owner"): 0.175729766661258,
+        ("Age", "Owner"): 0.0159375978980603,
+        ("Months", "Owner"): 0.000724193422780255,
+        ("Income", "Selfemp"): 0.0168077274438035,
+        ("Income", "Dependents"): 0.178844201299536,
+        ("Owner", "Dependents"): 0.578697741529175,
+        ("Age", "Months"): 2.85155286459752,
+        ("Card", "Majorcards"): 0.0912752579655268,
+        ("Income", "Majorcards"): 0.0223298793850125,
+        ("Income", "Active"): 0.345808846307825,
+        ("Owner", "Active"): 3.03113288530365,
+        ("Majorcards", "Active"): 1.53996015363929,
     },
-    phenomenon_overview="This dataset focuses on factors influencing credit card behavior and expenditure patterns, providing insights into consumer finance decisions."
+    phenomenon_overview="This dataset focuses on factors influencing credit card behavior and expenditure patterns, providing insights into consumer finance decisions.",
 )
 
 expenditure_results = parameterize_dag(expenditure_dag_data)
@@ -1071,13 +1318,13 @@ foodsecurity_dag_data = GeneralDAGData(
         ("Educational_Attainment", "Social_Cohesion"),
         ("Health", "Cost"),
         ("Health", "Educational_Attainment"),
-        ("Health", "Social_Cohesion")
+        ("Health", "Social_Cohesion"),
     ],
     node_descriptions={
         "Cost": "Cost of food (e.g., affordability, access).",
         "Educational_Attainment": "Level of education achieved.",
         "Health": "Overall health status of individuals.",
-        "Social_Cohesion": "Strength of community ties and social support."
+        "Social_Cohesion": "Strength of community ties and social support.",
     },
     primary_domain_name="Public Health",
     secondary_domain_name="Socioeconomics",
@@ -1085,21 +1332,21 @@ foodsecurity_dag_data = GeneralDAGData(
         "Cost": 0.0,
         "Educational_Attainment": 0.0,
         "Health": 0.0,
-        "Social_Cohesion": 0.0
+        "Social_Cohesion": 0.0,
     },
     node_upper_bound={
         "Cost": 100.0,
         "Educational_Attainment": 100.0,
         "Health": 100.0,
-        "Social_Cohesion": 100.0
+        "Social_Cohesion": 100.0,
     },
     ground_truth_effect_sizes={
-        ('Health', 'Cost'): 10.0,
-        ('Health', 'Educational_Attainment'): 7.0,
-        ('Educational_Attainment', 'Social_Cohesion'): 10.0,
-        ('Health', 'Social_Cohesion'): 17.0
+        ("Health", "Cost"): 10.0,
+        ("Health", "Educational_Attainment"): 7.0,
+        ("Educational_Attainment", "Social_Cohesion"): 10.0,
+        ("Health", "Social_Cohesion"): 17.0,
     },
-    phenomenon_overview=None
+    phenomenon_overview=None,
 )
 
 foodsecurity_exp_results = parameterize_dag(foodsecurity_dag_data)
@@ -1107,7 +1354,17 @@ foodsecurity_exp_results = parameterize_dag(foodsecurity_dag_data)
 """##### algal2"""
 
 algal2_dag_data = GeneralDAGData(
-    all_nodes={"ChiA", "ChiA_PS", "Colour", "Colour_PS", "Cyanobacteria", "RainSum", "TP", "TP_PS", "WindSpeed"},
+    all_nodes={
+        "ChiA",
+        "ChiA_PS",
+        "Colour",
+        "Colour_PS",
+        "Cyanobacteria",
+        "RainSum",
+        "TP",
+        "TP_PS",
+        "WindSpeed",
+    },
     raw_edges=[
         ("ChiA", "Cyanobacteria"),
         ("ChiA_PS", "ChiA"),
@@ -1117,7 +1374,7 @@ algal2_dag_data = GeneralDAGData(
         ("TP", "ChiA"),
         ("TP_PS", "ChiA_PS"),
         ("TP_PS", "TP"),
-        ("WindSpeed", "ChiA")
+        ("WindSpeed", "ChiA"),
     ],
     node_descriptions={
         "ChiA": "Chlorophyll A concentration",
@@ -1128,32 +1385,44 @@ algal2_dag_data = GeneralDAGData(
         "RainSum": "Sum of rainfall",
         "TP": "Total Phosphorus concentration",
         "TP_PS": "Total Phosphorus concentration, previous sample",
-        "WindSpeed": "Wind speed"
+        "WindSpeed": "Wind speed",
     },
     primary_domain_name="Ecology",
     secondary_domain_name="Environmental Science",
     node_lower_bound={
-        "ChiA": 0.0, "ChiA_PS": 0.0, "Colour": 0.0, "Colour_PS": 0.0,
-        "Cyanobacteria": 0.0, "RainSum": 0.0, "TP": 0.0, "TP_PS": 0.0,
-        "WindSpeed": 0.0
+        "ChiA": 0.0,
+        "ChiA_PS": 0.0,
+        "Colour": 0.0,
+        "Colour_PS": 0.0,
+        "Cyanobacteria": 0.0,
+        "RainSum": 0.0,
+        "TP": 0.0,
+        "TP_PS": 0.0,
+        "WindSpeed": 0.0,
     },
     node_upper_bound={
-        "ChiA": 100.0, "ChiA_PS": 100.0, "Colour": 100.0, "Colour_PS": 100.0,
-        "Cyanobacteria": 100.0, "RainSum": 100.0, "TP": 100.0, "TP_PS": 100.0,
-        "WindSpeed": 100.0
+        "ChiA": 100.0,
+        "ChiA_PS": 100.0,
+        "Colour": 100.0,
+        "Colour_PS": 100.0,
+        "Cyanobacteria": 100.0,
+        "RainSum": 100.0,
+        "TP": 100.0,
+        "TP_PS": 100.0,
+        "WindSpeed": 100.0,
     },
     ground_truth_effect_sizes={
-        ('ChiA_PS', 'ChiA'): 0.33,
-        ('TP', 'ChiA'): 0.47,
-        ('WindSpeed', 'ChiA'): -5.1,
-        ('TP_PS', 'ChiA_PS'): 0.62,
-        ('Colour_PS', 'Colour'): 0.81,
-        ('RainSum', 'Colour'): 0.028,
-        ('ChiA', 'Cyanobacteria'): 0.17,
-        ('Colour', 'Cyanobacteria'): -0.024,
-        ('TP_PS', 'TP'): 0.61
+        ("ChiA_PS", "ChiA"): 0.33,
+        ("TP", "ChiA"): 0.47,
+        ("WindSpeed", "ChiA"): -5.1,
+        ("TP_PS", "ChiA_PS"): 0.62,
+        ("Colour_PS", "Colour"): 0.81,
+        ("RainSum", "Colour"): 0.028,
+        ("ChiA", "Cyanobacteria"): 0.17,
+        ("Colour", "Cyanobacteria"): -0.024,
+        ("TP_PS", "TP"): 0.61,
     },
-    phenomenon_overview="This network describes relationships between various environmental factors and algal blooms in a body of water."
+    phenomenon_overview="This network describes relationships between various environmental factors and algal blooms in a body of water.",
 )
 
 algal2_exp_results = parameterize_dag(algal2_dag_data)
@@ -1211,7 +1480,16 @@ raw_edges=[
 """
 
 lexical_dag_data = GeneralDAGData(
-    all_nodes={"aoa", "area", "genre_disp", "log_freq", "log_range", "prev_heard", "prev_used", "social_disp"},
+    all_nodes={
+        "aoa",
+        "area",
+        "genre_disp",
+        "log_freq",
+        "log_range",
+        "prev_heard",
+        "prev_used",
+        "social_disp",
+    },
     raw_edges=[
         ("aoa", "genre_disp"),
         ("aoa", "prev_heard"),
@@ -1226,7 +1504,7 @@ lexical_dag_data = GeneralDAGData(
         ("prev_heard", "prev_used"),
         ("prev_used", "area"),
         ("prev_used", "log_freq"),
-        ("prev_used", "log_range")
+        ("prev_used", "log_range"),
     ],
     node_descriptions={
         "aoa": "Age of Acquisition",
@@ -1236,35 +1514,47 @@ lexical_dag_data = GeneralDAGData(
         "log_range": "Log Range",
         "prev_heard": "Previously Heard",
         "prev_used": "Previously Used",
-        "social_disp": "Social Dispersion"
+        "social_disp": "Social Dispersion",
     },
     primary_domain_name="Linguistics",
     secondary_domain_name="Cognitive Science",
     node_lower_bound={
-        "aoa": 0.0, "area": 0.0, "genre_disp": 0.0, "log_freq": 0.0,
-        "log_range": 0.0, "prev_heard": 0.0, "prev_used": 0.0, "social_disp": 0.0
+        "aoa": 0.0,
+        "area": 0.0,
+        "genre_disp": 0.0,
+        "log_freq": 0.0,
+        "log_range": 0.0,
+        "prev_heard": 0.0,
+        "prev_used": 0.0,
+        "social_disp": 0.0,
     },
     node_upper_bound={
-        "aoa": 100.0, "area": 100.0, "genre_disp": 100.0, "log_freq": 100.0,
-        "log_range": 100.0, "prev_heard": 100.0, "prev_used": 100.0, "social_disp": 100.0
+        "aoa": 100.0,
+        "area": 100.0,
+        "genre_disp": 100.0,
+        "log_freq": 100.0,
+        "log_range": 100.0,
+        "prev_heard": 100.0,
+        "prev_used": 100.0,
+        "social_disp": 100.0,
     },
     ground_truth_effect_sizes={
-        ('prev_heard', 'area'): 1.279619,
-        ('prev_used', 'area'): -0.5456541,
-        ('aoa', 'genre_disp'): 0.1493371,
-        ('log_freq', 'genre_disp'): 0.1369712,
-        ('log_range', 'genre_disp'): 0.2290909,
-        ('prev_heard', 'genre_disp'): 0.4137189,
-        ('prev_heard', 'log_freq'): -0.2389613,
-        ('prev_used', 'log_freq'): 0.6522685,
-        ('log_freq', 'log_range'): 0.453501,
-        ('prev_used', 'log_range'): 0.2927989,
-        ('aoa', 'prev_heard'): -0.422608,
-        ('prev_heard', 'prev_used'): 0.9072148,
-        ('aoa', 'social_disp'): -0.1212857,
-        ('area', 'social_disp'): 0.604543
+        ("prev_heard", "area"): 1.279619,
+        ("prev_used", "area"): -0.5456541,
+        ("aoa", "genre_disp"): 0.1493371,
+        ("log_freq", "genre_disp"): 0.1369712,
+        ("log_range", "genre_disp"): 0.2290909,
+        ("prev_heard", "genre_disp"): 0.4137189,
+        ("prev_heard", "log_freq"): -0.2389613,
+        ("prev_used", "log_freq"): 0.6522685,
+        ("log_freq", "log_range"): 0.453501,
+        ("prev_used", "log_range"): 0.2927989,
+        ("aoa", "prev_heard"): -0.422608,
+        ("prev_heard", "prev_used"): 0.9072148,
+        ("aoa", "social_disp"): -0.1212857,
+        ("area", "social_disp"): 0.604543,
     },
-    phenomenon_overview="This network models lexical properties and their relationships."
+    phenomenon_overview="This network models lexical properties and their relationships.",
 )
 
 lexical_exp_results = parameterize_dag(lexical_dag_data)
@@ -1340,7 +1630,7 @@ liquefaction_dag_data = GeneralDAGData(
         ("Mw", "S"),
         ("N160", "S"),
         ("Sigmav", "N160"),
-        ("Ts", "S")
+        ("Ts", "S"),
     ],
     node_descriptions={
         "Ds": "Soil depth",
@@ -1352,43 +1642,73 @@ liquefaction_dag_data = GeneralDAGData(
         "N160": "Standard Penetration Test N-value (normalized)",
         "S": "Liquefaction potential index",
         "Sigmav": "Vertical effective stress",
-        "Ts": "Soil type"
+        "Ts": "Soil type",
     },
     primary_domain_name="Geotechnical Engineering",
     secondary_domain_name="Seismology",
     node_lower_bound={
-        "Ds": 0.0, "GWT": 0.0, "lnamax": 0.0, "lnR": 0.0, "lnt": 0.0,
-        "Mw": 0.0, "N160": 0.0, "S": 0.0, "Sigmav": 0.0, "Ts": 0.0
+        "Ds": 0.0,
+        "GWT": 0.0,
+        "lnamax": 0.0,
+        "lnR": 0.0,
+        "lnt": 0.0,
+        "Mw": 0.0,
+        "N160": 0.0,
+        "S": 0.0,
+        "Sigmav": 0.0,
+        "Ts": 0.0,
     },
     node_upper_bound={
-        "Ds": 100.0, "GWT": 100.0, "lnamax": 100.0, "lnR": 100.0, "lnt": 100.0,
-        "Mw": 100.0, "N160": 100.0, "S": 100.0, "Sigmav": 100.0, "Ts": 100.0
+        "Ds": 100.0,
+        "GWT": 100.0,
+        "lnamax": 100.0,
+        "lnR": 100.0,
+        "lnt": 100.0,
+        "Mw": 100.0,
+        "N160": 100.0,
+        "S": 100.0,
+        "Sigmav": 100.0,
+        "Ts": 100.0,
     },
     ground_truth_effect_sizes={
-        ('lnR', 'lnamax'): -0.307873843121311,
-        ('Mw', 'lnamax'): 0.41908404951763,
-        ('lnR', 'lnt'): -0.729126859129163,
-        ('Mw', 'lnt'): 1.91326821221389,
-        ('Sigmav', 'N160'): 0.00907224603603644,
-        ('Ds', 'S'): -0.00832616014865797,
-        ('GWT', 'S'): 0.000777814682337057,
-        ('lnamax', 'S'): 0.0938939306816531,
-        ('lnR', 'S'): -0.00306747566719272,
-        ('lnt', 'S'): -0.010246146273104,
-        ('Mw', 'S'): 0.0534088869851398,
-        ('N160', 'S'): -0.00871964886165512,
-        ('Ts', 'S'): 0.0164373806481002,
-        ('Ds', 'Sigmav'): 8.65954393507753,
-        ('GWT', 'Sigmav'): 8.63429241267473
+        ("lnR", "lnamax"): -0.307873843121311,
+        ("Mw", "lnamax"): 0.41908404951763,
+        ("lnR", "lnt"): -0.729126859129163,
+        ("Mw", "lnt"): 1.91326821221389,
+        ("Sigmav", "N160"): 0.00907224603603644,
+        ("Ds", "S"): -0.00832616014865797,
+        ("GWT", "S"): 0.000777814682337057,
+        ("lnamax", "S"): 0.0938939306816531,
+        ("lnR", "S"): -0.00306747566719272,
+        ("lnt", "S"): -0.010246146273104,
+        ("Mw", "S"): 0.0534088869851398,
+        ("N160", "S"): -0.00871964886165512,
+        ("Ts", "S"): 0.0164373806481002,
+        ("Ds", "Sigmav"): 8.65954393507753,
+        ("GWT", "Sigmav"): 8.63429241267473,
     },
-    phenomenon_overview="This network models factors influencing soil liquefaction potential during earthquakes."
+    phenomenon_overview="This network models factors influencing soil liquefaction potential during earthquakes.",
 )
 liquefaction_exp_results = parameterize_dag(liquefaction_dag_data)
 
 """##### stocks"""
 
 stocks_dag_data = GeneralDAGData(
-    all_nodes={"AEFES", "AKSEN", "CCOLA", "ENJSA", "KERVT", "LKMNH", "MPARK", "ODAS", "PENGD", "TUKAS", "ULKER", "ULUUN", "ZOREN"},
+    all_nodes={
+        "AEFES",
+        "AKSEN",
+        "CCOLA",
+        "ENJSA",
+        "KERVT",
+        "LKMNH",
+        "MPARK",
+        "ODAS",
+        "PENGD",
+        "TUKAS",
+        "ULKER",
+        "ULUUN",
+        "ZOREN",
+    },
     raw_edges=[
         ("AEFES", "CCOLA"),
         ("AEFES", "ENJSA"),
@@ -1412,7 +1732,7 @@ stocks_dag_data = GeneralDAGData(
         ("ZOREN", "AEFES"),
         ("ZOREN", "AKSEN"),
         ("ZOREN", "ENJSA"),
-        ("ZOREN", "ULKER")
+        ("ZOREN", "ULKER"),
     ],
     node_descriptions={
         "AEFES": "Stock price of AEFES",
@@ -1427,52 +1747,69 @@ stocks_dag_data = GeneralDAGData(
         "TUKAS": "Stock price of TUKAS",
         "ULKER": "Stock price of ULKER",
         "ULUUN": "Stock price of ULUUN",
-        "ZOREN": "Stock price of ZOREN"
+        "ZOREN": "Stock price of ZOREN",
     },
     primary_domain_name="Finance",
     secondary_domain_name="Market Analysis",
     node_lower_bound={
-        "AEFES": 0.0, "AKSEN": 0.0, "CCOLA": 0.0, "ENJSA": 0.0, "KERVT": 0.0,
-        "LKMNH": 0.0, "MPARK": 0.0, "ODAS": 0.0, "PENGD": 0.0, "TUKAS": 0.0,
-        "ULKER": 0.0, "ULUUN": 0.0, "ZOREN": 0.0
+        "AEFES": 0.0,
+        "AKSEN": 0.0,
+        "CCOLA": 0.0,
+        "ENJSA": 0.0,
+        "KERVT": 0.0,
+        "LKMNH": 0.0,
+        "MPARK": 0.0,
+        "ODAS": 0.0,
+        "PENGD": 0.0,
+        "TUKAS": 0.0,
+        "ULKER": 0.0,
+        "ULUUN": 0.0,
+        "ZOREN": 0.0,
     },
     node_upper_bound={
-        "AEFES": 100.0, "AKSEN": 100.0, "CCOLA": 100.0, "ENJSA": 100.0, "KERVT": 100.0,
-        "LKMNH": 100.0, "MPARK": 100.0, "ODAS": 100.0, "PENGD": 100.0, "TUKAS": 100.0,
-        "ULKER": 100.0, "ULUUN": 100.0, "ZOREN": 100.0
+        "AEFES": 100.0,
+        "AKSEN": 100.0,
+        "CCOLA": 100.0,
+        "ENJSA": 100.0,
+        "KERVT": 100.0,
+        "LKMNH": 100.0,
+        "MPARK": 100.0,
+        "ODAS": 100.0,
+        "PENGD": 100.0,
+        "TUKAS": 100.0,
+        "ULKER": 100.0,
+        "ULUUN": 100.0,
+        "ZOREN": 100.0,
     },
     ground_truth_effect_sizes={
-        ('ZOREN', 'AEFES'): 0.28504,
-        ('ODAS', 'AKSEN'): 0.232151,
-        ('ZOREN', 'AKSEN'): 0.296668,
-        ('AEFES', 'CCOLA'): 0.351159,
-        ('ULKER', 'CCOLA'): 0.225405,
-        ('AEFES', 'ENJSA'): 0.148784,
-        ('AKSEN', 'ENJSA'): 0.134633,
-        ('KERVT', 'ENJSA'): 0.113066,
-        ('ZOREN', 'ENJSA'): 0.184162,
-        ('ULUUN', 'KERVT'): 0.284235,
-        ('AEFES', 'MPARK'): 0.205706,
-        ('AKSEN', 'MPARK'): 0.117322,
-        ('LKMNH', 'MPARK'): 0.29696,
-        ('ODAS', 'MPARK'): 0.0683476,
-        ('ULKER', 'MPARK'): 0.192566,
-        ('TUKAS', 'ODAS'): 0.324198,
-        ('KERVT', 'PENGD'): 0.680582,
-        ('KERVT', 'TUKAS'): 0.355931,
-        ('PENGD', 'TUKAS'): 0.110216,
-        ('KERVT', 'ULKER'): 0.206911,
-        ('ZOREN', 'ULKER'): 0.191251,
-        ('LKMNH', 'ULUUN'): 0.235237,
-        ('ODAS', 'ZOREN'): 0.450508
+        ("ZOREN", "AEFES"): 0.28504,
+        ("ODAS", "AKSEN"): 0.232151,
+        ("ZOREN", "AKSEN"): 0.296668,
+        ("AEFES", "CCOLA"): 0.351159,
+        ("ULKER", "CCOLA"): 0.225405,
+        ("AEFES", "ENJSA"): 0.148784,
+        ("AKSEN", "ENJSA"): 0.134633,
+        ("KERVT", "ENJSA"): 0.113066,
+        ("ZOREN", "ENJSA"): 0.184162,
+        ("ULUUN", "KERVT"): 0.284235,
+        ("AEFES", "MPARK"): 0.205706,
+        ("AKSEN", "MPARK"): 0.117322,
+        ("LKMNH", "MPARK"): 0.29696,
+        ("ODAS", "MPARK"): 0.0683476,
+        ("ULKER", "MPARK"): 0.192566,
+        ("TUKAS", "ODAS"): 0.324198,
+        ("KERVT", "PENGD"): 0.680582,
+        ("KERVT", "TUKAS"): 0.355931,
+        ("PENGD", "TUKAS"): 0.110216,
+        ("KERVT", "ULKER"): 0.206911,
+        ("ZOREN", "ULKER"): 0.191251,
+        ("LKMNH", "ULUUN"): 0.235237,
+        ("ODAS", "ZOREN"): 0.450508,
     },
-    phenomenon_overview="This network models the relationships between various stock prices."
+    phenomenon_overview="This network models the relationships between various stock prices.",
 )
 
 stocks_exp_results = parameterize_dag(stocks_dag_data)
-
-
-
 
 
 """```
@@ -1607,7 +1944,43 @@ raw_edges=[
 """
 
 suffocation_dag_data = GeneralDAGData(
-    all_nodes={"N10", "N11", "N12", "N13", "N14", "N16", "N17", "N18", "N20", "N22", "N23", "N24", "N25", "N26", "N27", "N28", "N29", "N30", "N32", "N33", "N34", "N35", "N36", "N37", "N38", "N39", "N4", "N40", "N5", "N8", "OI", "PersonnelSuffocation", "UA", "UP", "US"},
+    all_nodes={
+        "N10",
+        "N11",
+        "N12",
+        "N13",
+        "N14",
+        "N16",
+        "N17",
+        "N18",
+        "N20",
+        "N22",
+        "N23",
+        "N24",
+        "N25",
+        "N26",
+        "N27",
+        "N28",
+        "N29",
+        "N30",
+        "N32",
+        "N33",
+        "N34",
+        "N35",
+        "N36",
+        "N37",
+        "N38",
+        "N39",
+        "N4",
+        "N40",
+        "N5",
+        "N8",
+        "OI",
+        "PersonnelSuffocation",
+        "UA",
+        "UP",
+        "US",
+    },
     raw_edges=[
         ("N10", "OI"),
         ("N11", "OI"),
@@ -1642,83 +2015,182 @@ suffocation_dag_data = GeneralDAGData(
         ("OI", "PersonnelSuffocation"),
         ("UA", "PersonnelSuffocation"),
         ("UP", "PersonnelSuffocation"),
-        ("US", "PersonnelSuffocation")
+        ("US", "PersonnelSuffocation"),
     ],
     node_descriptions={
-        "N10": "Factor N10", "N11": "Factor N11", "N12": "Factor N12", "N13": "Factor N13",
-        "N14": "Factor N14", "N16": "Factor N16", "N17": "Factor N17", "N18": "Factor N18",
-        "N20": "Factor N20", "N22": "Factor N22", "N23": "Factor N23", "N24": "Factor N24",
-        "N25": "Factor N25", "N26": "Factor N26", "N27": "Factor N27", "N28": "Factor N28",
-        "N29": "Factor N29", "N30": "Factor N30", "N32": "Factor N32", "N33": "Factor N33",
-        "N34": "Factor N34", "N35": "Factor N35", "N36": "Factor N36", "N37": "Factor N37",
-        "N38": "Factor N38", "N39": "Factor N39", "N4": "Factor N4", "N40": "Factor N40",
-        "N5": "Factor N5", "N8": "Factor N8", "OI": "Oxygen Index",
-        "PersonnelSuffocation": "Personnel Suffocation", "UA": "Unsafe Acts",
-        "UP": "Unsafe Procedures", "US": "Unsafe Systems"
+        "N10": "Factor N10",
+        "N11": "Factor N11",
+        "N12": "Factor N12",
+        "N13": "Factor N13",
+        "N14": "Factor N14",
+        "N16": "Factor N16",
+        "N17": "Factor N17",
+        "N18": "Factor N18",
+        "N20": "Factor N20",
+        "N22": "Factor N22",
+        "N23": "Factor N23",
+        "N24": "Factor N24",
+        "N25": "Factor N25",
+        "N26": "Factor N26",
+        "N27": "Factor N27",
+        "N28": "Factor N28",
+        "N29": "Factor N29",
+        "N30": "Factor N30",
+        "N32": "Factor N32",
+        "N33": "Factor N33",
+        "N34": "Factor N34",
+        "N35": "Factor N35",
+        "N36": "Factor N36",
+        "N37": "Factor N37",
+        "N38": "Factor N38",
+        "N39": "Factor N39",
+        "N4": "Factor N4",
+        "N40": "Factor N40",
+        "N5": "Factor N5",
+        "N8": "Factor N8",
+        "OI": "Oxygen Index",
+        "PersonnelSuffocation": "Personnel Suffocation",
+        "UA": "Unsafe Acts",
+        "UP": "Unsafe Procedures",
+        "US": "Unsafe Systems",
     },
     primary_domain_name="Safety Engineering",
     secondary_domain_name="Risk Assessment",
     node_lower_bound={
-        "N10": 0.0, "N11": 0.0, "N12": 0.0, "N13": 0.0, "N14": 0.0, "N16": 0.0,
-        "N17": 0.0, "N18": 0.0, "N20": 0.0, "N22": 0.0, "N23": 0.0, "N24": 0.0,
-        "N25": 0.0, "N26": 0.0, "N27": 0.0, "N28": 0.0, "N29": 0.0, "N30": 0.0,
-        "N32": 0.0, "N33": 0.0, "N34": 0.0, "N35": 0.0, "N36": 0.0, "N37": 0.0,
-        "N38": 0.0, "N39": 0.0, "N4": 0.0, "N40": 0.0, "N5": 0.0, "N8": 0.0,
-        "OI": 0.0, "PersonnelSuffocation": 0.0, "UA": 0.0, "UP": 0.0, "US": 0.0
+        "N10": 0.0,
+        "N11": 0.0,
+        "N12": 0.0,
+        "N13": 0.0,
+        "N14": 0.0,
+        "N16": 0.0,
+        "N17": 0.0,
+        "N18": 0.0,
+        "N20": 0.0,
+        "N22": 0.0,
+        "N23": 0.0,
+        "N24": 0.0,
+        "N25": 0.0,
+        "N26": 0.0,
+        "N27": 0.0,
+        "N28": 0.0,
+        "N29": 0.0,
+        "N30": 0.0,
+        "N32": 0.0,
+        "N33": 0.0,
+        "N34": 0.0,
+        "N35": 0.0,
+        "N36": 0.0,
+        "N37": 0.0,
+        "N38": 0.0,
+        "N39": 0.0,
+        "N4": 0.0,
+        "N40": 0.0,
+        "N5": 0.0,
+        "N8": 0.0,
+        "OI": 0.0,
+        "PersonnelSuffocation": 0.0,
+        "UA": 0.0,
+        "UP": 0.0,
+        "US": 0.0,
     },
     node_upper_bound={
-        "N10": 100.0, "N11": 100.0, "N12": 100.0, "N13": 100.0, "N14": 100.0, "N16": 100.0,
-        "N17": 100.0, "N18": 100.0, "N20": 100.0, "N22": 100.0, "N23": 100.0, "N24": 100.0,
-        "N25": 100.0, "N26": 100.0, "N27": 100.0, "N28": 100.0, "N29": 100.0, "N30": 100.0,
-        "N32": 100.0, "N33": 100.0, "N34": 100.0, "N35": 100.0, "N36": 100.0, "N37": 100.0,
-        "N38": 100.0, "N39": 100.0, "N4": 100.0, "N40": 100.0, "N5": 100.0, "N8": 100.0,
-        "OI": 100.0, "PersonnelSuffocation": 100.0, "UA": 100.0, "UP": 100.0, "US": 100.0
+        "N10": 100.0,
+        "N11": 100.0,
+        "N12": 100.0,
+        "N13": 100.0,
+        "N14": 100.0,
+        "N16": 100.0,
+        "N17": 100.0,
+        "N18": 100.0,
+        "N20": 100.0,
+        "N22": 100.0,
+        "N23": 100.0,
+        "N24": 100.0,
+        "N25": 100.0,
+        "N26": 100.0,
+        "N27": 100.0,
+        "N28": 100.0,
+        "N29": 100.0,
+        "N30": 100.0,
+        "N32": 100.0,
+        "N33": 100.0,
+        "N34": 100.0,
+        "N35": 100.0,
+        "N36": 100.0,
+        "N37": 100.0,
+        "N38": 100.0,
+        "N39": 100.0,
+        "N4": 100.0,
+        "N40": 100.0,
+        "N5": 100.0,
+        "N8": 100.0,
+        "OI": 100.0,
+        "PersonnelSuffocation": 100.0,
+        "UA": 100.0,
+        "UP": 100.0,
+        "US": 100.0,
     },
     ground_truth_effect_sizes={
-        ('N10', 'OI'): 0.2026,
-        ('N11', 'OI'): 0.153,
-        ('N12', 'OI'): 0.1454,
-        ('N13', 'OI'): 0.403,
-        ('N14', 'OI'): 0.0959,
-        ('OI', 'PersonnelSuffocation'): 0.1383,
-        ('UA', 'PersonnelSuffocation'): 0.3455,
-        ('UP', 'PersonnelSuffocation'): 0.0935,
-        ('US', 'PersonnelSuffocation'): 0.4227,
-        ('N20', 'UA'): 0.0904,
-        ('N22', 'UA'): 0.0671,
-        ('N23', 'UA'): 0.0671,
-        ('N24', 'UA'): 0.0671,
-        ('N25', 'UA'): 0.1148,
-        ('N26', 'UA'): 0.0935,
-        ('N27', 'UA'): 0.0888,
-        ('N28', 'UA'): 0.0671,
-        ('N29', 'UA'): 0.1148,
-        ('N30', 'UA'): 0.0671,
-        ('N32', 'UA'): 0.0764,
-        ('N8', 'UA'): 0.0858,
-        ('N33', 'UP'): 0.2702,
-        ('N40', 'UP'): 0.5166,
-        ('N5', 'UP'): 0.2132,
-        ('N16', 'US'): 0.1299,
-        ('N17', 'US'): 0.1299,
-        ('N18', 'US'): 0.1299,
-        ('N34', 'US'): 0.0769,
-        ('N35', 'US'): 0.075,
-        ('N36', 'US'): 0.075,
-        ('N37', 'US'): 0.1162,
-        ('N38', 'US'): 0.075,
-        ('N39', 'US'): 0.075,
-        ('N4', 'US'): 0.1173
+        ("N10", "OI"): 0.2026,
+        ("N11", "OI"): 0.153,
+        ("N12", "OI"): 0.1454,
+        ("N13", "OI"): 0.403,
+        ("N14", "OI"): 0.0959,
+        ("OI", "PersonnelSuffocation"): 0.1383,
+        ("UA", "PersonnelSuffocation"): 0.3455,
+        ("UP", "PersonnelSuffocation"): 0.0935,
+        ("US", "PersonnelSuffocation"): 0.4227,
+        ("N20", "UA"): 0.0904,
+        ("N22", "UA"): 0.0671,
+        ("N23", "UA"): 0.0671,
+        ("N24", "UA"): 0.0671,
+        ("N25", "UA"): 0.1148,
+        ("N26", "UA"): 0.0935,
+        ("N27", "UA"): 0.0888,
+        ("N28", "UA"): 0.0671,
+        ("N29", "UA"): 0.1148,
+        ("N30", "UA"): 0.0671,
+        ("N32", "UA"): 0.0764,
+        ("N8", "UA"): 0.0858,
+        ("N33", "UP"): 0.2702,
+        ("N40", "UP"): 0.5166,
+        ("N5", "UP"): 0.2132,
+        ("N16", "US"): 0.1299,
+        ("N17", "US"): 0.1299,
+        ("N18", "US"): 0.1299,
+        ("N34", "US"): 0.0769,
+        ("N35", "US"): 0.075,
+        ("N36", "US"): 0.075,
+        ("N37", "US"): 0.1162,
+        ("N38", "US"): 0.075,
+        ("N39", "US"): 0.075,
+        ("N4", "US"): 0.1173,
     },
-    phenomenon_overview="This network models factors contributing to personnel suffocation incidents."
+    phenomenon_overview="This network models factors contributing to personnel suffocation incidents.",
 )
 
 suffocation_exp_results = parameterize_dag(suffocation_dag_data)
 
 
-
 turbine1_dag_data = GeneralDAGData(
-    all_nodes={"PtfmPitch", "PtfmRoll", "PtfmSurge", "PtfmSway", "TTDspFA", "TTDspPtch", "TTDspRoll", "TTDspSS", "TwrBsFxt", "TwrBsFyt", "TwrBsMxt", "TwrBsMyt", "YawBrFxp", "YawBrFyp", "YawBrMxp", "YawBrMyp"},
+    all_nodes={
+        "PtfmPitch",
+        "PtfmRoll",
+        "PtfmSurge",
+        "PtfmSway",
+        "TTDspFA",
+        "TTDspPtch",
+        "TTDspRoll",
+        "TTDspSS",
+        "TwrBsFxt",
+        "TwrBsFyt",
+        "TwrBsMxt",
+        "TwrBsMyt",
+        "YawBrFxp",
+        "YawBrFyp",
+        "YawBrMxp",
+        "YawBrMyp",
+    },
     raw_edges=[
         ("PtfmPitch", "TTDspPtch"),
         ("PtfmRoll", "TTDspRoll"),
@@ -1739,55 +2211,87 @@ turbine1_dag_data = GeneralDAGData(
         ("YawBrMxp", "PtfmSurge"),
         ("YawBrMxp", "TTDspRoll"),
         ("YawBrMyp", "PtfmSway"),
-        ("YawBrMyp", "TTDspPtch")
+        ("YawBrMyp", "TTDspPtch"),
     ],
     node_descriptions={
-        "PtfmPitch": "Platform Pitch", "PtfmRoll": "Platform Roll", "PtfmSurge": "Platform Surge",
-        "PtfmSway": "Platform Sway", "TTDspFA": "Tower Top Displacement Fore-Aft",
-        "TTDspPtch": "Tower Top Displacement Pitch", "TTDspRoll": "Tower Top Displacement Roll",
-        "TTDspSS": "Tower Top Displacement Side-Side", "TwrBsFxt": "Tower Base Force X-axis",
-        "TwrBsFyt": "Tower Base Force Y-axis", "TwrBsMxt": "Tower Base Moment X-axis",
-        "TwrBsMyt": "Tower Base Moment Y-axis", "YawBrFxp": "Yaw Bearing Force X-axis",
-        "YawBrFyp": "Yaw Bearing Force Y-axis", "YawBrMxp": "Yaw Bearing Moment X-axis",
-        "YawBrMyp": "Yaw Bearing Moment Y-axis"
+        "PtfmPitch": "Platform Pitch",
+        "PtfmRoll": "Platform Roll",
+        "PtfmSurge": "Platform Surge",
+        "PtfmSway": "Platform Sway",
+        "TTDspFA": "Tower Top Displacement Fore-Aft",
+        "TTDspPtch": "Tower Top Displacement Pitch",
+        "TTDspRoll": "Tower Top Displacement Roll",
+        "TTDspSS": "Tower Top Displacement Side-Side",
+        "TwrBsFxt": "Tower Base Force X-axis",
+        "TwrBsFyt": "Tower Base Force Y-axis",
+        "TwrBsMxt": "Tower Base Moment X-axis",
+        "TwrBsMyt": "Tower Base Moment Y-axis",
+        "YawBrFxp": "Yaw Bearing Force X-axis",
+        "YawBrFyp": "Yaw Bearing Force Y-axis",
+        "YawBrMxp": "Yaw Bearing Moment X-axis",
+        "YawBrMyp": "Yaw Bearing Moment Y-axis",
     },
     primary_domain_name="Mechanical Engineering",
     secondary_domain_name="Renewable Energy",
     node_lower_bound={
-        "PtfmPitch": 0.0, "PtfmRoll": 0.0, "PtfmSurge": 0.0, "PtfmSway": 0.0,
-        "TTDspFA": 0.0, "TTDspPtch": 0.0, "TTDspRoll": 0.0, "TTDspSS": 0.0,
-        "TwrBsFxt": 0.0, "TwrBsFyt": 0.0, "TwrBsMxt": 0.0, "TwrBsMyt": 0.0,
-        "YawBrFxp": 0.0, "YawBrFyp": 0.0, "YawBrMxp": 0.0, "YawBrMyp": 0.0
+        "PtfmPitch": 0.0,
+        "PtfmRoll": 0.0,
+        "PtfmSurge": 0.0,
+        "PtfmSway": 0.0,
+        "TTDspFA": 0.0,
+        "TTDspPtch": 0.0,
+        "TTDspRoll": 0.0,
+        "TTDspSS": 0.0,
+        "TwrBsFxt": 0.0,
+        "TwrBsFyt": 0.0,
+        "TwrBsMxt": 0.0,
+        "TwrBsMyt": 0.0,
+        "YawBrFxp": 0.0,
+        "YawBrFyp": 0.0,
+        "YawBrMxp": 0.0,
+        "YawBrMyp": 0.0,
     },
     node_upper_bound={
-        "PtfmPitch": 100.0, "PtfmRoll": 100.0, "PtfmSurge": 100.0, "PtfmSway": 100.0,
-        "TTDspFA": 100.0, "TTDspPtch": 100.0, "TTDspRoll": 100.0, "TTDspSS": 100.0,
-        "TwrBsFxt": 100.0, "TwrBsFyt": 100.0, "TwrBsMxt": 100.0, "TwrBsMyt": 100.0,
-        "YawBrFxp": 100.0, "YawBrFyp": 100.0, "YawBrMxp": 100.0, "YawBrMyp": 100.0
+        "PtfmPitch": 100.0,
+        "PtfmRoll": 100.0,
+        "PtfmSurge": 100.0,
+        "PtfmSway": 100.0,
+        "TTDspFA": 100.0,
+        "TTDspPtch": 100.0,
+        "TTDspRoll": 100.0,
+        "TTDspSS": 100.0,
+        "TwrBsFxt": 100.0,
+        "TwrBsFyt": 100.0,
+        "TwrBsMxt": 100.0,
+        "TwrBsMyt": 100.0,
+        "YawBrFxp": 100.0,
+        "YawBrFyp": 100.0,
+        "YawBrMxp": 100.0,
+        "YawBrMyp": 100.0,
     },
     ground_truth_effect_sizes={
-        ('TwrBsMxt', 'PtfmRoll'): 3.207186e-05,
-        ('TwrBsFxt', 'PtfmSurge'): 0.0104914489,
-        ('YawBrFxp', 'PtfmSurge'): -0.0113494099,
-        ('YawBrMxp', 'PtfmSurge'): -0.0006205644,
-        ('TwrBsFyt', 'PtfmSway'): 0.003894343,
-        ('YawBrMyp', 'PtfmSway'): -3.246104e-05,
-        ('PtfmSurge', 'TTDspFA'): 1.41667e-07,
-        ('TwrBsFxt', 'TTDspFA'): 9.849973e-05,
-        ('YawBrFxp', 'TTDspFA'): 0.0003382452,
-        ('PtfmPitch', 'TTDspPtch'): -0.004537201,
-        ('TwrBsMyt', 'TTDspPtch'): 6.906587e-06,
-        ('YawBrMyp', 'TTDspPtch'): 1.207271e-05,
-        ('PtfmRoll', 'TTDspRoll'): -0.006269582,
-        ('TwrBsMxt', 'TTDspRoll'): 7.226258e-06,
-        ('YawBrMxp', 'TTDspRoll'): 1.501368e-05,
-        ('TwrBsFyt', 'TTDspSS'): 0.00037893559,
-        ('TwrBsFxt', 'YawBrFxp'): 0.7626502,
-        ('TTDspSS', 'YawBrFyp'): 2443.0219893,
-        ('TwrBsFyt', 'YawBrFyp'): -0.1350949,
-        ('TwrBsMxt', 'YawBrMxp'): 0.02512427
+        ("TwrBsMxt", "PtfmRoll"): 3.207186e-05,
+        ("TwrBsFxt", "PtfmSurge"): 0.0104914489,
+        ("YawBrFxp", "PtfmSurge"): -0.0113494099,
+        ("YawBrMxp", "PtfmSurge"): -0.0006205644,
+        ("TwrBsFyt", "PtfmSway"): 0.003894343,
+        ("YawBrMyp", "PtfmSway"): -3.246104e-05,
+        ("PtfmSurge", "TTDspFA"): 1.41667e-07,
+        ("TwrBsFxt", "TTDspFA"): 9.849973e-05,
+        ("YawBrFxp", "TTDspFA"): 0.0003382452,
+        ("PtfmPitch", "TTDspPtch"): -0.004537201,
+        ("TwrBsMyt", "TTDspPtch"): 6.906587e-06,
+        ("YawBrMyp", "TTDspPtch"): 1.207271e-05,
+        ("PtfmRoll", "TTDspRoll"): -0.006269582,
+        ("TwrBsMxt", "TTDspRoll"): 7.226258e-06,
+        ("YawBrMxp", "TTDspRoll"): 1.501368e-05,
+        ("TwrBsFyt", "TTDspSS"): 0.00037893559,
+        ("TwrBsFxt", "YawBrFxp"): 0.7626502,
+        ("TTDspSS", "YawBrFyp"): 2443.0219893,
+        ("TwrBsFyt", "YawBrFyp"): -0.1350949,
+        ("TwrBsMxt", "YawBrMxp"): 0.02512427,
     },
-    phenomenon_overview="This network models the dynamics of a wind turbine."
+    phenomenon_overview="This network models the dynamics of a wind turbine.",
 )
 turbine1_exp_results = parameterize_dag(turbine1_dag_data)
 
@@ -1858,7 +2362,24 @@ raw_edges=[
 """
 
 turbine2_dag_data = GeneralDAGData(
-    all_nodes={"PtfmPitch", "PtfmRoll", "PtfmSurge", "PtfmSway", "TTDspFA", "TTDspPtch", "TTDspRoll", "TTDspSS", "TwrBsFxt", "TwrBsFyt", "TwrBsMxt", "TwrBsMyt", "YawBrFxp", "YawBrFyp", "YawBrMxp", "YawBrMyp"},
+    all_nodes={
+        "PtfmPitch",
+        "PtfmRoll",
+        "PtfmSurge",
+        "PtfmSway",
+        "TTDspFA",
+        "TTDspPtch",
+        "TTDspRoll",
+        "TTDspSS",
+        "TwrBsFxt",
+        "TwrBsFyt",
+        "TwrBsMxt",
+        "TwrBsMyt",
+        "YawBrFxp",
+        "YawBrFyp",
+        "YawBrMxp",
+        "YawBrMyp",
+    },
     raw_edges=[
         ("PtfmPitch", "TTDspPtch"),
         ("PtfmRoll", "TTDspRoll"),
@@ -1879,59 +2400,90 @@ turbine2_dag_data = GeneralDAGData(
         ("YawBrMxp", "PtfmSurge"),
         ("YawBrMxp", "TTDspRoll"),
         ("YawBrMyp", "PtfmSway"),
-        ("YawBrMyp", "TTDspPtch")
+        ("YawBrMyp", "TTDspPtch"),
     ],
     node_descriptions={
-        "PtfmPitch": "Platform Pitch", "PtfmRoll": "Platform Roll", "PtfmSurge": "Platform Surge",
-        "PtfmSway": "Platform Sway", "TTDspFA": "Tower Top Displacement Fore-Aft",
-        "TTDspPtch": "Tower Top Displacement Pitch", "TTDspRoll": "Tower Top Displacement Roll",
-        "TTDspSS": "Tower Top Displacement Side-Side", "TwrBsFxt": "Tower Base Force X-axis",
-        "TwrBsFyt": "Tower Base Force Y-axis", "TwrBsMxt": "Tower Base Moment X-axis",
-        "TwrBsMyt": "Tower Base Moment Y-axis", "YawBrFxp": "Yaw Bearing Force X-axis",
-        "YawBrFyp": "Yaw Bearing Force Y-axis", "YawBrMxp": "Yaw Bearing Moment X-axis",
-        "YawBrMyp": "Yaw Bearing Moment Y-axis"
+        "PtfmPitch": "Platform Pitch",
+        "PtfmRoll": "Platform Roll",
+        "PtfmSurge": "Platform Surge",
+        "PtfmSway": "Platform Sway",
+        "TTDspFA": "Tower Top Displacement Fore-Aft",
+        "TTDspPtch": "Tower Top Displacement Pitch",
+        "TTDspRoll": "Tower Top Displacement Roll",
+        "TTDspSS": "Tower Top Displacement Side-Side",
+        "TwrBsFxt": "Tower Base Force X-axis",
+        "TwrBsFyt": "Tower Base Force Y-axis",
+        "TwrBsMxt": "Tower Base Moment X-axis",
+        "TwrBsMyt": "Tower Base Moment Y-axis",
+        "YawBrFxp": "Yaw Bearing Force X-axis",
+        "YawBrFyp": "Yaw Bearing Force Y-axis",
+        "YawBrMxp": "Yaw Bearing Moment X-axis",
+        "YawBrMyp": "Yaw Bearing Moment Y-axis",
     },
     primary_domain_name="Mechanical Engineering",
     secondary_domain_name="Renewable Energy",
     node_lower_bound={
-        "PtfmPitch": 0.0, "PtfmRoll": 0.0, "PtfmSurge": 0.0, "PtfmSway": 0.0,
-        "TTDspFA": 0.0, "TTDspPtch": 0.0, "TTDspRoll": 0.0, "TTDspSS": 0.0,
-        "TwrBsFxt": 0.0, "TwrBsFyt": 0.0, "TwrBsMxt": 0.0, "TwrBsMyt": 0.0,
-        "YawBrFxp": 0.0, "YawBrFyp": 0.0, "YawBrMxp": 0.0, "YawBrMyp": 0.0
+        "PtfmPitch": 0.0,
+        "PtfmRoll": 0.0,
+        "PtfmSurge": 0.0,
+        "PtfmSway": 0.0,
+        "TTDspFA": 0.0,
+        "TTDspPtch": 0.0,
+        "TTDspRoll": 0.0,
+        "TTDspSS": 0.0,
+        "TwrBsFxt": 0.0,
+        "TwrBsFyt": 0.0,
+        "TwrBsMxt": 0.0,
+        "TwrBsMyt": 0.0,
+        "YawBrFxp": 0.0,
+        "YawBrFyp": 0.0,
+        "YawBrMxp": 0.0,
+        "YawBrMyp": 0.0,
     },
     node_upper_bound={
-        "PtfmPitch": 100.0, "PtfmRoll": 100.0, "PtfmSurge": 100.0, "PtfmSway": 100.0,
-        "TTDspFA": 100.0, "TTDspPtch": 100.0, "TTDspRoll": 100.0, "TTDspSS": 100.0,
-        "TwrBsFxt": 100.0, "TwrBsFyt": 100.0, "TwrBsMxt": 100.0, "TwrBsMyt": 100.0,
-        "YawBrFxp": 100.0, "YawBrFyp": 100.0, "YawBrMxp": 100.0, "YawBrMyp": 100.0
+        "PtfmPitch": 100.0,
+        "PtfmRoll": 100.0,
+        "PtfmSurge": 100.0,
+        "PtfmSway": 100.0,
+        "TTDspFA": 100.0,
+        "TTDspPtch": 100.0,
+        "TTDspRoll": 100.0,
+        "TTDspSS": 100.0,
+        "TwrBsFxt": 100.0,
+        "TwrBsFyt": 100.0,
+        "TwrBsMxt": 100.0,
+        "TwrBsMyt": 100.0,
+        "YawBrFxp": 100.0,
+        "YawBrFyp": 100.0,
+        "YawBrMxp": 100.0,
+        "YawBrMyp": 100.0,
     },
     ground_truth_effect_sizes={
-        ('TwrBsMxt', 'PtfmRoll'): 3.207186e-05,
-        ('TwrBsFxt', 'PtfmSurge'): 0.0104914489,
-        ('YawBrFxp', 'PtfmSurge'): -0.0113494099,
-        ('YawBrMxp', 'PtfmSurge'): -0.0006205644,
-        ('TwrBsFyt', 'PtfmSway'): 0.003894343,
-        ('YawBrMyp', 'PtfmSway'): -3.246104e-05,
-        ('PtfmSurge', 'TTDspFA'): 1.41667e-07,
-        ('TwrBsFxt', 'TTDspFA'): 9.849973e-05,
-        ('YawBrFxp', 'TTDspFA'): 0.0003382452,
-        ('PtfmPitch', 'TTDspPtch'): 0.008012841,
-        ('TwrBsMyt', 'TTDspPtch'): 6.906587e-06,
-        ('YawBrMyp', 'TTDspPtch'): 1.207271e-05,
-        ('PtfmRoll', 'TTDspRoll'): -0.006269582,
-        ('TwrBsMxt', 'TTDspRoll'): 7.226258e-06,
-        ('YawBrMxp', 'TTDspRoll'): 1.501368e-05,
-        ('TwrBsFyt', 'TTDspSS'): 0.00037893559,
-        ('TwrBsFxt', 'YawBrFxp'): 0.7626502,
-        ('TTDspSS', 'YawBrFyp'): 2443.0219893,
-        ('TwrBsFyt', 'YawBrFyp'): -0.1350949,
-        ('TwrBsMxt', 'YawBrMxp'): 0.02512427
+        ("TwrBsMxt", "PtfmRoll"): 3.207186e-05,
+        ("TwrBsFxt", "PtfmSurge"): 0.0104914489,
+        ("YawBrFxp", "PtfmSurge"): -0.0113494099,
+        ("YawBrMxp", "PtfmSurge"): -0.0006205644,
+        ("TwrBsFyt", "PtfmSway"): 0.003894343,
+        ("YawBrMyp", "PtfmSway"): -3.246104e-05,
+        ("PtfmSurge", "TTDspFA"): 1.41667e-07,
+        ("TwrBsFxt", "TTDspFA"): 9.849973e-05,
+        ("YawBrFxp", "TTDspFA"): 0.0003382452,
+        ("PtfmPitch", "TTDspPtch"): 0.008012841,
+        ("TwrBsMyt", "TTDspPtch"): 6.906587e-06,
+        ("YawBrMyp", "TTDspPtch"): 1.207271e-05,
+        ("PtfmRoll", "TTDspRoll"): -0.006269582,
+        ("TwrBsMxt", "TTDspRoll"): 7.226258e-06,
+        ("YawBrMxp", "TTDspRoll"): 1.501368e-05,
+        ("TwrBsFyt", "TTDspSS"): 0.00037893559,
+        ("TwrBsFxt", "YawBrFxp"): 0.7626502,
+        ("TTDspSS", "YawBrFyp"): 2443.0219893,
+        ("TwrBsFyt", "YawBrFyp"): -0.1350949,
+        ("TwrBsMxt", "YawBrMxp"): 0.02512427,
     },
-    phenomenon_overview="This network models the dynamics of a wind turbine."
+    phenomenon_overview="This network models the dynamics of a wind turbine.",
 )
 
 turbine2_exp_results = parameterize_dag(turbine2_dag_data)
-
 
 
 """#### suffocation
@@ -2031,8 +2583,18 @@ INCLUDE_HARD_CONSTRAINTS = True
 
 expenditure_dag_data_distracted = GeneralDAGData(
     all_nodes={
-        "Card", "Reports", "Age", "Income", "Share", "Expenditure",
-        "Owner", "Selfemp", "Dependents", "Months", "Majorcards", "Active"
+        "Card",
+        "Reports",
+        "Age",
+        "Income",
+        "Share",
+        "Expenditure",
+        "Owner",
+        "Selfemp",
+        "Dependents",
+        "Months",
+        "Majorcards",
+        "Active",
     },
     raw_edges=[
         ("Card", "Reports"),
@@ -2060,7 +2622,7 @@ expenditure_dag_data_distracted = GeneralDAGData(
         ("Months", "Card"),
         ("Expenditure", "Majorcards"),
         ("Dependents", "Reports"),
-        ("Owner", "Share")
+        ("Owner", "Share"),
     ],
     node_descriptions={
         "Card": "Whether the application for credit card was accepted or not (Categorical/Binary).",
@@ -2074,60 +2636,75 @@ expenditure_dag_data_distracted = GeneralDAGData(
         "Dependents": "The number of dependents + 1 (Count).",
         "Months": "The number of months living at current address (Unit: Months).",
         "Majorcards": "The number of major credit cards held (Count).",
-        "Active": "The number of active credit accounts (Count)."
+        "Active": "The number of active credit accounts (Count).",
     },
     primary_domain_name="Finance",
     secondary_domain_name="Consumer Behavior",
     node_lower_bound={
-        "Card": 0, "Reports": 0, "Age": 18, "Income": 0.0, "Share": 0.0,
-        "Expenditure": 0.0, "Owner": 0, "Selfemp": 0, "Dependents": 1, "Months": 0,
-        "Majorcards": 0, "Active": 0
+        "Card": 0,
+        "Reports": 0,
+        "Age": 18,
+        "Income": 0.0,
+        "Share": 0.0,
+        "Expenditure": 0.0,
+        "Owner": 0,
+        "Selfemp": 0,
+        "Dependents": 1,
+        "Months": 0,
+        "Majorcards": 0,
+        "Active": 0,
     },
     node_upper_bound={
-        "Card": 1, "Reports": 10, "Age": 100, "Income": 500.0,
-        "Share": 1.0, "Expenditure": 250000.0,
-        "Owner": 1, "Selfemp": 1, "Dependents": 10, "Months": 1000,
-        "Majorcards": 5, "Active": 10
+        "Card": 1,
+        "Reports": 10,
+        "Age": 100,
+        "Income": 500.0,
+        "Share": 1.0,
+        "Expenditure": 250000.0,
+        "Owner": 1,
+        "Selfemp": 1,
+        "Dependents": 10,
+        "Months": 1000,
+        "Majorcards": 5,
+        "Active": 10,
     },
     ground_truth_effect_sizes={
-        ('Card', 'Reports'): -1.52254735864156,
-        ('Active', 'Reports'): 0.0524304077175797,
-        ('Age', 'Income'): 0.0396322368121011,
-        ('Owner', 'Income'): 0.81007553939645,
-        ('Card', 'Share'): 0.0880188466837473,
-        ('Age', 'Share'): -0.00108166463383845,
-        ('Income', 'Expenditure'): 52.6677840700376,
-        ('Share', 'Expenditure'): 2463.53664138429,
-        ('Card', 'Owner'): 0.175729766661258,
-        ('Age', 'Owner'): 0.0159375978980603,
-        ('Months', 'Owner'): 0.000724193422780255,
-        ('Income', 'Selfemp'): 0.0168077274438035,
-        ('Income', 'Dependents'): 0.178844201299536,
-        ('Owner', 'Dependents'): 0.578697741529175,
-        ('Age', 'Months'): 2.85155286459752,
-        ('Card', 'Majorcards'): 0.0912752579655268,
-        ('Income', 'Majorcards'): 0.0223298793850125,
-        ('Income', 'Active'): 0.345808846307825,
-        ('Owner', 'Active'): 3.03113288530365,
-        ('Majorcards', 'Active'): 1.53996015363929,
+        ("Card", "Reports"): -1.52254735864156,
+        ("Active", "Reports"): 0.0524304077175797,
+        ("Age", "Income"): 0.0396322368121011,
+        ("Owner", "Income"): 0.81007553939645,
+        ("Card", "Share"): 0.0880188466837473,
+        ("Age", "Share"): -0.00108166463383845,
+        ("Income", "Expenditure"): 52.6677840700376,
+        ("Share", "Expenditure"): 2463.53664138429,
+        ("Card", "Owner"): 0.175729766661258,
+        ("Age", "Owner"): 0.0159375978980603,
+        ("Months", "Owner"): 0.000724193422780255,
+        ("Income", "Selfemp"): 0.0168077274438035,
+        ("Income", "Dependents"): 0.178844201299536,
+        ("Owner", "Dependents"): 0.578697741529175,
+        ("Age", "Months"): 2.85155286459752,
+        ("Card", "Majorcards"): 0.0912752579655268,
+        ("Income", "Majorcards"): 0.0223298793850125,
+        ("Income", "Active"): 0.345808846307825,
+        ("Owner", "Active"): 3.03113288530365,
+        ("Majorcards", "Active"): 1.53996015363929,
         # --- NEW EFFECT SIZES (GROUND-TRUTH ZEROS) ADDED ---
-        ('Age', 'Card'): 0.0,
-        ('Months', 'Card'): 0.0,
-        ('Expenditure', 'Majorcards'): 0.0,
-        ('Dependents', 'Reports'): 0.0,
-        ('Owner', 'Share'): 0.0
+        ("Age", "Card"): 0.0,
+        ("Months", "Card"): 0.0,
+        ("Expenditure", "Majorcards"): 0.0,
+        ("Dependents", "Reports"): 0.0,
+        ("Owner", "Share"): 0.0,
     },
-    phenomenon_overview="This dataset focuses on factors influencing credit card behavior and expenditure patterns, providing insights into consumer finance decisions."
+    phenomenon_overview="This dataset focuses on factors influencing credit card behavior and expenditure patterns, providing insights into consumer finance decisions.",
 )
 
 expenditure_results_distracted = parameterize_dag(expenditure_dag_data_distracted)
 
 
-
 """#### DEBUG - to be removed - dammy DAG visualization test"""
 
 import pandas as pd
-import numpy as np
 
 # Use the already defined expenditure_dag_data for DAG and ground truth
 # Assuming expenditure_dag_data is available in the global scope from previous execution
@@ -2145,7 +2722,7 @@ dummy_scenarios_for_viz = [
         "node_descriptions": expenditure_dag_data.node_descriptions,
         "node_lower_bounds": expenditure_dag_data.node_lower_bound,
         "node_upper_bounds": expenditure_dag_data.node_upper_bound,
-        "include_constraints_in_prompt": True
+        "include_constraints_in_prompt": True,
     },
     {
         "primary_domain_name": expenditure_dag_data.primary_domain_name,
@@ -2155,7 +2732,7 @@ dummy_scenarios_for_viz = [
         "node_descriptions": expenditure_dag_data.node_descriptions,
         "node_lower_bounds": expenditure_dag_data.node_lower_bound,
         "node_upper_bounds": expenditure_dag_data.node_upper_bound,
-        "include_constraints_in_prompt": True
+        "include_constraints_in_prompt": True,
     },
     {
         "primary_domain_name": expenditure_dag_data.primary_domain_name,
@@ -2165,21 +2742,19 @@ dummy_scenarios_for_viz = [
         "node_descriptions": expenditure_dag_data.node_descriptions,
         "node_lower_bounds": expenditure_dag_data.node_lower_bound,
         "node_upper_bounds": expenditure_dag_data.node_upper_bound,
-        "include_constraints_in_prompt": True
-    }
+        "include_constraints_in_prompt": True,
+    },
 ]
 
 # 2. Create dummy all_coefficients_dfs
 # These should correspond to the scenarios above
-coeff_df_months = pd.DataFrame([{'beta_0': 10.0, 'beta_Age': 2.5}])
-coeff_df_share = pd.DataFrame([{'beta_0': 0.05, 'beta_Card': 0.1, 'beta_Age': -0.002}])
-coeff_df_reports = pd.DataFrame([{'beta_0': 0.1, 'beta_Card': -1.0, 'beta_Active': 0.02}])
+coeff_df_months = pd.DataFrame([{"beta_0": 10.0, "beta_Age": 2.5}])
+coeff_df_share = pd.DataFrame([{"beta_0": 0.05, "beta_Card": 0.1, "beta_Age": -0.002}])
+coeff_df_reports = pd.DataFrame(
+    [{"beta_0": 0.1, "beta_Card": -1.0, "beta_Active": 0.02}]
+)
 
-dummy_all_coefficients_dfs = [
-    coeff_df_months,
-    coeff_df_share,
-    coeff_df_reports
-]
+dummy_all_coefficients_dfs = [coeff_df_months, coeff_df_share, coeff_df_reports]
 
 # 3. Create dummy all_scenario_validation_success
 # Let's say the first two passed, and the last one failed
@@ -2190,12 +2765,11 @@ print("\n--- Visualizing Dummy Expenditure DAG with dummy elicited effects --- "
 visualize_full_dag_effects(
     all_scenarios=dummy_scenarios_for_viz,
     all_coefficients_dfs=dummy_all_coefficients_dfs,
-    dag_data=expenditure_dag_data, # Use the real DAG data for comparison
-    all_scenario_validation_success=dummy_all_scenario_validation_success
+    dag_data=expenditure_dag_data,  # Use the real DAG data for comparison
+    all_scenario_validation_success=dummy_all_scenario_validation_success,
 )
 
 import pandas as pd
-import numpy as np
 
 # Assuming expenditure_dag_data is available in the global scope
 
@@ -2209,7 +2783,7 @@ dummy_scenarios_for_viz_complete = [
         "node_descriptions": expenditure_dag_data.node_descriptions,
         "node_lower_bounds": expenditure_dag_data.node_lower_bound,
         "node_upper_bounds": expenditure_dag_data.node_upper_bound,
-        "include_constraints_in_prompt": True
+        "include_constraints_in_prompt": True,
     },
     {
         "primary_domain_name": expenditure_dag_data.primary_domain_name,
@@ -2219,7 +2793,7 @@ dummy_scenarios_for_viz_complete = [
         "node_descriptions": expenditure_dag_data.node_descriptions,
         "node_lower_bounds": expenditure_dag_data.node_lower_bound,
         "node_upper_bounds": expenditure_dag_data.node_upper_bound,
-        "include_constraints_in_prompt": True
+        "include_constraints_in_prompt": True,
     },
     {
         "primary_domain_name": expenditure_dag_data.primary_domain_name,
@@ -2229,7 +2803,7 @@ dummy_scenarios_for_viz_complete = [
         "node_descriptions": expenditure_dag_data.node_descriptions,
         "node_lower_bounds": expenditure_dag_data.node_lower_bound,
         "node_upper_bounds": expenditure_dag_data.node_upper_bound,
-        "include_constraints_in_prompt": True
+        "include_constraints_in_prompt": True,
     },
     {
         "primary_domain_name": expenditure_dag_data.primary_domain_name,
@@ -2239,7 +2813,7 @@ dummy_scenarios_for_viz_complete = [
         "node_descriptions": expenditure_dag_data.node_descriptions,
         "node_lower_bounds": expenditure_dag_data.node_lower_bound,
         "node_upper_bounds": expenditure_dag_data.node_upper_bound,
-        "include_constraints_in_prompt": True
+        "include_constraints_in_prompt": True,
     },
     {
         "primary_domain_name": expenditure_dag_data.primary_domain_name,
@@ -2249,7 +2823,7 @@ dummy_scenarios_for_viz_complete = [
         "node_descriptions": expenditure_dag_data.node_descriptions,
         "node_lower_bounds": expenditure_dag_data.node_lower_bound,
         "node_upper_bounds": expenditure_dag_data.node_upper_bound,
-        "include_constraints_in_prompt": True
+        "include_constraints_in_prompt": True,
     },
     {
         "primary_domain_name": expenditure_dag_data.primary_domain_name,
@@ -2259,7 +2833,7 @@ dummy_scenarios_for_viz_complete = [
         "node_descriptions": expenditure_dag_data.node_descriptions,
         "node_lower_bounds": expenditure_dag_data.node_lower_bound,
         "node_upper_bounds": expenditure_dag_data.node_upper_bound,
-        "include_constraints_in_prompt": True
+        "include_constraints_in_prompt": True,
     },
     {
         "primary_domain_name": expenditure_dag_data.primary_domain_name,
@@ -2269,7 +2843,7 @@ dummy_scenarios_for_viz_complete = [
         "node_descriptions": expenditure_dag_data.node_descriptions,
         "node_lower_bounds": expenditure_dag_data.node_lower_bound,
         "node_upper_bounds": expenditure_dag_data.node_upper_bound,
-        "include_constraints_in_prompt": True
+        "include_constraints_in_prompt": True,
     },
     {
         "primary_domain_name": expenditure_dag_data.primary_domain_name,
@@ -2279,7 +2853,7 @@ dummy_scenarios_for_viz_complete = [
         "node_descriptions": expenditure_dag_data.node_descriptions,
         "node_lower_bounds": expenditure_dag_data.node_lower_bound,
         "node_upper_bounds": expenditure_dag_data.node_upper_bound,
-        "include_constraints_in_prompt": True
+        "include_constraints_in_prompt": True,
     },
     {
         "primary_domain_name": expenditure_dag_data.primary_domain_name,
@@ -2289,7 +2863,7 @@ dummy_scenarios_for_viz_complete = [
         "node_descriptions": expenditure_dag_data.node_descriptions,
         "node_lower_bounds": expenditure_dag_data.node_lower_bound,
         "node_upper_bounds": expenditure_dag_data.node_upper_bound,
-        "include_constraints_in_prompt": True
+        "include_constraints_in_prompt": True,
     },
     {
         "primary_domain_name": expenditure_dag_data.primary_domain_name,
@@ -2299,24 +2873,40 @@ dummy_scenarios_for_viz_complete = [
         "node_descriptions": expenditure_dag_data.node_descriptions,
         "node_lower_bounds": expenditure_dag_data.node_lower_bound,
         "node_upper_bounds": expenditure_dag_data.node_upper_bound,
-        "include_constraints_in_prompt": True
+        "include_constraints_in_prompt": True,
     },
 ]
 
 # 2. Create dummy all_coefficients_dfs for all scenarios
-dummy_coeff_df_months = pd.DataFrame([{'beta_0': 10.0, 'beta_Age': 2.5}])
-dummy_coeff_df_share = pd.DataFrame([{'beta_0': 0.05, 'beta_Card': 0.1, 'beta_Age': -0.002}])
-dummy_coeff_df_owner = pd.DataFrame([{'beta_0': 0.1, 'beta_Card': 0.2, 'beta_Age': 0.01, 'beta_Months': 0.005}])
-dummy_coeff_df_income = pd.DataFrame([{'beta_0': 5.0, 'beta_Age': 0.04, 'beta_Owner': 0.8}])
-dummy_coeff_df_expenditure = pd.DataFrame([{'beta_0': 100.0, 'beta_Income': 50.0, 'beta_Share': 2000.0}])
-dummy_coeff_df_selfemp = pd.DataFrame([{'beta_0': 0.01, 'beta_Income': 0.015}])
-dummy_coeff_df_dependents = pd.DataFrame([{'beta_0': 1.0, 'beta_Income': 0.15, 'beta_Owner': 0.5}])
-dummy_coeff_df_majorcards = pd.DataFrame([{'beta_0': 0.5, 'beta_Card': 0.08, 'beta_Income': 0.02}])
-dummy_coeff_df_active = pd.DataFrame([{'beta_0': 0.5, 'beta_Income': 0.3, 'beta_Owner': 3.0, 'beta_Majorcards': 1.5}])
+dummy_coeff_df_months = pd.DataFrame([{"beta_0": 10.0, "beta_Age": 2.5}])
+dummy_coeff_df_share = pd.DataFrame(
+    [{"beta_0": 0.05, "beta_Card": 0.1, "beta_Age": -0.002}]
+)
+dummy_coeff_df_owner = pd.DataFrame(
+    [{"beta_0": 0.1, "beta_Card": 0.2, "beta_Age": 0.01, "beta_Months": 0.005}]
+)
+dummy_coeff_df_income = pd.DataFrame(
+    [{"beta_0": 5.0, "beta_Age": 0.04, "beta_Owner": 0.8}]
+)
+dummy_coeff_df_expenditure = pd.DataFrame(
+    [{"beta_0": 100.0, "beta_Income": 50.0, "beta_Share": 2000.0}]
+)
+dummy_coeff_df_selfemp = pd.DataFrame([{"beta_0": 0.01, "beta_Income": 0.015}])
+dummy_coeff_df_dependents = pd.DataFrame(
+    [{"beta_0": 1.0, "beta_Income": 0.15, "beta_Owner": 0.5}]
+)
+dummy_coeff_df_majorcards = pd.DataFrame(
+    [{"beta_0": 0.5, "beta_Card": 0.08, "beta_Income": 0.02}]
+)
+dummy_coeff_df_active = pd.DataFrame(
+    [{"beta_0": 0.5, "beta_Income": 0.3, "beta_Owner": 3.0, "beta_Majorcards": 1.5}]
+)
 # MODIFIED: Changed beta_Active for Reports to create an order mismatch
 # GT order for Reports: |Card| (1.52) > |Active| (0.05)
 # New LLM order for Reports: |Card| (1.0) < |Active| (5.0) -> should be red
-dummy_coeff_df_reports = pd.DataFrame([{'beta_0': 0.1, 'beta_Card': -1.0, 'beta_Active': 5.0}])
+dummy_coeff_df_reports = pd.DataFrame(
+    [{"beta_0": 0.1, "beta_Card": -1.0, "beta_Active": 5.0}]
+)
 
 dummy_all_coefficients_dfs_complete = [
     dummy_coeff_df_months,
@@ -2328,12 +2918,21 @@ dummy_all_coefficients_dfs_complete = [
     dummy_coeff_df_dependents,
     dummy_coeff_df_majorcards,
     dummy_coeff_df_active,
-    dummy_coeff_df_reports
+    dummy_coeff_df_reports,
 ]
 
 # 3. Create dummy all_scenario_validation_success (all True except Reports to show asterisk)
 dummy_all_scenario_validation_success_complete = [
-    True, True, True, True, True, True, True, True, True, False
+    True,
+    True,
+    True,
+    True,
+    True,
+    True,
+    True,
+    True,
+    True,
+    False,
 ]
 
 
@@ -2341,17 +2940,18 @@ print("\n--- Visualizing Complete Dummy Expenditure DAG with elicited effects --
 visualize_full_dag_effects(
     all_scenarios=dummy_scenarios_for_viz_complete,
     all_coefficients_dfs=dummy_all_coefficients_dfs_complete,
-    dag_data=expenditure_dag_data, # Use the real DAG data for comparison
+    dag_data=expenditure_dag_data,  # Use the real DAG data for comparison
     all_scenario_validation_success=dummy_all_scenario_validation_success_complete,
 )
 
 
-
 import json
 import pandas as pd
-import re # For parsing effect size keys
 
-def post_process_dag_visualization(json_file_path: str, console_output_json: bool = False):
+
+def post_process_dag_visualization(
+    json_file_path: str, console_output_json: bool = False
+):
     """Recreates the full DAG visualization from a saved JSON file.
 
     Args:
@@ -2359,17 +2959,17 @@ def post_process_dag_visualization(json_file_path: str, console_output_json: boo
         console_output_json (bool): Whether to print the re-loaded JSON data to console.
     """
     print(f"Loading visualization data from '{json_file_path}'...")
-    with open(json_file_path, 'r') as f:
+    with open(json_file_path, "r") as f:
         loaded_data = json.load(f)
 
     # Reconstruct dag_data object
-    loaded_dag_data_dict = loaded_data['dag_data']
+    loaded_dag_data_dict = loaded_data["dag_data"]
 
     # Convert string keys for ground_truth_effect_sizes back to tuples
     reconstructed_gt_effects = {}
-    for k_str, v in loaded_dag_data_dict['ground_truth_effect_sizes'].items():
+    for k_str, v in loaded_dag_data_dict["ground_truth_effect_sizes"].items():
         # Assuming key format 'parent->child'
-        match = re.match(r'(.+)->(.+)', k_str)
+        match = re.match(r"(.+)->(.+)", k_str)
         if match:
             parent, child = match.groups()
             reconstructed_gt_effects[(parent, child)] = v
@@ -2377,28 +2977,28 @@ def post_process_dag_visualization(json_file_path: str, console_output_json: boo
             print(f"Warning: Could not parse ground truth effect key: {k_str}")
 
     reconstructed_dag_data = GeneralDAGData(
-        all_nodes=set(loaded_dag_data_dict['all_nodes']), # Convert list back to set
-        raw_edges=loaded_dag_data_dict['raw_edges'],
-        node_descriptions=loaded_dag_data_dict['node_descriptions'],
-        primary_domain_name=loaded_dag_data_dict['primary_domain_name'],
-        secondary_domain_name=loaded_dag_data_dict['secondary_domain_name'],
-        node_lower_bound=loaded_dag_data_dict['node_lower_bound'],
-        node_upper_bound=loaded_dag_data_dict['node_upper_bound'],
+        all_nodes=set(loaded_dag_data_dict["all_nodes"]),  # Convert list back to set
+        raw_edges=loaded_dag_data_dict["raw_edges"],
+        node_descriptions=loaded_dag_data_dict["node_descriptions"],
+        primary_domain_name=loaded_dag_data_dict["primary_domain_name"],
+        secondary_domain_name=loaded_dag_data_dict["secondary_domain_name"],
+        node_lower_bound=loaded_dag_data_dict["node_lower_bound"],
+        node_upper_bound=loaded_dag_data_dict["node_upper_bound"],
         ground_truth_effect_sizes=reconstructed_gt_effects,
-        phenomenon_overview=loaded_dag_data_dict['phenomenon_overview']
+        phenomenon_overview=loaded_dag_data_dict["phenomenon_overview"],
     )
 
     # Reconstruct all_coefficients_dfs
     reconstructed_coefficients_dfs = []
-    for df_dict_list in loaded_data['all_coefficients_dfs']:
+    for df_dict_list in loaded_data["all_coefficients_dfs"]:
         if df_dict_list:
             reconstructed_coefficients_dfs.append(pd.DataFrame(df_dict_list))
         else:
-            reconstructed_coefficients_dfs.append(pd.DataFrame()) # Handle empty DFs
+            reconstructed_coefficients_dfs.append(pd.DataFrame())  # Handle empty DFs
 
     # The other lists can be used directly
-    reconstructed_scenarios = loaded_data['all_scenarios']
-    reconstructed_validation_success = loaded_data['all_scenario_validation_success']
+    reconstructed_scenarios = loaded_data["all_scenarios"]
+    reconstructed_validation_success = loaded_data["all_scenario_validation_success"]
 
     print("Data successfully reloaded and reconstructed.")
 
@@ -2408,12 +3008,14 @@ def post_process_dag_visualization(json_file_path: str, console_output_json: boo
         all_coefficients_dfs=reconstructed_coefficients_dfs,
         dag_data=reconstructed_dag_data,
         all_scenario_validation_success=reconstructed_validation_success,
-        console_output_json=console_output_json, # Pass through the flag
-        save_json_to_file=False # Prevent re-saving JSON when post-processing
+        console_output_json=console_output_json,  # Pass through the flag
+        save_json_to_file=False,  # Prevent re-saving JSON when post-processing
     )
 
     print("Post-processed DAG visualization complete.")
 
-# Example usage (assuming 'full_dag_visualization_data.json' exists after a run):
-post_process_dag_visualization('full_dag_visualization_data.json', console_output_json=False)
 
+# Example usage (assuming 'full_dag_visualization_data.json' exists after a run):
+post_process_dag_visualization(
+    "full_dag_visualization_data.json", console_output_json=False
+)

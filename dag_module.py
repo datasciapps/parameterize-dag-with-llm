@@ -1,8 +1,9 @@
 # dag_module.py
-"""Module defining classes for Directed Acyclic Graph (DAG) representation and manipulation, DAGNode and DAG.
-"""
+"""Module defining classes for Directed Acyclic Graph (DAG) representation and manipulation, DAGNode and DAG."""
+
 from collections import deque
 import graphviz
+
 
 class DAGNode:
     def __init__(self, name):
@@ -23,7 +24,14 @@ class DAGNode:
 
 
 class DAG:
-    def __init__(self, all_nodes, raw_edges, node_descriptions: dict = None, lower_bound: dict = None, upper_bound: dict = None):
+    def __init__(
+        self,
+        all_nodes,
+        raw_edges,
+        node_descriptions: dict = None,
+        lower_bound: dict = None,
+        upper_bound: dict = None,
+    ):
         self.nodes = {}
         self.in_degree = {node_name: 0 for node_name in all_nodes}
 
@@ -33,7 +41,9 @@ class DAG:
         # Assertion: Ensure every node in all_nodes has a description
         for node_name in all_nodes:
             if node_name not in node_descriptions:
-                raise ValueError(f"Missing description for node '{node_name}' in node_descriptions.")
+                raise ValueError(
+                    f"Missing description for node '{node_name}' in node_descriptions."
+                )
 
         self.node_descriptions = node_descriptions
 
@@ -64,7 +74,9 @@ class DAG:
 
     def get_node_description(self, node_name: str) -> str:
         """Returns the textual description for a given node."""
-        return self.node_descriptions.get(node_name, f"No description available for {node_name}.")
+        return self.node_descriptions.get(
+            node_name, f"No description available for {node_name}."
+        )
 
     def get_lower_bound(self, node_name: str):
         """Returns the lower bound for a given node, or None if not specified."""
@@ -106,7 +118,7 @@ class DAG:
 
         if not sorted_nodes:
             print("[DAG] Cannot traverse a graph with a cycle or no nodes.")
-            return [] # Return empty list if no nodes or cycle
+            return []  # Return empty list if no nodes or cycle
 
         relationships_list = []
 
@@ -120,17 +132,23 @@ class DAG:
                 print(f"[DAG] ROOT NODE: {node.name} (No incoming edges)")
             print("[DAG] " + "-" * 20)
 
-            relationships_list.append({
-                "target_variable_name": node.name,
-                "direct_parent_variables": [parent.name for parent in node.parents]
-            })
+            relationships_list.append(
+                {
+                    "target_variable_name": node.name,
+                    "direct_parent_variables": [parent.name for parent in node.parents],
+                }
+            )
 
         print("[DAG] Traversal Complete.")
         return relationships_list
 
-    def visualize_dag(self, filename='dag_visualization', format='png', display_in_notebook=False):
+    def visualize_dag(
+        self, filename="dag_visualization", format="png", display_in_notebook=False
+    ):
         """Visualizes the DAG using graphviz and saves it to a file. Optionally displays it in the notebook."""
-        dot = graphviz.Digraph(comment='Causal DAG', graph_attr={'rankdir': 'LR', 'overlap': 'false'})
+        dot = graphviz.Digraph(
+            comment="Causal DAG", graph_attr={"rankdir": "LR", "overlap": "false"}
+        )
 
         for node_name in self.nodes:
             dot.node(node_name, node_name)

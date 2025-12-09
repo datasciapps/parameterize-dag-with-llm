@@ -71,3 +71,5 @@ Successfully installed numpy-2.3.5 pandas-2.3.3 python-dateutil-2.9.0.post0 pytz
 .3.0->instructor->-r requirements.txt (line 1)) (4.5.1)
 Installing collected packages: websockets, pyasn1, cachetools, rsa, pyasn1-modules, google-auth, google-genai
 Successfully installed cachetools-6.2.2 google-auth-2.43.0 google-genai-1.53.0 pyasn1-0.6.1 pyasn1-modules-0.4.2 rsa-4.9.1 websockets-15.0.1
+
+Successfully installed ruff-0.14.8

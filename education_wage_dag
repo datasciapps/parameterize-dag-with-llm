@@ -2,17 +2,17 @@
 digraph {
 	graph [overlap=false rankdir=LR]
 	B [label=B]
-	F [label=F]
+	A [label=A]
 	GM [label=GM]
 	V [label=V]
 	GC [label=GC]
-	A [label=A]
+	F [label=F]
 	B -> V
-	F -> GM
+	A -> GC
 	GM -> A
 	GM -> B
 	GM -> V
 	GC -> B
 	GC -> V
-	A -> GC
+	F -> GM
 }
