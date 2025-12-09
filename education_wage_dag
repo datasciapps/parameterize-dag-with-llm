@@ -1,18 +1,18 @@
 // Causal DAG
 digraph {
 	graph [overlap=false rankdir=LR]
+	F [label=F]
+	V [label=V]
+	GM [label=GM]
+	GC [label=GC]
 	B [label=B]
 	A [label=A]
-	GM [label=GM]
-	V [label=V]
-	GC [label=GC]
-	F [label=F]
-	B -> V
-	A -> GC
+	F -> GM
 	GM -> A
 	GM -> B
 	GM -> V
 	GC -> B
 	GC -> V
-	F -> GM
+	B -> V
+	A -> GC
 }

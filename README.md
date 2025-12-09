@@ -73,3 +73,4 @@ Installing collected packages: websockets, pyasn1, cachetools, rsa, pyasn1-modul
 Successfully installed cachetools-6.2.2 google-auth-2.43.0 google-genai-1.53.0 pyasn1-0.6.1 pyasn1-modules-0.4.2 rsa-4.9.1 websockets-15.0.1
 
 Successfully installed ruff-0.14.8
+tabulate

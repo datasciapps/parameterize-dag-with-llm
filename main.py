@@ -26,6 +26,7 @@ Things added:
 import graphviz
 
 # from IPython.display import Image, display # Import Image and display
+from custom_display_utility import display
 from dag_module import DAG
 from dag_traversal_utility import GeneralDAGData
 from prompt_generator import PromptPerNode
@@ -39,6 +40,9 @@ from dag_traversal_utility import compile_dag_metadata
 import re
 from llm_integration import run_llm_elicitation
 from llm_response_parser import split_equations_to_terms
+import numpy as np
+from datetime import datetime  # Import datetime for timestamping
+import datetime
 
 
 def response_sanity_check(parsed_dict: dict) -> None:
@@ -79,7 +83,7 @@ def extract_intercept(term):
 
 
 def convert_terms_to_coeffient_df(
-    split_terms: list[list[str]], scenario_parents: list[str], verbose=False
+    split_terms: list[list[str]], scenario_parents: list[str], exp_id: str, verbose=False
 ) -> pd.DataFrame:
     coefficients_list = []
 
@@ -103,9 +107,9 @@ def convert_terms_to_coeffient_df(
 
     coefficients_df = pd.DataFrame(coefficients_list)
     if verbose:
-        display(coefficients_df)
+        display(coefficients_df, "coeff_df", exp_id=exp_id)
     else:
-        display(coefficients_df.head())
+        display(coefficients_df.head(), "coeff_df_head", exp_id=exp_id)
     return coefficients_df
 
 
@@ -223,7 +227,6 @@ def symbolic_range_validator(
 #### Fully Parameterized DAG Visualizagtion
 """
 
-import numpy as np
 
 
 def compute_graph_statistics(
@@ -259,7 +262,6 @@ def compute_graph_statistics(
 
 # compute_graph_statistics(all_effect_sizes_map)
 
-from datetime import datetime  # Import datetime for timestamping
 
 
 # Custom JSON encoder to handle non-serializable types like numpy floats and sets
@@ -493,6 +495,9 @@ def parameterize_dag(
     all_coefficients_dfs = []  # This will store the *final* coefficients for each scenario (after validation passes)
     all_scenario_validation_success = []  # New list to store validation success status for each scenario
 
+    # Experimental id
+    exp_id: str = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+
     education_wage_dag = DAG(
         education_wage_data.all_nodes,
         education_wage_data.raw_edges,
@@ -553,8 +558,6 @@ def parameterize_dag(
                 feedback_message=current_feedback_message,  # Pass feedback message to the prompt generator
                 phenomenon_overview=education_wage_data.phenomenon_overview,  # Pass phenomenon_overview
             )
-            full_prompt = prompt_generator.get_full_prompt()
-
             # --- LLM Loop ---
             elicitation_prompt = prompt_generator.get_full_prompt()
             llm_responses_df = run_llm_elicitation(
@@ -564,11 +567,10 @@ def parameterize_dag(
                 debug_print=True,
             )
             llm_responses_df["scenario_idx"] = scenario_idx
-            display(llm_responses_df)
+            display(llm_responses_df, "llm_resp_df", exp_id=exp_id)
 
-            from datetime import datetime
 
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+            # timestamp = datetime.now().strftime("%Y%m%d_%H%M")
             # llm_responses_df.to_csv(f'llm_responses_{scenario_idx}_{timestamp}.csv', index=False) # Keep this for saving individual responses for debugging if needed
 
             print(
@@ -587,6 +589,7 @@ def parameterize_dag(
                 split_terms,
                 scenario_to_process["direct_parent_variables"],
                 verbose=True,
+                exp_id=exp_id,
             )
 
             validation_result = None  # Initialize to None
@@ -2704,7 +2707,6 @@ expenditure_results_distracted = parameterize_dag(expenditure_dag_data_distracte
 
 """#### DEBUG - to be removed - dammy DAG visualization test"""
 
-import pandas as pd
 
 # Use the already defined expenditure_dag_data for DAG and ground truth
 # Assuming expenditure_dag_data is available in the global scope from previous execution
@@ -2769,7 +2771,6 @@ visualize_full_dag_effects(
     all_scenario_validation_success=dummy_all_scenario_validation_success,
 )
 
-import pandas as pd
 
 # Assuming expenditure_dag_data is available in the global scope
 
@@ -2945,8 +2946,6 @@ visualize_full_dag_effects(
 )
 
 
-import json
-import pandas as pd
 
 
 def post_process_dag_visualization(

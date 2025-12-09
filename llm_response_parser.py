@@ -1,4 +1,6 @@
 import pandas as pd
+import re
+import json
 
 
 def split_equation(equation_str_to_split, verbose=False):  # Renamed for clarity
