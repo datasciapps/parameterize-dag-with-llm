@@ -4,6 +4,25 @@
 from dag_traversal_utility import GeneralDAGData
 from llm_dag_parameterizer import parameterize_dag
 
+
+from dags.chachexia1.disease_informed_arbitrary_bounds import cachexia1_disease_informed_arbitrary_bounds
+from dags.chachexia1.disease_blind_arbitrary_bounds import cachexia1_disease_blind_arbitrary_bounds
+from dags.chachexia1.disease_blind_real_bounds_and_units import cachexia1_disease_blind_real_bounds_and_units
+from dags.chachexia1.disease_informed_real_bounds_and_units import cachexia1_disease_informed_real_bounds_and_units
+from dags.chachexia1.disease_informed_real_bounds_tweaked_units_nm import cachexia1_disease_informed_real_bounds_tweaked_units_nm
+from dags.chachexia1.disease_informed_real_bounds_tweaked_units_high_precision_nm import cachexia1_disease_informed_real_bounds_tweaked_units_high_precision_nm
+"""
+from dats.chacexia.disease_blind_arbitrary_bounds import
+from dats.chacexia.disease_blind_real_bounds_and_units import
+from dats.chacexia.disease_informed_real_bounds_and_units import
+from dats.chacexia.disease_informed_real_bounds_tweaked_units_nm import
+from dats.chacexia.disease_informed_real_bounds_tweaked_units_high_precision_nm import
+"""
+
+# import (
+    # cachexia1_disease_informed_arbitrary_bounds,
+# )
+# import logging
 # from google.colab import userdata
 # from google.colab import drive # Drive is not used in this context
 # os.environ["GEMINI_API_KEY"] = userdata.get("GOOGLE_API_KEY")
@@ -16,45 +35,34 @@ def main():
     ##### Cachexia 1 disease informed - arbitrary bounds
     """
 
-    # Cachexia1 DAG Data
-    cachexia1_exp1 = GeneralDAGData(
-        all_nodes={"A", "B", "F", "GC", "GM", "V"},
-        raw_edges=[
-            ("A", "GC"),
-            ("B", "V"),
-            ("F", "GM"),
-            ("GC", "B"),
-            ("GC", "V"),
-            ("GM", "A"),
-            ("GM", "B"),
-            ("GM", "V"),
-        ],
-        node_descriptions={
-            "A": "Adipate",
-            "B": "Betaine",
-            "F": "Fumarate",
-            "GC": "Glucose",
-            "GM": "Glutamine",
-            "V": "Valine",
-        },
-        primary_domain_name="metabolic systems",
-        secondary_domain_name="biochemistry",
-        node_lower_bound={"A": 0, "B": 0, "F": 0, "GC": 0, "GM": 0, "V": 0},
-        node_upper_bound={"A": 100, "B": 100, "F": 100, "GC": 100, "GM": 100, "V": 100},
-        ground_truth_effect_sizes={
-            ("GM", "A"): 0.0674,
-            ("GC", "B"): 0.0181,
-            ("GM", "B"): 0.1104,
-            ("A", "GC"): 13.4753,
-            ("F", "GM"): 10.7348,
-            ("B", "V"): 0.1104,
-            ("GC", "V"): 0.0068,
-            ("GM", "V"): 0.0436,
-        },
-        phenomenon_overview="You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover.",
+
+    # parameterize_dag(cachexia1_exp1, include_hard_constraints=True)    
+    # parameterize_dag(cachexia1_disease_informed_arbitrary_bounds, include_hard_constraints=True)
+    current_dag_data: dict = cachexia1_disease_informed_arbitrary_bounds
+
+    print(f"[Current DAG] {current_dag_data['name']}")
+    
+    parameterize_dag(
+        GeneralDAGData(
+            all_nodes = current_dag_data["all_nodes"],
+            raw_edges = current_dag_data["raw_edges"],
+            node_descriptions=current_dag_data["node_descriptions"],
+            primary_domain_name=current_dag_data["primary_domain_name"],
+            secondary_domain_name=current_dag_data["secondary_domain_name"],
+            node_lower_bound=current_dag_data["node_lower_bound"],
+            node_upper_bound=current_dag_data["node_upper_bound"],
+            ground_truth_effect_sizes=current_dag_data["ground_truth_effect_sizes"],
+            phenomenon_overview=current_dag_data["phenomenon_overview"],
+        ),
+        include_hard_constraints=True,
     )
 
-    parameterize_dag(cachexia1_exp1, include_hard_constraints=True)
+    cachexia1_disease_informed_arbitrary_bounds
+    cachexia1_disease_blind_arbitrary_bounds
+    cachexia1_disease_blind_real_bounds_and_units
+    cachexia1_disease_informed_real_bounds_and_units
+    cachexia1_disease_informed_real_bounds_tweaked_units_nm
+    cachexia1_disease_informed_real_bounds_tweaked_units_high_precision_nm
 
 if __name__ == "__main__":
     main()

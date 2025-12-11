@@ -2,6 +2,7 @@
 
 
 import datetime
+import logging
 from custom_display_utility import display
 from dag_module import DAG
 from dag_traversal_utility import GeneralDAGData, compile_dag_metadata
@@ -19,8 +20,22 @@ def parameterize_dag(
     all_coefficients_dfs = []  # This will store the *final* coefficients for each scenario (after validation passes)
     all_scenario_validation_success = []  # New list to store validation success status for each scenario
 
-    # Experimental id
+    # # Experimental id
     exp_id: str = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+    # logger = logging.getLogger("customlogger")
+    # # logging.basicConfig(filename=f'./output/exp_{exp_id}.log', level=logging.DEBUG)
+    # # logging.info(f'[*****Experiment ID: {exp_id} started.****')
+    # log_file_path =  f'./output/exp_{exp_id}.log'
+
+    # file_handler = logging.FileHandler(log_file_path)
+    # file_handler.setLevel(logging.INFO)
+
+    # formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    # file_handler.setFormatter(formatter)
+
+    # logger.addHandler(file_handler)
+    # logger.info(f'[*****Experiment ID: {exp_id} started.****')
+    print(f'[*****Experiment ID: {exp_id} started.****')
 
     education_wage_dag = DAG(
         education_wage_data.all_nodes,
