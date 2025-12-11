@@ -2,7 +2,6 @@
 
 
 import datetime
-import logging
 from custom_display_utility import display
 from dag_module import DAG
 from dag_traversal_utility import GeneralDAGData, compile_dag_metadata
@@ -103,6 +102,7 @@ def parameterize_dag(
                 wait_sec_per_chat=2,
                 elicitation_prompt=elicitation_prompt,
                 debug_print=True,
+                scenario_to_process=scenario_to_process,
             )
             llm_responses_df["scenario_idx"] = scenario_idx
             display(llm_responses_df, "llm_resp_df", exp_id=exp_id)
@@ -131,6 +131,10 @@ def parameterize_dag(
             )
 
             validation_result = None  # Initialize to None
+
+            assert not coefficients_df.empty
+            # Parsed coefficients including intercept should match number of parents + 1
+            assert len(coefficients_df.columns.to_list()) == (len(scenario_to_process["direct_parent_variables"]) + 1)
 
             if not coefficients_df.empty:
                 proposed_equation_str = llm_responses_df.iloc[0]["proposed_lin_str_eq"]

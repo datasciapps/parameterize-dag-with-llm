@@ -152,15 +152,25 @@ def extract_coefficient(term, variable_name):
 
 
 def extract_intercept(term):
+    # If term explicitly contains '*1', treat the left side as the intercept
     if "*1" in term:
         value_str = term.split("*1")[0]
         try:
-            # Handle potential leading '+' or '-' in the constant term
             if value_str.startswith("+"):
                 value_str = value_str[1:]
             return float(value_str)
         except ValueError:
-            return None  # Handle cases where conversion to float fails
+            return None
+
+    # If the term is a bare numeric constant (e.g., '80' or '+80' or '-12.5'),
+    # treat it as the intercept even when '*1' is missing.
+    numeric_match = re.match(r"^([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)$", term)
+    if numeric_match:
+        try:
+            return float(numeric_match.group(1))
+        except ValueError:
+            return None
+
     return None
 
 
@@ -172,8 +182,9 @@ def convert_terms_to_coeffient_df(
     for terms in split_terms:
         coefficients = {}
         for term in terms:
-            if "*1" in term:
-                coefficients["beta_0"] = extract_intercept(term)
+            intercept_val = extract_intercept(term)
+            if intercept_val is not None:
+                coefficients["beta_0"] = intercept_val
             for parent_var_name in scenario_parents:
                 coeff = extract_coefficient(term, parent_var_name)
                 if coeff is not None:
