@@ -1,6 +1,3 @@
-
-
-
 import datetime
 from custom_display_utility import display
 from dag_module import DAG
@@ -20,7 +17,7 @@ def parameterize_dag(
     all_scenario_validation_success = []  # New list to store validation success status for each scenario
 
     # # Experimental id
-    exp_id: str = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+    exp_id: str = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     # logger = logging.getLogger("customlogger")
     # # logging.basicConfig(filename=f'./output/exp_{exp_id}.log', level=logging.DEBUG)
     # # logging.info(f'[*****Experiment ID: {exp_id} started.****')
@@ -34,7 +31,7 @@ def parameterize_dag(
 
     # logger.addHandler(file_handler)
     # logger.info(f'[*****Experiment ID: {exp_id} started.****')
-    print(f'[*****Experiment ID: {exp_id} started.****')
+    print(f"[*****Experiment ID: {exp_id} started.****")
 
     education_wage_dag = DAG(
         education_wage_data.all_nodes,
@@ -105,8 +102,8 @@ def parameterize_dag(
                 scenario_to_process=scenario_to_process,
             )
             llm_responses_df["scenario_idx"] = scenario_idx
-            display(llm_responses_df, "llm_resp_df", exp_id=exp_id)
-
+            # Save the LLM responses DataFrame for this iteration but silence print since others will print it
+            display(llm_responses_df, "llm_resp_df", exp_id=exp_id, silence_print=True)
 
             # timestamp = datetime.now().strftime("%Y%m%d_%H%M")
             # llm_responses_df.to_csv(f'llm_responses_{scenario_idx}_{timestamp}.csv', index=False) # Keep this for saving individual responses for debugging if needed
@@ -134,7 +131,9 @@ def parameterize_dag(
 
             assert not coefficients_df.empty
             # Parsed coefficients including intercept should match number of parents + 1
-            assert len(coefficients_df.columns.to_list()) == (len(scenario_to_process["direct_parent_variables"]) + 1)
+            assert len(coefficients_df.columns.to_list()) == (
+                len(scenario_to_process["direct_parent_variables"]) + 1
+            )
 
             if not coefficients_df.empty:
                 proposed_equation_str = llm_responses_df.iloc[0]["proposed_lin_str_eq"]
@@ -260,7 +259,9 @@ def parameterize_dag(
             display(
                 prompt_generator.visualize_parent_child_relationship(
                     effect_sizes=effect_sizes
-                ), output_file_postfix="viz_par_chil", exp_id=exp_id
+                ),
+                output_file_postfix="viz_par_chil",
+                exp_id=exp_id,
             )
         else:
             print(

@@ -5,6 +5,7 @@ from collections import deque
 import graphviz
 from custom_display_utility import display
 
+
 class DAGNode:
     def __init__(self, name):
         self.name = name
@@ -142,9 +143,7 @@ class DAG:
         print("[DAG] Traversal Complete.")
         return relationships_list
 
-    def visualize_dag(
-        self, exp_id: str
-    ):
+    def visualize_dag(self, exp_id: str):
         """Visualizes the DAG using graphviz and saves it to a file. Optionally displays it in the notebook."""
         dot = graphviz.Digraph(
             comment="Causal DAG", graph_attr={"rankdir": "LR", "overlap": "false"}

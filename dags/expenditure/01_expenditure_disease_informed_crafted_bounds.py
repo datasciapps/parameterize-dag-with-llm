@@ -1,6 +1,6 @@
 {
     "name": "expenditure_disease_informed_crafted_bounds",
-    "all_nodes":{
+    "all_nodes": {
         "Card",
         "Reports",
         "Age",
@@ -14,7 +14,7 @@
         "Majorcards",
         "Active",
     },
-    "raw_edges":[
+    "raw_edges": [
         ("Card", "Reports"),
         ("Card", "Share"),
         ("Card", "Owner"),
@@ -36,7 +36,7 @@
         ("Majorcards", "Active"),
         ("Active", "Reports"),
     ],
-    "node_descriptions":{
+    "node_descriptions": {
         "Card": "Whether the application for credit card was accepted or not (Categorical/Binary).",
         "Reports": "The number of major derogatory reports (Count).",
         "Age": "The age in years plus twelfths of a year (Unit: Years + fractions).",
@@ -50,9 +50,9 @@
         "Majorcards": "The number of major credit cards held (Count).",
         "Active": "The number of active credit accounts (Count).",
     },
-    "primary_domain_name":"Finance",
-    "secondary_domain_name":"Consumer Behavior",
-    "node_lower_bound":{
+    "primary_domain_name": "Finance",
+    "secondary_domain_name": "Consumer Behavior",
+    "node_lower_bound": {
         "Card": 0,
         "Reports": 0,
         "Age": 18,
@@ -66,7 +66,7 @@
         "Majorcards": 0,
         "Active": 0,
     },
-    "node_upper_bound":{
+    "node_upper_bound": {
         "Card": 1,
         "Reports": 10,
         "Age": 100,
@@ -80,7 +80,7 @@
         "Majorcards": 5,
         "Active": 10,
     },
-    "ground_truth_effect_sizes":{
+    "ground_truth_effect_sizes": {
         ("Card", "Reports"): -1.52254735864156,
         ("Active", "Reports"): 0.0524304077175797,
         ("Age", "Income"): 0.0396322368121011,
@@ -102,5 +102,5 @@
         ("Owner", "Active"): 3.03113288530365,
         ("Majorcards", "Active"): 1.53996015363929,
     },
-    "phenomenon_overview":"This dataset focuses on factors influencing credit card behavior and expenditure patterns, providing insights into consumer finance decisions.",
+    "phenomenon_overview": "This dataset focuses on factors influencing credit card behavior and expenditure patterns, providing insights into consumer finance decisions.",
 }

@@ -12,7 +12,6 @@ class LLMParamResponse(BaseModel):
     proposed_lin_str_eq: str
 
 
-
 def run_llm_elicitation(
     num_responses_per_prompt: int = 5,
     debug_print=True,
@@ -67,7 +66,9 @@ def run_llm_elicitation(
             # Convert the Pydantic model instance to a dictionary for history storage
             response_json = response_obj.model_dump()
             proposed_lin_str_eq: str = response_json.get("proposed_lin_str_eq", "")
-            print("[Run LLM Elicitation] Proposed Linear String Equation (early validation):")    
+            print(
+                "[Run LLM Elicitation] Proposed Linear String Equation (early validation):"
+            )
             print(proposed_lin_str_eq)
             scenario_parents = scenario_to_process["direct_parent_variables"]
             # scenario_parents.append("0") # For intercept (edge case)

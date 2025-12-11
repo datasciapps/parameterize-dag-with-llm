@@ -1,9 +1,8 @@
-
 # cachexia1_disease_informed_arbitrary_bounds
 cachexia1_disease_informed_arbitrary_bounds = {
     "name": "cachexia1_disease_informed_arbitrary_bounds",
-    "all_nodes":{"A", "B", "F", "GC", "GM", "V"},
-    "raw_edges":[
+    "all_nodes": {"A", "B", "F", "GC", "GM", "V"},
+    "raw_edges": [
         ("A", "GC"),
         ("B", "V"),
         ("F", "GM"),
@@ -13,7 +12,7 @@ cachexia1_disease_informed_arbitrary_bounds = {
         ("GM", "B"),
         ("GM", "V"),
     ],
-    "node_descriptions":{
+    "node_descriptions": {
         "A": "Adipate",
         "B": "Betaine",
         "F": "Fumarate",
@@ -21,11 +20,11 @@ cachexia1_disease_informed_arbitrary_bounds = {
         "GM": "Glutamine",
         "V": "Valine",
     },
-    "primary_domain_name":"metabolic systems",
-    "secondary_domain_name":"biochemistry",
-    "node_lower_bound":{"A": 0, "B": 0, "F": 0, "GC": 0, "GM": 0, "V": 0},
-    "node_upper_bound":{"A": 100, "B": 100, "F": 100, "GC": 100, "GM": 100, "V": 100},
-    "ground_truth_effect_sizes":{
+    "primary_domain_name": "metabolic systems",
+    "secondary_domain_name": "biochemistry",
+    "node_lower_bound": {"A": 0, "B": 0, "F": 0, "GC": 0, "GM": 0, "V": 0},
+    "node_upper_bound": {"A": 100, "B": 100, "F": 100, "GC": 100, "GM": 100, "V": 100},
+    "ground_truth_effect_sizes": {
         ("GM", "A"): 0.0674,
         ("GC", "B"): 0.0181,
         ("GM", "B"): 0.1104,
@@ -35,5 +34,5 @@ cachexia1_disease_informed_arbitrary_bounds = {
         ("GC", "V"): 0.0068,
         ("GM", "V"): 0.0436,
     },
-    "phenomenon_overview":"You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover.",
+    "phenomenon_overview": "You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover.",
 }

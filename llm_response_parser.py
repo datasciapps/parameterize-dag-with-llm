@@ -175,7 +175,10 @@ def extract_intercept(term):
 
 
 def convert_terms_to_coeffient_df(
-    split_terms: list[list[str]], scenario_parents: list[str], exp_id: str, verbose=False
+    split_terms: list[list[str]],
+    scenario_parents: list[str],
+    exp_id: str,
+    verbose=False,
 ) -> pd.DataFrame:
     coefficients_list = []
 
@@ -204,4 +207,3 @@ def convert_terms_to_coeffient_df(
     else:
         display(coefficients_df.head(), "coeff_df_head", exp_id=exp_id)
     return coefficients_df
-

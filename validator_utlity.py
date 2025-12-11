@@ -106,4 +106,3 @@ def symbolic_range_validator(
         "validated": is_validated,
         "summary_message": summary_message,
     }
-

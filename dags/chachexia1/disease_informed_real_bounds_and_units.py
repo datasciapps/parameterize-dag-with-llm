@@ -1,8 +1,7 @@
-
 cachexia1_disease_informed_real_bounds_and_units = {
     "name": "cachexia1_disease_informed_real_bounds_and_units",
-    "all_nodes":{"A", "B", "F", "GC", "GM", "V"},
-    "raw_edges":[
+    "all_nodes": {"A", "B", "F", "GC", "GM", "V"},
+    "raw_edges": [
         ("A", "GC"),
         ("B", "V"),
         ("F", "GM"),
@@ -12,7 +11,7 @@ cachexia1_disease_informed_real_bounds_and_units = {
         ("GM", "B"),
         ("GM", "V"),
     ],
-    "node_descriptions":{
+    "node_descriptions": {
         "A": "Adipate (micromolar, µM)",
         "B": "Betaine  (micromolar, µM)",
         "F": "Fumarate  (micromolar, µM)",
@@ -20,10 +19,17 @@ cachexia1_disease_informed_real_bounds_and_units = {
         "GM": "Glutamine  (micromolar, µM)",
         "V": "Valine  (micromolar, µM)",
     },
-    "primary_domain_name":"metabolic systems",
-    "secondary_domain_name":"biochemistry",
-    "node_lower_bound":{"A": 1.6, "B": 2.3, "F": 0.8, "GC": 26.9, "GM": 15.1, "V": 4.1},
-    "node_upper_bound":{
+    "primary_domain_name": "metabolic systems",
+    "secondary_domain_name": "biochemistry",
+    "node_lower_bound": {
+        "A": 1.6,
+        "B": 2.3,
+        "F": 0.8,
+        "GC": 26.9,
+        "GM": 15.1,
+        "V": 4.1,
+    },
+    "node_upper_bound": {
         "A": 325.6,
         "B": 788.8,
         "F": 96.6,
@@ -31,7 +37,7 @@ cachexia1_disease_informed_real_bounds_and_units = {
         "GM": 1684.0,
         "V": 160.1,
     },
-    "ground_truth_effect_sizes":{
+    "ground_truth_effect_sizes": {
         ("GM", "A"): 0.0674,
         ("GC", "B"): 0.0181,
         ("GM", "B"): 0.1104,
@@ -41,5 +47,5 @@ cachexia1_disease_informed_real_bounds_and_units = {
         ("GC", "V"): 0.0068,
         ("GM", "V"): 0.0436,
     },
-    "phenomenon_overview":"You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover.",
+    "phenomenon_overview": "You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover.",
 }
