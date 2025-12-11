@@ -1,5 +1,5 @@
 """##### Cachexia 1 disease-informed - real bounds & tweaked units"""
-{
+cachexia1_disease_informed_real_bounds_tweaked_units_nm = {
     "name": "cachexia1_disease_informed_real_bounds_tweaked_units_nm",
     "all_nodes":{"A", "B", "F", "GC", "GM", "V"},
     "raw_edges":[

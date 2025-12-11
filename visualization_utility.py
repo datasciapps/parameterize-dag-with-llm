@@ -46,9 +46,18 @@ def visualize_full_dag_effects(
 
     # Calculate statistics to be displayed as a label
     stats_result = compute_graph_statistics(all_effect_sizes_map, dag_data)
+    df_stats_result = pd.DataFrame(stats_result, index=[0])
+    display(df_stats_result, output_file_postfix="gt_llm_stat_df", exp_id=exp_id)
+
     l2_norm_value = stats_result.get("l2_norm", "N/A")
+    l2_norm_normalized_value = stats_result.get("l2_norm_normalized", "N/A")
+    l2_norm_normalized_without_single_parent_edges_value = stats_result.get("l2_norm_normalized_without_single_parent_edges", "N/A")
+    # TODO: add these to the label as well
     statistics_label_text = (
-        f"L2 Norm of differences (LLM-elicited vs GT): {l2_norm_value} (Model: google/gemini-2.5-flash)\n"
+        f"Model: google/gemini-2.5-flash)" # Later replace with dynamic model name if needed
+        f"L2 Norm distance (LLM-elicited vs GT): {l2_norm_value}\n"
+        f"L2 Norm distance with node-wise normalization (LLM-elicited vs GT): {l2_norm_normalized_value}\n"
+        f"L2 Norm differences with node-wise normalization, single-parent edges excluded (LLM-elicited vs GT): {l2_norm_normalized_without_single_parent_edges_value}\n"
         f"* indicates that parametrization feedback loop failed within loop budget.\n"
         f"Node Color Scheme:\n"
         f"- Lightgreen: Correct order of effect sizes from LLM vs GT (for >1 parents)\n"
@@ -203,14 +212,43 @@ def visualize_full_dag_effects(
 
 
 def compute_graph_statistics(
-    all_effect_sizes_map, dag_data: GeneralDAGData, normalize_effect_per_node=False
+    all_effect_sizes_map, dag_data: GeneralDAGData
 ) -> dict:
     # --- Comparison Logic --- (using L2 norm as requested)
     differences_squared = []
+    differences_squared_normalized = []
+    differences_squared_normalized_without_single_parent_edges = []
 
     print("\n--- Comparing LLM Elicited Effects with Ground Truth ---")
-    if normalize_effect_per_node:
-        raise NotImplementedError
+    # [1] Normalized per node comparison
+    # first obtain unique children, later for each child group do something similar for generatl case
+    unique_children = set([child for (parent, child), llm_effect in all_effect_sizes_map.items()])
+    for child in unique_children:
+        llm_effect_per_node: list[float] = []
+        gt_effect_per_node: list[float] = []
+        for edge_pair, llm_effect in all_effect_sizes_map.items():
+            if edge_pair[1] != child:
+                continue
+            llm_effect_per_node.append(llm_effect) # raw coefficients (but be careful of ordering)
+            gt_key = (edge_pair[0], edge_pair[1])
+            gt_effect = dag_data.ground_truth_effect_sizes[gt_key]
+            gt_effect_per_node.append(gt_effect)
+        # normalize llm effects per node
+        llm_effect_per_node = [e / np.linalg.norm(llm_effect_per_node) for e in llm_effect_per_node]
+        # normalize gt effects per node
+        gt_effect_per_node = [e / np.linalg.norm(gt_effect_per_node) for e in gt_effect_per_node]
+        assert len(llm_effect_per_node) == len(gt_effect_per_node), "Mismatched lengths."
+        # calculate L2 norm between llm_effect_per_node and gt_effect_per_node
+        # first maybe converd lists into numpy arrays
+        llm_array = np.array(llm_effect_per_node)
+        gt_array = np.array(gt_effect_per_node)
+        diff = llm_array - gt_array
+        differences_squared_normalized.append(np.sum(diff**2))
+        # Also store per-edge differences for later use (excluding single parent edges)
+        if len(llm_effect_per_node) > 1:
+            differences_squared_normalized_without_single_parent_edges.append(np.sum(diff**2))
+
+    # [2] Overall L2 norm comparison (with no node-wise normalization)
     for (parent, child), llm_effect in all_effect_sizes_map.items():
         ground_truth_key = (parent, child)
         assert ground_truth_key in dag_data.ground_truth_effect_sizes, (
@@ -224,13 +262,18 @@ def compute_graph_statistics(
         )
 
     # Calculate the L2 norm (Euclidean distance)
-    if differences_squared:
-        l2_norm = np.sqrt(np.sum(differences_squared))
-        print(f"\nCalculated L2 Norm of differences: {l2_norm:.4f}")
-        return {"l2_norm": str(l2_norm)}
-    else:
-        print("No common effects to compare. L2 Norm cannot be calculated.")
-        return {"l2_norm": str(None)}
+    assert differences_squared_normalized, "No differences calculated for normalized effects."
+    assert differences_squared, "No differences calculated for overall effects."
+    assert differences_squared_normalized_without_single_parent_edges, "No differences calculated for normalized effects without single parent edges."
+    # Double checl L2 norm definition, also will add normalized version to the key as well
+
+    l2_norm = np.sqrt(np.sum(differences_squared))
+    l2_norm_node_wise_normalized = np.sqrt(np.sum(differences_squared_normalized))
+    l2_norm_node_wise_normalized_without_single_parent_edges = np.sqrt(np.sum(differences_squared_normalized_without_single_parent_edges))
+    print(f"\nCalculated L2 Norm of differences: {l2_norm:.4f}")
+    return {"l2_norm": str(l2_norm),
+            "l2_norm_normalized": str(l2_norm_node_wise_normalized),
+            "l2_norm_normalized_without_single_parent_edges": str(l2_norm_node_wise_normalized_without_single_parent_edges)}
 
 
 # compute_graph_statistics(all_effect_sizes_map)

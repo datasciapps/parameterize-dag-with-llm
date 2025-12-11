@@ -1,6 +1,6 @@
 
 # cachexia1_disease_informed_arbitrary_bounds
-{
+cachexia1_disease_informed_arbitrary_bounds = {
     "name": "cachexia1_disease_informed_arbitrary_bounds",
     "all_nodes":{"A", "B", "F", "GC", "GM", "V"},
     "raw_edges":[

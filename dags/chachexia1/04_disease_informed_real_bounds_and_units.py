@@ -1,4 +1,5 @@
-{
+
+cachexia1_disease_informed_real_bounds_and_units = {
     "name": "cachexia1_disease_informed_real_bounds_and_units",
     "all_nodes":{"A", "B", "F", "GC", "GM", "V"},
     "raw_edges":[

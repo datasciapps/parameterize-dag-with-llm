@@ -1,4 +1,4 @@
-expenditure_results = parameterize_dag(expenditure_dag_data)
+# TODO: move them into separate files later
 
 """##### Ablation, arbitrary hard constraints [0, 100]"""
 
@@ -110,7 +110,6 @@ expenditure_dag_data = GeneralDAGData(
     phenomenon_overview="This dataset focuses on factors influencing credit card behavior and expenditure patterns, providing insights into consumer finance decisions.",
 )
 
-expenditure_results = parameterize_dag(expenditure_dag_data)
 
 """#### Other DAGs with [0, 100] constraints
 
@@ -156,7 +155,6 @@ foodsecurity_dag_data = GeneralDAGData(
     phenomenon_overview=None,
 )
 
-foodsecurity_exp_results = parameterize_dag(foodsecurity_dag_data)
 
 """##### algal2"""
 
@@ -232,7 +230,6 @@ algal2_dag_data = GeneralDAGData(
     phenomenon_overview="This network describes relationships between various environmental factors and algal blooms in a body of water.",
 )
 
-algal2_exp_results = parameterize_dag(algal2_dag_data)
 
 """##### lexical
 
@@ -364,7 +361,6 @@ lexical_dag_data = GeneralDAGData(
     phenomenon_overview="This network models lexical properties and their relationships.",
 )
 
-lexical_exp_results = parameterize_dag(lexical_dag_data)
 
 """##### liquefaction
 
@@ -496,7 +492,6 @@ liquefaction_dag_data = GeneralDAGData(
     },
     phenomenon_overview="This network models factors influencing soil liquefaction potential during earthquakes.",
 )
-liquefaction_exp_results = parameterize_dag(liquefaction_dag_data)
 
 """##### stocks"""
 
@@ -616,7 +611,6 @@ stocks_dag_data = GeneralDAGData(
     phenomenon_overview="This network models the relationships between various stock prices.",
 )
 
-stocks_exp_results = parameterize_dag(stocks_dag_data)
 
 
 """```
@@ -976,7 +970,6 @@ suffocation_dag_data = GeneralDAGData(
     phenomenon_overview="This network models factors contributing to personnel suffocation incidents.",
 )
 
-suffocation_exp_results = parameterize_dag(suffocation_dag_data)
 
 
 turbine1_dag_data = GeneralDAGData(
@@ -1100,7 +1093,6 @@ turbine1_dag_data = GeneralDAGData(
     },
     phenomenon_overview="This network models the dynamics of a wind turbine.",
 )
-turbine1_exp_results = parameterize_dag(turbine1_dag_data)
 
 """#### turbine2
 
@@ -1290,102 +1282,10 @@ turbine2_dag_data = GeneralDAGData(
     phenomenon_overview="This network models the dynamics of a wind turbine.",
 )
 
-turbine2_exp_results = parameterize_dag(turbine2_dag_data)
 
 
-"""#### suffocation
-
-```
-=======================================================
-Processing network: suffocation
-=======================================================
-
---- Class of the bnRep network (suffocation) ---
-[1] "bn.fit"      "bn.fit.gnet"
-
---- Ground Truth Effect Sizes ---
-ground_truth_effect_sizes={
-        ('N10', 'OI'): 0.2026,
-        ('N11', 'OI'): 0.153,
-        ('N12', 'OI'): 0.1454,
-        ('N13', 'OI'): 0.403,
-        ('N14', 'OI'): 0.0959,
-        ('OI', 'PersonnelSuffocation'): 0.1383,
-        ('UA', 'PersonnelSuffocation'): 0.3455,
-        ('UP', 'PersonnelSuffocation'): 0.0935,
-        ('US', 'PersonnelSuffocation'): 0.4227,
-        ('N20', 'UA'): 0.0904,
-        ('N22', 'UA'): 0.0671,
-        ('N23', 'UA'): 0.0671,
-        ('N24', 'UA'): 0.0671,
-        ('N25', 'UA'): 0.1148,
-        ('N26', 'UA'): 0.0935,
-        ('N27', 'UA'): 0.0888,
-        ('N28', 'UA'): 0.0671,
-        ('N29', 'UA'): 0.1148,
-        ('N30', 'UA'): 0.0671,
-        ('N32', 'UA'): 0.0764,
-        ('N8', 'UA'): 0.0858,
-        ('N33', 'UP'): 0.2702,
-        ('N40', 'UP'): 0.5166,
-        ('N5', 'UP'): 0.2132,
-        ('N16', 'US'): 0.1299,
-        ('N17', 'US'): 0.1299,
-        ('N18', 'US'): 0.1299,
-        ('N34', 'US'): 0.0769,
-        ('N35', 'US'): 0.075,
-        ('N36', 'US'): 0.075,
-        ('N37', 'US'): 0.1162,
-        ('N38', 'US'): 0.075,
-        ('N39', 'US'): 0.075,
-        ('N4', 'US'): 0.1173,
-    },
-
---- All Nodes ---
-all_nodes={"N10", "N11", "N12", "N13", "N14", "N16", "N17", "N18", "N20", "N22", "N23", "N24", "N25", "N26", "N27", "N28", "N29", "N30", "N32", "N33", "N34", "N35", "N36", "N37", "N38", "N39", "N4", "N40", "N5", "N8", "OI", "PersonnelSuffocation", "UA", "UP", "US"},
-
---- Raw Edges ---
-raw_edges=[
-        ("N10", "OI"),
-        ("N11", "OI"),
-        ("N12", "OI"),
-        ("N13", "OI"),
-        ("N14", "OI"),
-        ("N16", "US"),
-        ("N17", "US"),
-        ("N18", "US"),
-        ("N20", "UA"),
-        ("N22", "UA"),
-        ("N23", "UA"),
-        ("N24", "UA"),
-        ("N25", "UA"),
-        ("N26", "UA"),
-        ("N27", "UA"),
-        ("N28", "UA"),
-        ("N29", "UA"),
-        ("N30", "UA"),
-        ("N32", "UA"),
-        ("N33", "UP"),
-        ("N34", "US"),
-        ("N35", "US"),
-        ("N36", "US"),
-        ("N37", "US"),
-        ("N38", "US"),
-        ("N39", "US"),
-        ("N4", "US"),
-        ("N40", "UP"),
-        ("N5", "UP"),
-        ("N8", "UA"),
-        ("OI", "PersonnelSuffocation"),
-        ("UA", "PersonnelSuffocation"),
-        ("UP", "PersonnelSuffocation"),
-        ("US", "PersonnelSuffocation")
-    ],
-```
-
-##### Expenditure with Distracting Edges
+"""#### expenditure_dag_data_distracted
 """
-
 expenditure_dag_data_distracted = GeneralDAGData(
     all_nodes={
         "Card",
@@ -1503,5 +1403,3 @@ expenditure_dag_data_distracted = GeneralDAGData(
     },
     phenomenon_overview="This dataset focuses on factors influencing credit card behavior and expenditure patterns, providing insights into consumer finance decisions.",
 )
-
-expenditure_results_distracted = parameterize_dag(expenditure_dag_data_distracted)

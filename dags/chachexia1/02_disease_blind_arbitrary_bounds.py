@@ -1,5 +1,5 @@
 # cachexia1_disease_blind_arbitrary_bounds.py
-{
+cachexia1_disease_blind_arbitrary_bounds = {
     "name": "cachexia1_disease_blind_arbitrary_bounds",
     "all_nodes":{"A", "B", "F", "GC", "GM", "V"},
     "raw_edges":[

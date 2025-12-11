@@ -1,6 +1,7 @@
 
 """##### Cachexia 1 disease-informed - real bounds & tweaked units with higher resolution prompt"""
-{
+
+cachexia1_disease_informed_real_bounds_tweaked_units_high_precision_nm = {
     "name": "cachexia1_disease_informed_real_bounds_tweaked_units_high_precision_nm",
     "all_nodes":{"A", "B", "F", "GC", "GM", "V"},
     "raw_edges":[
