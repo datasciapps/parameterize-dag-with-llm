@@ -15,7 +15,7 @@ class LLMParamResponse(BaseModel):
 def run_llm_elicitation(
     num_responses_per_prompt: int = 5,
     debug_print=True,
-    wait_sec_per_chat=1,
+    wait_sec_per_chat=0.2,
     elicitation_prompt: str = "",
     scenario_to_process: dict = None,
 ) -> pd.DataFrame:

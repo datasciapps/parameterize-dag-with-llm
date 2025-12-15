@@ -47,10 +47,7 @@ def main():
     ##### Cachexia 1 disease informed - arbitrary bounds
     """
 
-    # parameterize_dag(cachexia1_exp1, include_hard_constraints=True)
-    # parameterize_dag(cachexia1_disease_informed_arbitrary_bounds, include_hard_constraints=True)
-    current_dag_data: dict = cachexia1_disease_informed_arbitrary_bounds
-
+    current_dag_data = cachexia1_disease_informed_real_bounds_tweaked_units_high_precision_nm
     print(f"[Current DAG] {current_dag_data['name']}")
 
     parameterize_dag(
