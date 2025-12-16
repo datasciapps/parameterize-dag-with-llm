@@ -27,7 +27,12 @@ def _unique_path(path: str) -> str:
     return candidate
 
 
-def display(object_to_display, output_file_postfix: str, exp_id: str, silence_print: bool = False) -> None:
+def display(
+    object_to_display,
+    output_file_postfix: str,
+    exp_id: str,
+    silence_print: bool = False,
+) -> None:
     """A custom display for cli environments."""
     if "DataFrame" in str(type(object_to_display)):
         print("[Display (DataFrame)]")

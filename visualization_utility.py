@@ -11,6 +11,7 @@ def visualize_full_dag_effects(
     dag_data: GeneralDAGData,
     all_scenario_validation_success: list[bool],
     exp_id: str,
+    model_name: str,
     console_output_json: bool = False,
     save_json_to_file: bool = True,
 ) -> None:
@@ -54,9 +55,8 @@ def visualize_full_dag_effects(
     l2_norm_normalized_without_single_parent_edges_value = stats_result.get(
         "l2_norm_normalized_without_single_parent_edges", "N/A"
     )
-    # TODO: add these to the label as well
     statistics_label_text = (
-        f"Model: google/gemini-2.5-flash)"  # Later replace with dynamic model name if needed
+        f"Model: {model_name}"
         f"L2 Norm distance (LLM-elicited vs GT): {l2_norm_value}\n"
         f"L2 Norm distance with node-wise normalization (LLM-elicited vs GT): {l2_norm_normalized_value}\n"
         f"L2 Norm differences with node-wise normalization, single-parent edges excluded (LLM-elicited vs GT): {l2_norm_normalized_without_single_parent_edges_value}\n"

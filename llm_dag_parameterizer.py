@@ -1,4 +1,6 @@
 import datetime
+
+import instructor
 from custom_display_utility import display
 from dag_module import DAG
 from dag_traversal_utility import GeneralDAGData, compile_dag_metadata
@@ -10,7 +12,11 @@ from visualization_utility import visualize_full_dag_effects
 
 
 def parameterize_dag(
-    education_wage_data: GeneralDAGData, include_hard_constraints: bool
+    education_wage_data: GeneralDAGData,
+    include_hard_constraints: bool,
+    client: instructor.AsyncInstructor,
+    model_dependent_config: dict,
+    instructor_model_name: str,
 ) -> dict:
     all_llm_responses_dfs = []  # This will store the *final* LLM response for each scenario (after validation passes)
     all_coefficients_dfs = []  # This will store the *final* coefficients for each scenario (after validation passes)
@@ -31,7 +37,9 @@ def parameterize_dag(
 
     # logger.addHandler(file_handler)
     # logger.info(f'[*****Experiment ID: {exp_id} started.****')
+
     print(f"[*****Experiment ID: {exp_id} started.****")
+    print(f"Using Instructor Model: {instructor_model_name}")
 
     education_wage_dag = DAG(
         education_wage_data.all_nodes,
@@ -93,13 +101,16 @@ def parameterize_dag(
                 phenomenon_overview=education_wage_data.phenomenon_overview,  # Pass phenomenon_overview
             )
             # --- LLM Loop ---
+
             elicitation_prompt = prompt_generator.get_full_prompt()
             llm_responses_df = run_llm_elicitation(
-                num_responses_per_prompt=1,
-                wait_sec_per_chat=2,
+                client=client,
                 elicitation_prompt=elicitation_prompt,
-                debug_print=True,
                 scenario_to_process=scenario_to_process,
+                model_dependent_config=model_dependent_config,
+                wait_sec_per_chat=0.2,
+                debug_print=True,
+                num_responses_per_prompt=1,
             )
             llm_responses_df["scenario_idx"] = scenario_idx
             # Save the LLM responses DataFrame for this iteration but silence print since others will print it
@@ -281,6 +292,7 @@ def parameterize_dag(
         education_wage_data,
         all_scenario_validation_success,
         exp_id=exp_id,
+        model_name=instructor_model_name,
     )
     return {
         "all_llm_responses_dfs": all_llm_responses_dfs,

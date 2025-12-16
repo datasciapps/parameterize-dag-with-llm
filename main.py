@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 # from IPython.display import Image, display # Import Image and display
+from instructor import Instructor
+import instructor
 from dag_traversal_utility import GeneralDAGData
 from llm_dag_parameterizer import parameterize_dag
 
@@ -46,8 +48,29 @@ def main():
 
     ##### Cachexia 1 disease informed - arbitrary bounds
     """
+    # [2] groq example
+    instructor_model_name = "groq/llama-3.1-8b-instant"
+    client: Instructor.AsyncInstructor = instructor.from_provider(instructor_model_name)
+    model_dependent_config: dict = {
+        "temperature": 0.0,
+    }
 
-    current_dag_data = cachexia1_disease_informed_real_bounds_tweaked_units_high_precision_nm
+    # [1] Gemini configuration example:
+    # Initialize instructor client
+    # client: instructor.AsyncInstructor = instructor.from_provider(
+    #     "google/gemini-2.5-flash",
+    # )
+    # model_dependent_config: dict = {
+    #     "config": types.GenerateContentConfig(
+    #         temperature=0,
+    #         thinking_config=types.ThinkingConfig(
+    #             thinking_budget=0,
+    #         ),
+    #         response_mime_type="application/json",
+    #     )
+    # }
+
+    current_dag_data = cachexia1_disease_informed_real_bounds_and_units
     print(f"[Current DAG] {current_dag_data['name']}")
 
     parameterize_dag(
@@ -63,6 +86,9 @@ def main():
             phenomenon_overview=current_dag_data["phenomenon_overview"],
         ),
         include_hard_constraints=True,
+        client=client,
+        model_dependent_config=model_dependent_config,
+        instructor_model_name=instructor_model_name,
     )
 
     cachexia1_disease_informed_arbitrary_bounds

@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 import pandas as pd
-from google.genai import types
 import instructor
 import time
 import json
@@ -13,29 +12,17 @@ class LLMParamResponse(BaseModel):
 
 
 def run_llm_elicitation(
-    num_responses_per_prompt: int = 5,
-    debug_print=True,
+    client: instructor.AsyncInstructor,
+    elicitation_prompt: str,
+    scenario_to_process: dict,
+    model_dependent_config: dict,  # This is unpacked into client.create as arguments.
     wait_sec_per_chat=0.2,
-    elicitation_prompt: str = "",
-    scenario_to_process: dict = None,
+    debug_print=True,
+    num_responses_per_prompt: int = 1,
 ) -> pd.DataFrame:
     """Runs the LLM elicitation process for a single prompt multiple times to collect varied responses."""
     assert len(elicitation_prompt) > 0
     assert scenario_to_process is not None
-
-    # Configuration for Gemini model, including thinking_config
-    gemini_config = types.GenerateContentConfig(
-        temperature=0,
-        thinking_config=types.ThinkingConfig(
-            thinking_budget=0,
-        ),
-        response_mime_type="application/json",
-    )
-
-    # Initialize instructor client
-    client = instructor.from_provider(
-        "google/gemini-2.5-flash",
-    )
 
     if num_responses_per_prompt > 1:
         raise NotImplementedError("Currently only single response is supported.")
@@ -61,7 +48,7 @@ def run_llm_elicitation(
                         "content": elicitation_prompt,
                     }
                 ],
-                config=gemini_config,
+                **model_dependent_config,
             )
             # Convert the Pydantic model instance to a dictionary for history storage
             response_json = response_obj.model_dump()
