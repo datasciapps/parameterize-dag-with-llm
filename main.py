@@ -4,8 +4,11 @@
 from instructor import Instructor
 import instructor
 from dag_traversal_utility import GeneralDAGData
+from dags.expenditure.expenditure_phenomena_informed_crafted_bounds import (
+    expenditure_phenomena_informed_crafted_bounds,
+)
 from llm_dag_parameterizer import parameterize_dag
-
+from google.genai import types
 
 from dags.chachexia1.disease_informed_arbitrary_bounds import (
     cachexia1_disease_informed_arbitrary_bounds,
@@ -48,29 +51,30 @@ def main():
 
     ##### Cachexia 1 disease informed - arbitrary bounds
     """
-    # [2] groq example
-    instructor_model_name = "groq/llama-3.1-8b-instant"
-    client: Instructor.AsyncInstructor = instructor.from_provider(instructor_model_name)
-    model_dependent_config: dict = {
-        "temperature": 0.0,
-    }
+    ## [2] groq example
+    #instructor_model_name = "groq/llama-3.1-8b-instant"
+    #client: Instructor.AsyncInstructor = instructor.from_provider(instructor_model_name)
+    #model_dependent_config: dict = {
+    #    "temperature": 0.0,
+    #}
 
     # [1] Gemini configuration example:
     # Initialize instructor client
-    # client: instructor.AsyncInstructor = instructor.from_provider(
-    #     "google/gemini-2.5-flash",
-    # )
-    # model_dependent_config: dict = {
-    #     "config": types.GenerateContentConfig(
-    #         temperature=0,
-    #         thinking_config=types.ThinkingConfig(
-    #             thinking_budget=0,
-    #         ),
-    #         response_mime_type="application/json",
-    #     )
-    # }
+    instructor_model_name = "google/gemini-2.5-flash"
+    client: instructor.AsyncInstructor = instructor.from_provider(
+        "google/gemini-2.5-flash",
+    )
+    model_dependent_config: dict = {
+        "config": types.GenerateContentConfig(
+            temperature=0,
+            thinking_config=types.ThinkingConfig(
+                thinking_budget=0,
+            ),
+            response_mime_type="application/json",
+        )
+    }
 
-    current_dag_data = cachexia1_disease_informed_real_bounds_and_units
+    current_dag_data = expenditure_phenomena_informed_crafted_bounds
     print(f"[Current DAG] {current_dag_data['name']}")
 
     parameterize_dag(

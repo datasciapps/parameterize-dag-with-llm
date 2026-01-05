@@ -1,5 +1,5 @@
-{
-    "name": "expenditure_disease_informed_crafted_bounds",
+expenditure_phenomena_informed_crafted_bounds = {
+    "name": "expenditure_phenomena_informed_crafted_bounds",
     "all_nodes": {
         "Card",
         "Reports",
