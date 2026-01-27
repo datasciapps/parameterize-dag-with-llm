@@ -98,6 +98,7 @@ def main():
             node_upper_bound=current_dag_data["node_upper_bound"],
             ground_truth_effect_sizes=current_dag_data["ground_truth_effect_sizes"],
             phenomenon_overview=current_dag_data["phenomenon_overview"],
+            include_parent_relationships=current_dag_data.get("include_parent_relationships", False),
         ),
         include_hard_constraints=True,
         client=client,

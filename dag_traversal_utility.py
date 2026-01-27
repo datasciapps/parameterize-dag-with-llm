@@ -13,6 +13,7 @@ class GeneralDAGData:
         node_upper_bound: dict[str, float],
         ground_truth_effect_sizes: dict[tuple[str, str], float],
         phenomenon_overview: str,
+        include_parent_relationships: bool = False,
     ):
         self.all_nodes = all_nodes
         self.raw_edges = raw_edges
@@ -23,6 +24,7 @@ class GeneralDAGData:
         self.node_upper_bound = node_upper_bound
         self.ground_truth_effect_sizes = ground_truth_effect_sizes
         self.phenomenon_overview = phenomenon_overview
+        self.include_parent_relationships = include_parent_relationships
 
 
 def compile_dag_metadata(
@@ -42,6 +44,7 @@ def compile_dag_metadata(
             "node_lower_bounds": dag_data.node_lower_bound,
             "node_upper_bounds": dag_data.node_upper_bound,
             "include_constraints_in_prompt": include_hard_constraints,
+            "include_parent_relationships": dag_data.include_parent_relationships,  # Pass the toggle flag from DAG
         }
         print(compiled_variable_description)
         if len(relation["direct_parent_variables"]) > 0:
