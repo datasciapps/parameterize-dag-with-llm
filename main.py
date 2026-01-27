@@ -29,6 +29,12 @@ from dags.chachexia1.disease_informed_real_bounds_tweaked_units_high_precision_n
     cachexia1_disease_informed_real_bounds_tweaked_units_high_precision_nm,
 )
 
+from dags.expenditure.expenditure_spurious_edges_added import (
+    expenditure_sp_owner_expenditure,
+    expenditure_sp_majorcards_dependents,
+    expenditure_sp_owner_share,
+    expenditure_sp_majorcards_selfemp,
+)
 """
 from dats.chacexia.disease_blind_arbitrary_bounds import
 from dats.chacexia.disease_blind_real_bounds_and_units import
@@ -51,12 +57,12 @@ def main():
 
     ##### Cachexia 1 disease informed - arbitrary bounds
     """
-    ## [2] groq example
-    #instructor_model_name = "groq/llama-3.1-8b-instant"
-    #client: Instructor.AsyncInstructor = instructor.from_provider(instructor_model_name)
-    #model_dependent_config: dict = {
-    #    "temperature": 0.0,
-    #}
+    # [2] groq example
+    # instructor_model_name = "groq/llama-3.1-8b-instant"
+    # client: Instructor.AsyncInstructor = instructor.from_provider(instructor_model_name)
+    # model_dependent_config: dict = {
+    #     "temperature": 0.0,
+    # }
 
     # [1] Gemini configuration example:
     # Initialize instructor client
@@ -74,7 +80,11 @@ def main():
         )
     }
 
-    current_dag_data = expenditure_phenomena_informed_crafted_bounds
+    # expenditure_sp_owner_expenditure,
+    # expenditure_sp_owner_majorcards_dependents,
+    # expenditure_sp_owner_share,
+    # expenditure_sp_owner_majorcards_selfemp,
+    current_dag_data = expenditure_sp_owner_expenditure
     print(f"[Current DAG] {current_dag_data['name']}")
 
     parameterize_dag(
