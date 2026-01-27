@@ -4,11 +4,16 @@
 from instructor import Instructor
 import instructor
 from dag_traversal_utility import GeneralDAGData
+from dag_yaml_loader import load_dag_from_yaml
+from llm_dag_parameterizer import parameterize_dag
+from google.genai import types
+import sys
+from pathlib import Path
+
+# Legacy Python imports (kept for backward compatibility)
 from dags.expenditure.expenditure_phenomena_informed_crafted_bounds import (
     expenditure_phenomena_informed_crafted_bounds,
 )
-from llm_dag_parameterizer import parameterize_dag
-from google.genai import types
 
 from dags.chachexia1.disease_informed_arbitrary_bounds import (
     cachexia1_disease_informed_arbitrary_bounds,
@@ -52,10 +57,14 @@ from dats.chacexia.disease_informed_real_bounds_tweaked_units_high_precision_nm 
 # os.environ["GEMINI_API_KEY"] = userdata.get("GOOGLE_API_KEY")
 
 
-def main():
+def main(dag_yaml_path: str = None):
     """#### Main Loops for Cachexia Arbitrary Bounds
 
     ##### Cachexia 1 disease informed - arbitrary bounds
+    
+    Args:
+        dag_yaml_path (str, optional): Path to a YAML DAG file. If not provided,
+                                       defaults to the Python-defined DAG.
     """
     # [2] groq example
     instructor_model_name = "groq/llama-3.1-8b-instant"
@@ -80,11 +89,16 @@ def main():
     #     )
     # }
 
-    # expenditure_sp_owner_expenditure,
-    # expenditure_sp_owner_majorcards_dependents,
-    # expenditure_sp_owner_share,
-    # expenditure_sp_owner_majorcards_selfemp,
-    current_dag_data = expenditure_phenomena_informed_crafted_bounds
+    # Load DAG from YAML or use default Python-defined DAG
+    if dag_yaml_path:
+        if not Path(dag_yaml_path).exists():
+            raise FileNotFoundError(f"DAG YAML file not found: {dag_yaml_path}")
+        print(f"[Loading DAG from YAML] {dag_yaml_path}")
+        current_dag_data = load_dag_from_yaml(dag_yaml_path)
+    else:
+        # Default: use Python-defined DAG
+        current_dag_data = expenditure_phenomena_informed_crafted_bounds
+    
     print(f"[Current DAG] {current_dag_data['name']}")
 
     parameterize_dag(
@@ -115,4 +129,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # Allow passing a YAML DAG file path as command-line argument
+    if len(sys.argv) > 1:
+        dag_yaml_file = sys.argv[1]
+        main(dag_yaml_path=dag_yaml_file)
+    else:
+        main()
