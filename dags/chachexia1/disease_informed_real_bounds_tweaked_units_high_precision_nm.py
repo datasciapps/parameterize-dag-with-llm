@@ -53,4 +53,5 @@ cachexia1_disease_informed_real_bounds_tweaked_units_high_precision_nm = {
         ("GM", "V"): 0.0436,
     },
     "phenomenon_overview": "You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover. For highest precision, please consider at least four decimal points for your parameterization results or even more.",
+    "include_parent_relationships": False,
 }

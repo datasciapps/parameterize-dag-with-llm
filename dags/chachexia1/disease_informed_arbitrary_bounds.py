@@ -35,4 +35,5 @@ cachexia1_disease_informed_arbitrary_bounds = {
         ("GM", "V"): 0.0436,
     },
     "phenomenon_overview": "You are going to identify internal dynamics of a phenomena, Cachexia. Cachexia is a complicated metabolic syndrome related to underlying illness and characterized by muscle mass loss with or without fat mass loss that is often associated with anorexia, an inflammatory process, insulin resistance, and increased protein turnover.",
+    "include_parent_relationships": False,
 }

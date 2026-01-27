@@ -197,7 +197,12 @@ def create_distribution_plots(df: pd.DataFrame, columns: list[str]):
                 continue
 
             # Use plt.hist() for a basic histogram
-            plt.hist(data_to_plot, bins=50, edgecolor="black", alpha=0.7)
+            # Try 50 bins first, but fall back to dynamic binning if data range is too small
+            data_range = data_to_plot.max() - data_to_plot.min()
+            num_bins = 50
+            if data_range < 0.5:  # If range is very small, use dynamic binning
+                num_bins = max(1, int(data_range * 100))
+            plt.hist(data_to_plot, bins=num_bins, edgecolor="black", alpha=0.7)
 
             # Calculate mean and std dev to add to the plot title/legend
             mean_val = data_to_plot.mean()

@@ -35,4 +35,5 @@ cachexia1_disease_blind_arbitrary_bounds = {
         ("GM", "V"): 0.0436,
     },
     "phenomenon_overview": None,
+    "include_parent_relationships": False,
 }

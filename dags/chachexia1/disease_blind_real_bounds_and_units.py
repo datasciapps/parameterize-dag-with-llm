@@ -48,4 +48,5 @@ cachexia1_disease_blind_real_bounds_and_units = {
         ("GM", "V"): 0.0436,
     },
     "phenomenon_overview": None,
+    "include_parent_relationships": False,
 }

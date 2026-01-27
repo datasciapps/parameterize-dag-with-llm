@@ -103,4 +103,5 @@ expenditure_phenomena_informed_crafted_bounds = {
         ("Majorcards", "Active"): 1.53996015363929,
     },
     "phenomenon_overview": "This dataset focuses on factors influencing credit card behavior and expenditure patterns, providing insights into consumer finance decisions.",
+    "include_parent_relationships": False,
 }

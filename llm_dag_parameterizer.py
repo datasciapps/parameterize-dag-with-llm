@@ -105,6 +105,7 @@ def parameterize_dag(
                 phenomenon_overview=education_wage_data.phenomenon_overview,  # Pass phenomenon_overview
                 dag=education_wage_dag,  # Pass the DAG to detect parent-parent relationships
                 parameterized_equations=parameterized_equations,  # Pass already-parameterized equations
+                include_parent_relationships=scenario_to_process.get("include_parent_relationships", True),  # Pass toggle flag, default to True
             )
             # --- LLM Loop ---
 

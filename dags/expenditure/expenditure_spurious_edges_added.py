@@ -439,4 +439,5 @@ expenditure_sp_majorcards_selfemp = {
         ("Majorcards", "Selfemp"): 0.0,
     },
     "phenomenon_overview": "This dataset focuses on factors influencing credit card behavior and expenditure patterns, providing insights into consumer finance decisions.",
+    "include_parent_relationships": False,
 }
