@@ -57,6 +57,10 @@ def parameterize_dag(
         education_wage_data, dag_relationships, include_hard_constraints
     )
 
+    # Build a mapping of parameterized equations as we process scenarios
+    # This will store the final validated equations for each node
+    parameterized_equations = {}
+
     MAX_RETRIES = (
         5  # Set the maximum number of retries for LLM elicitation per scenario
     )
@@ -99,6 +103,8 @@ def parameterize_dag(
                 include_constraints_in_prompt=include_hard_constraints,
                 feedback_message=current_feedback_message,  # Pass feedback message to the prompt generator
                 phenomenon_overview=education_wage_data.phenomenon_overview,  # Pass phenomenon_overview
+                dag=education_wage_dag,  # Pass the DAG to detect parent-parent relationships
+                parameterized_equations=parameterized_equations,  # Pass already-parameterized equations
             )
             # --- LLM Loop ---
 
@@ -187,6 +193,8 @@ def parameterize_dag(
                     last_validated_llm_responses_df = (
                         llm_responses_df  # Store for outside visualization
                     )
+                    # Store the parameterized equation for this node for future reference
+                    parameterized_equations[scenario_to_process["target_variable_name"]] = proposed_equation_str
                     current_scenario_succeeded = True  # Mark as successful
                     break  # Exit while loop for current scenario
                 else:
@@ -239,6 +247,14 @@ def parameterize_dag(
             # Also add to the 'final' lists if not already added by successful validation
             all_llm_responses_dfs.append(last_validated_llm_responses_df)
             all_coefficients_dfs.append(last_validated_coefficients_df)
+            # Store the equation from the last proposal
+            if (
+                not last_validated_llm_responses_df.empty
+                and "proposed_lin_str_eq" in last_validated_llm_responses_df.columns
+            ):
+                parameterized_equations[scenario_to_process["target_variable_name"]] = (
+                    last_validated_llm_responses_df.iloc[0]["proposed_lin_str_eq"]
+                )
             # current_scenario_succeeded remains False
         elif not current_scenario_succeeded and not scenario_iteration_history:
             print(

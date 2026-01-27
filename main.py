@@ -58,33 +58,33 @@ def main():
     ##### Cachexia 1 disease informed - arbitrary bounds
     """
     # [2] groq example
-    # instructor_model_name = "groq/llama-3.1-8b-instant"
-    # client: Instructor.AsyncInstructor = instructor.from_provider(instructor_model_name)
-    # model_dependent_config: dict = {
-    #     "temperature": 0.0,
-    # }
+    instructor_model_name = "groq/llama-3.1-8b-instant"
+    client: Instructor.AsyncInstructor = instructor.from_provider(instructor_model_name)
+    model_dependent_config: dict = {
+        "temperature": 0.0,
+    }
 
     # [1] Gemini configuration example:
     # Initialize instructor client
-    instructor_model_name = "google/gemini-2.5-flash"
-    client: instructor.AsyncInstructor = instructor.from_provider(
-        "google/gemini-2.5-flash",
-    )
-    model_dependent_config: dict = {
-        "config": types.GenerateContentConfig(
-            temperature=0,
-            thinking_config=types.ThinkingConfig(
-                thinking_budget=0,
-            ),
-            response_mime_type="application/json",
-        )
-    }
+    # instructor_model_name = "google/gemini-2.5-flash"
+    # client: instructor.AsyncInstructor = instructor.from_provider(
+    #     "google/gemini-2.5-flash",
+    # )
+    # model_dependent_config: dict = {
+    #     "config": types.GenerateContentConfig(
+    #         temperature=0,
+    #         thinking_config=types.ThinkingConfig(
+    #             thinking_budget=0,
+    #         ),
+    #         response_mime_type="application/json",
+    #     )
+    # }
 
     # expenditure_sp_owner_expenditure,
     # expenditure_sp_owner_majorcards_dependents,
     # expenditure_sp_owner_share,
     # expenditure_sp_owner_majorcards_selfemp,
-    current_dag_data = expenditure_sp_owner_expenditure
+    current_dag_data = expenditure_phenomena_informed_crafted_bounds
     print(f"[Current DAG] {current_dag_data['name']}")
 
     parameterize_dag(
