@@ -35,6 +35,7 @@ STAT_COLUMNS = [
     "l2_norm",
     "l2_norm_normalized",
     "l2_norm_normalized_without_single_parent_edges",
+    "relative_order_count",  # M4 metric
 ]
 
 # --- Core Logic Functions ---
@@ -118,25 +119,46 @@ def calculate_and_print_statistics(
     print("=======================================================")
 
     stats_data = []
+
     for col in columns:
         if col in df.columns:
             mean_val = df[col].mean()
             std_val = df[col].std()
+            n = df[col].count()
+            
+            # Calculate 95% confidence interval
+            # CI = mean ± (1.96 * std / sqrt(n))
+            import numpy as np
+            if n > 1:
+                ci_range = 1.96 * std_val / np.sqrt(n)
+            else:
+                ci_range = np.nan
 
             # Print the results
             print(f"**Column: {col}**")
             print(f"  - Mean ($\mu$): {mean_val:.4f}")
             print(f"  - Std Dev ($\sigma$): {std_val:.4f}")
+            if not np.isnan(ci_range):
+                print(f"  - 95% CI: {mean_val:.4f} ± {ci_range:.4f}")
 
             # Collect data for plotting
-            stats_data.append({"Metric": col, "Mean": mean_val, "StdDev": std_val})
+            stats_data.append({
+                "Metric": col, 
+                "Mean": mean_val, 
+                "StdDev": std_val,
+                "CI_95_Range": ci_range
+            })
+
+            # Special print for M4 (relative_order_count)
+            if col == "relative_order_count":
+                print(f"  >> Aggregated M4 (relative_order_count) across runs: Mean = {mean_val:.4f}, Std = {std_val:.4f}")
         else:
             print(f"Warning: Column '{col}' not found in the combined data. Skipping.")
 
     return pd.DataFrame(stats_data)
 
 
-def create_bar_plot(stats_df: pd.DataFrame):
+def create_bar_plot(stats_df: pd.DataFrame, timestamp: str = None):
     """Generates a bar plot with error bars for the statistics and saves it."""
 
     if stats_df.empty:
@@ -166,17 +188,24 @@ def create_bar_plot(stats_df: pd.DataFrame):
     plt.tight_layout()
 
     # Save the plot to the output directory
-    plot_filename = BASE_DIR / "statistics_bar_plot.png"
+    from datetime import datetime
+    if not timestamp:
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    plot_filename = BASE_DIR / f"{timestamp}_statistics_bar_plot.png"
     plt.savefig(plot_filename)
     plt.close()
     print(f"\nBar plot successfully saved to: {plot_filename}")
 
 
-def create_distribution_plots(df: pd.DataFrame, columns: list[str]):
+def create_distribution_plots(df: pd.DataFrame, columns: list[str], timestamp: str = None):
     """Generates and saves a histogram for each specified column."""
     if df.empty:
         print("Cannot create distribution plots: DataFrame is empty.")
         return
+
+    from datetime import datetime
+    if not timestamp:
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
     print("\n--- Generating Distribution Plots ---")
 
@@ -221,7 +250,7 @@ def create_distribution_plots(df: pd.DataFrame, columns: list[str]):
             # Save the plot
             # Create a safe filename
             safe_col_name = col.replace(".", "_")
-            plot_filename = BASE_DIR / f"distribution_plot_{safe_col_name}.png"
+            plot_filename = BASE_DIR / f"{timestamp}_distribution_plot_{safe_col_name}.png"
             plt.savefig(plot_filename)
             plt.close()  # Close the figure to free up memory
             print(f"  > Distribution plot for '{col}' saved to: {plot_filename.name}")
@@ -232,24 +261,131 @@ def create_distribution_plots(df: pd.DataFrame, columns: list[str]):
             )
 
 
+def extract_experiment_ids() -> dict:
+    """
+    Extracts all unique experiment IDs (timestamps) from gt_llm_stat_df CSV files.
+    Returns a dictionary mapping experiment_id -> list of file paths.
+    """
+    print(f"Searching for experiment IDs in {BASE_DIR.resolve()}...")
+    
+    if not BASE_DIR.is_dir():
+        print(f"Error: Directory '{BASE_DIR}' not found.")
+        return {}
+    
+    # Find all gt_llm_stat_df CSV files
+    all_stat_files = [
+        f for f in BASE_DIR.iterdir() if f.is_file() and f.match(SEARCH_PATTERN)
+    ]
+    
+    if not all_stat_files:
+        print("No experiment files found.")
+        return {}
+    
+    # Extract experiment IDs (timestamps) from filenames
+    import re
+    experiments = {}
+    for file in all_stat_files:
+        match = re.search(r"(\d{14})", file.name)  # Match 14-digit timestamp
+        if match:
+            exp_id = match.group(1)
+            if exp_id not in experiments:
+                experiments[exp_id] = []
+            experiments[exp_id].append(file)
+    
+    return experiments
+
+
+def prompt_user_for_experiment(experiments: dict) -> str:
+    """
+    Displays available experiment IDs and prompts user to choose one.
+    Returns the selected experiment ID or 'all' for all experiments.
+    """
+    if not experiments:
+        print("No experiments available.")
+        return None
+    
+    print("\n" + "="*60)
+    print("Available Experiment IDs:")
+    print("="*60)
+    
+    sorted_exp_ids = sorted(experiments.keys())
+    for idx, exp_id in enumerate(sorted_exp_ids, 1):
+        file_count = len(experiments[exp_id])
+        print(f"  [{idx}] {exp_id} ({file_count} file{'s' if file_count > 1 else ''})")
+    
+    print(f"  [0] ALL experiments (aggregate all {len(sorted_exp_ids)} experiments)")
+    print("="*60)
+    
+    while True:
+        try:
+            choice = input("\nEnter your choice [0-{}]: ".format(len(sorted_exp_ids))).strip()
+            choice_num = int(choice)
+            
+            if choice_num == 0:
+                return "all"
+            elif 1 <= choice_num <= len(sorted_exp_ids):
+                return sorted_exp_ids[choice_num - 1]
+            else:
+                print(f"Invalid choice. Please enter a number between 0 and {len(sorted_exp_ids)}.")
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+        except KeyboardInterrupt:
+            print("\n\nOperation cancelled by user.")
+            return None
+
+
 # --- Main Execution ---
 
 if __name__ == "__main__":
-    # 1. Get the list of files, sorted numerically
-    files_to_process = get_sorted_files()
-
-    # 2. Combine the data
+    # 1. Extract available experiment IDs
+    experiments = extract_experiment_ids()
+    
+    if not experiments:
+        print("No experiments found. Exiting.")
+        exit(0)
+    
+    # 2. Prompt user to select an experiment
+    selected_exp_id = prompt_user_for_experiment(experiments)
+    
+    if selected_exp_id is None:
+        print("No experiment selected. Exiting.")
+        exit(0)
+    
+    # 3. Get the files to process based on user selection
+    if selected_exp_id == "all":
+        files_to_process = []
+        for exp_files in experiments.values():
+            files_to_process.extend(exp_files)
+        files_to_process = sorted(files_to_process, key=lambda f: f.name)
+        print(f"\nProcessing ALL experiments ({len(files_to_process)} files total)")
+    else:
+        files_to_process = experiments[selected_exp_id]
+        print(f"\nProcessing experiment {selected_exp_id} ({len(files_to_process)} files)")
+    
+    # 4. Combine the data
     final_dataframe = combine_csv_files(files_to_process)
 
-    # 3. Calculate statistics
+    # 5. Calculate statistics
     stats_df = pd.DataFrame()
+    timestamp = selected_exp_id if selected_exp_id != "all" else None
+    
     if not final_dataframe.empty:
         stats_df = calculate_and_print_statistics(final_dataframe, STAT_COLUMNS)
 
-    # 4. Create and save the bar plot (RE-INCLUDED)
-    if not stats_df.empty:
-        create_bar_plot(stats_df)
+        # Save the aggregated statistics to a timestamped CSV file
+        from datetime import datetime
+        # Use the selected experiment ID as timestamp, or generate new one for 'all'
+        if not timestamp:
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        agg_csv_name = f"{timestamp}_aggregated_stats.csv"
+        agg_csv_path = BASE_DIR / agg_csv_name
+        stats_df.to_csv(agg_csv_path, index=False)
+        print(f"\nAggregated statistics saved to: {agg_csv_path}")
 
-    # 5. Create and save the distribution plots
+    # 6. Create and save the bar plot (RE-INCLUDED)
+    if not stats_df.empty:
+        create_bar_plot(stats_df, timestamp)
+
+    # 7. Create and save the distribution plots
     if not final_dataframe.empty:
-        create_distribution_plots(final_dataframe, STAT_COLUMNS)
+        create_distribution_plots(final_dataframe, STAT_COLUMNS, timestamp)
