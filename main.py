@@ -6,6 +6,7 @@ import instructor
 from dag_traversal_utility import GeneralDAGData
 from dag_yaml_loader import load_dag_from_yaml
 from llm_dag_parameterizer import parameterize_dag
+from logging_utility import ExperimentLogger
 from google.genai import types
 import sys
 import argparse
@@ -35,7 +36,7 @@ MODEL_CONFIGS = {
 }
 
 
-def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: int = 3):
+def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: int = 3, label: str = None):
     """#### Main Loops for DAG Parameterization
     
     Args:
@@ -45,6 +46,7 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
                          google/gemini-2.5-flash, google/gemini-2.0-flash
         num_loops (int): Number of parameterization cycles to run (required).
         loop_retry_max (int): Maximum number of retries per loop on failure (default: 3).
+        label (str): Optional custom label for the experiment (default: None).
     """
     if not Path(dag_yaml_path).exists():
         raise FileNotFoundError(f"DAG YAML file not found: {dag_yaml_path}")
@@ -58,6 +60,9 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
     
     if loop_retry_max < 0:
         raise ValueError(f"Number of retries must be >= 0, got {loop_retry_max}")
+    
+    # Initialize experiment logger
+    exp_logger = ExperimentLogger(dag_yaml_path, model_name, num_loops, loop_retry_max, label)
     
     print(f"[Loading DAG from YAML] {dag_yaml_path}")
     current_dag_data = load_dag_from_yaml(dag_yaml_path)
@@ -86,6 +91,10 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
 
     # Run parameterization in a loop with retry logic
     for loop_num in range(1, num_loops + 1):
+        # Create logger for this loop
+        loop_logger = exp_logger.create_loop_logger(loop_num)
+        exp_logger.log_experiment_metadata(loop_logger)
+        
         print(f"\n{'='*80}")
         print(f"[Loop {loop_num}/{num_loops}]")
         print(f"{'='*80}\n")
@@ -93,44 +102,46 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
         retry_num = 0
         loop_success = False
         
-        while retry_num <= loop_retry_max and not loop_success:
-            try:
-                if retry_num > 0:
-                    print(f"[Retry {retry_num}/{loop_retry_max}] Attempting loop {loop_num} again...\n")
-                
-                parameterize_dag(
-                    GeneralDAGData(
-                        all_nodes=current_dag_data["all_nodes"],
-                        raw_edges=current_dag_data["raw_edges"],
-                        node_descriptions=current_dag_data["node_descriptions"],
-                        primary_domain_name=current_dag_data["primary_domain_name"],
-                        secondary_domain_name=current_dag_data["secondary_domain_name"],
-                        node_lower_bound=current_dag_data["node_lower_bound"],
-                        node_upper_bound=current_dag_data["node_upper_bound"],
-                        ground_truth_effect_sizes=current_dag_data["ground_truth_effect_sizes"],
-                        phenomenon_overview=current_dag_data["phenomenon_overview"],
-                        include_parent_relationships=current_dag_data.get("include_parent_relationships", False),
-                    ),
-                    include_hard_constraints=True,
-                    client=client,
-                    model_dependent_config=model_dependent_config,
-                    instructor_model_name=model_name,
-                )
-                
-                loop_success = True
-                print(f"\n[Loop {loop_num}/{num_loops}] ✓ Completed successfully")
-                
-            except Exception as e:
-                retry_num += 1
-                
-                if retry_num <= loop_retry_max:
-                    print(f"\n[Loop {loop_num}/{num_loops}] ✗ Failed on attempt {retry_num}: {str(e)[:200]}")
-                    print(f"[Retries remaining] {loop_retry_max - retry_num + 1}")
-                else:
-                    print(f"\n[Loop {loop_num}/{num_loops}] ✗ Failed after {loop_retry_max} retries")
-                    print(f"[Error] {str(e)}")
-                    print(f"[Status] SKIPPING loop {loop_num} and continuing to next loop\n")
-                    break
+        # Redirect all output to both console and log file
+        with exp_logger.redirect_output():
+            while retry_num <= loop_retry_max and not loop_success:
+                try:
+                    if retry_num > 0:
+                        print(f"[Retry {retry_num}/{loop_retry_max}] Attempting loop {loop_num} again...\n")
+                    
+                    parameterize_dag(
+                        GeneralDAGData(
+                            all_nodes=current_dag_data["all_nodes"],
+                            raw_edges=current_dag_data["raw_edges"],
+                            node_descriptions=current_dag_data["node_descriptions"],
+                            primary_domain_name=current_dag_data["primary_domain_name"],
+                            secondary_domain_name=current_dag_data["secondary_domain_name"],
+                            node_lower_bound=current_dag_data["node_lower_bound"],
+                            node_upper_bound=current_dag_data["node_upper_bound"],
+                            ground_truth_effect_sizes=current_dag_data["ground_truth_effect_sizes"],
+                            phenomenon_overview=current_dag_data["phenomenon_overview"],
+                            include_parent_relationships=current_dag_data.get("include_parent_relationships", False),
+                        ),
+                        include_hard_constraints=True,
+                        client=client,
+                        model_dependent_config=model_dependent_config,
+                        instructor_model_name=model_name,
+                    )
+                    
+                    loop_success = True
+                    print(f"\n[Loop {loop_num}/{num_loops}] ✓ Completed successfully")
+                    
+                except Exception as e:
+                    retry_num += 1
+                    
+                    if retry_num <= loop_retry_max:
+                        print(f"\n[Loop {loop_num}/{num_loops}] ✗ Failed on attempt {retry_num}: {str(e)[:200]}")
+                        print(f"[Retries remaining] {loop_retry_max - retry_num + 1}")
+                    else:
+                        print(f"\n[Loop {loop_num}/{num_loops}] ✗ Failed after {loop_retry_max} retries")
+                        print(f"[Error] {str(e)}")
+                        print(f"[Status] SKIPPING loop {loop_num} and continuing to next loop\n")
+                        break
         
         if not loop_success:
             print(f"[Loop {loop_num}/{num_loops}] Marked as FAILED - will continue with next iteration")
@@ -184,5 +195,12 @@ Available models:
         help="Maximum number of retries per loop on failure (default: 3)"
     )
     
+    parser.add_argument(
+        "--label",
+        type=str,
+        required=True,
+        help="Custom label for the experiment (used in log filenames)"
+    )
+    
     args = parser.parse_args()
-    main(dag_yaml_path=args.dag_yaml, model_name=args.model, num_loops=args.loop, loop_retry_max=args.loop_retry_max)
+    main(dag_yaml_path=args.dag_yaml, model_name=args.model, num_loops=args.loop, loop_retry_max=args.loop_retry_max, label=args.label)

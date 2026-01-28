@@ -15,17 +15,21 @@ Developer's environment:
 
 ### LLM prerequisite
 
-- As in main.py, via instructor package, you can plug in many models via many providers.  
-- For example, you may use gemini from "gemini/...", or all the models from groq "groq/...". 
-- Note: You need to specify API keys via environmental variable. 
-- Arguments to pass `instructor.create()`, you need to pass it via `model_dependent_config` dict.
+- Via the instructor package, you can use multiple LLM models from different providers.
+- Supported models:
+  - `groq/llama-3.1-8b-instant` (Groq provider)
+  - `google/gemini-2.5-flash` (Google provider)
+  - `google/gemini-2.0-flash` (Google provider)
+- API keys must be set as environment variables (e.g., `GROQ_API_KEY`, `GOOGLE_API_KEY`)
+- Model configuration is handled via the `model_dependent_config` dictionary passed to `parameterize_dag()`.
 
-```
-    instructor_model_name = "groq/llama-3.1-8b-instant"
-    client: Instructor.AsyncInstructor = instructor.from_provider(instructor_model_name)
-    model_dependent_config: dict = {
-        "temperature": 0.0,
-    }
+Example usage in code:
+```python
+instructor_model_name = "groq/llama-3.1-8b-instant"
+client = instructor.from_provider(instructor_model_name)
+model_dependent_config = {
+    "temperature": 0.0,
+}
 ```
 
 
@@ -49,15 +53,24 @@ pip install -r requirements.txt
 
 ### Run an experiment
 
+The CLI requires a DAG YAML file, an LLM model, the number of loops to run, and a custom label for the experiment.
 
-Simple run:
+Basic run:
+```bash
+python main.py dags/chachexia1/disease_informed_arbitrary_bounds.yaml -m groq/llama-3.1-8b-instant -l 5 --label exp1
+```
 
-```
-python main.py
+With custom retry settings:
+```bash
+python main.py dags/expenditure/expenditure_phenomena_informed_crafted_bounds.yaml -m google/gemini-2.5-flash -l 10 --loop-retry-max 0 --label "exp baseline"
 ```
 
-Run 25 times with logging:
+Available options:
+- `dag_yaml`: Path to the DAG YAML file (required)
+- `-m, --model`: LLM model to use (required)
+- `-l, --loop`: Number of parameterization cycles to run (required)
+- `--label`: Custom label for the experiment, used in log filenames (required). Spaces will be converted to underscores and converted to lowercase.
+- `--loop-retry-max`: Maximum retries per loop on failure (default: 3)
 
-```
-for i in {1..25}; do python main.py 2>&1 | tee output/A_$(date +%H%M%S).log; done
-```
+Logs are saved to `output/logs/` with filenames like `{timestamp}_{label}_loop_{N}.log`
+
