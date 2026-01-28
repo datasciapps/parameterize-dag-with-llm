@@ -203,7 +203,7 @@ def convert_terms_to_coeffient_df(
 
     coefficients_df = pd.DataFrame(coefficients_list)
     if verbose:
-        display(coefficients_df, "coeff_df", exp_id=exp_id)
+        display(coefficients_df, "coeff_df", exp_id=exp_id, append_mode=True, header_as_string=True)
     else:
         display(coefficients_df.head(), "coeff_df_head", exp_id=exp_id)
     return coefficients_df

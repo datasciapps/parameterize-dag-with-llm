@@ -35,7 +35,7 @@ MODEL_CONFIGS = {
 }
 
 
-def main(dag_yaml_path: str, model_name: str, num_loops: int):
+def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: int = 3):
     """#### Main Loops for DAG Parameterization
     
     Args:
@@ -43,7 +43,8 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int):
         model_name (str): Name of the LLM model to use (required).
                          Available models: groq/llama-3.1-8b-instant, 
                          google/gemini-2.5-flash, google/gemini-2.0-flash
-        num_loops (int): Number of parameterization cycles to run (default: 1).
+        num_loops (int): Number of parameterization cycles to run (required).
+        loop_retry_max (int): Maximum number of retries per loop on failure (default: 3).
     """
     if not Path(dag_yaml_path).exists():
         raise FileNotFoundError(f"DAG YAML file not found: {dag_yaml_path}")
@@ -55,12 +56,16 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int):
     if num_loops < 1:
         raise ValueError(f"Number of loops must be >= 1, got {num_loops}")
     
+    if loop_retry_max < 0:
+        raise ValueError(f"Number of retries must be >= 0, got {loop_retry_max}")
+    
     print(f"[Loading DAG from YAML] {dag_yaml_path}")
     current_dag_data = load_dag_from_yaml(dag_yaml_path)
     print(f"[Current DAG] {current_dag_data['name']}")
     
     print(f"[LLM Model] {model_name}")
     print(f"[Number of Loops] {num_loops}")
+    print(f"[Retry Budget per Loop] {loop_retry_max}")
     
     model_config = MODEL_CONFIGS[model_name]
     
@@ -79,30 +84,60 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int):
             "temperature": model_config["temperature"],
         }
 
-    # Run parameterization in a loop
+    # Run parameterization in a loop with retry logic
     for loop_num in range(1, num_loops + 1):
         print(f"\n{'='*80}")
         print(f"[Loop {loop_num}/{num_loops}]")
         print(f"{'='*80}\n")
         
-        parameterize_dag(
-            GeneralDAGData(
-                all_nodes=current_dag_data["all_nodes"],
-                raw_edges=current_dag_data["raw_edges"],
-                node_descriptions=current_dag_data["node_descriptions"],
-                primary_domain_name=current_dag_data["primary_domain_name"],
-                secondary_domain_name=current_dag_data["secondary_domain_name"],
-                node_lower_bound=current_dag_data["node_lower_bound"],
-                node_upper_bound=current_dag_data["node_upper_bound"],
-                ground_truth_effect_sizes=current_dag_data["ground_truth_effect_sizes"],
-                phenomenon_overview=current_dag_data["phenomenon_overview"],
-                include_parent_relationships=current_dag_data.get("include_parent_relationships", False),
-            ),
-            include_hard_constraints=True,
-            client=client,
-            model_dependent_config=model_dependent_config,
-            instructor_model_name=model_name,
-        )
+        retry_num = 0
+        loop_success = False
+        
+        while retry_num <= loop_retry_max and not loop_success:
+            try:
+                if retry_num > 0:
+                    print(f"[Retry {retry_num}/{loop_retry_max}] Attempting loop {loop_num} again...\n")
+                
+                parameterize_dag(
+                    GeneralDAGData(
+                        all_nodes=current_dag_data["all_nodes"],
+                        raw_edges=current_dag_data["raw_edges"],
+                        node_descriptions=current_dag_data["node_descriptions"],
+                        primary_domain_name=current_dag_data["primary_domain_name"],
+                        secondary_domain_name=current_dag_data["secondary_domain_name"],
+                        node_lower_bound=current_dag_data["node_lower_bound"],
+                        node_upper_bound=current_dag_data["node_upper_bound"],
+                        ground_truth_effect_sizes=current_dag_data["ground_truth_effect_sizes"],
+                        phenomenon_overview=current_dag_data["phenomenon_overview"],
+                        include_parent_relationships=current_dag_data.get("include_parent_relationships", False),
+                    ),
+                    include_hard_constraints=True,
+                    client=client,
+                    model_dependent_config=model_dependent_config,
+                    instructor_model_name=model_name,
+                )
+                
+                loop_success = True
+                print(f"\n[Loop {loop_num}/{num_loops}] ✓ Completed successfully")
+                
+            except Exception as e:
+                retry_num += 1
+                
+                if retry_num <= loop_retry_max:
+                    print(f"\n[Loop {loop_num}/{num_loops}] ✗ Failed on attempt {retry_num}: {str(e)[:200]}")
+                    print(f"[Retries remaining] {loop_retry_max - retry_num + 1}")
+                else:
+                    print(f"\n[Loop {loop_num}/{num_loops}] ✗ Failed after {loop_retry_max} retries")
+                    print(f"[Error] {str(e)}")
+                    print(f"[Status] SKIPPING loop {loop_num} and continuing to next loop\n")
+                    break
+        
+        if not loop_success:
+            print(f"[Loop {loop_num}/{num_loops}] Marked as FAILED - will continue with next iteration")
+    
+    print(f"\n{'='*80}")
+    print(f"[Execution Complete]")
+    print(f"{'='*80}\n")
 
 
 if __name__ == "__main__":
@@ -111,9 +146,9 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python main.py dags/expenditure/expenditure_phenomena_informed_crafted_bounds.yaml --model groq/llama-3.1-8b-instant
-  python main.py dags/chachexia1/disease_informed_arbitrary_bounds.yaml --model google/gemini-2.5-flash
   python main.py dags/expenditure/expenditure_phenomena_informed_crafted_bounds.yaml --model groq/llama-3.1-8b-instant --loop 5
+  python main.py dags/chachexia1/disease_informed_arbitrary_bounds.yaml --model google/gemini-2.5-flash --loop 3 --loop-retry-max 5
+  python main.py dags/expenditure/expenditure_phenomena_informed_crafted_bounds.yaml -m groq/llama-3.1-8b-instant -l 10 --loop-retry-max 0
 
 Available models:
   - groq/llama-3.1-8b-instant
@@ -142,5 +177,12 @@ Available models:
         help="Number of parameterization cycles to run (required)"
     )
     
+    parser.add_argument(
+        "--loop-retry-max",
+        type=int,
+        default=3,
+        help="Maximum number of retries per loop on failure (default: 3)"
+    )
+    
     args = parser.parse_args()
-    main(dag_yaml_path=args.dag_yaml, model_name=args.model, num_loops=args.loop)
+    main(dag_yaml_path=args.dag_yaml, model_name=args.model, num_loops=args.loop, loop_retry_max=args.loop_retry_max)

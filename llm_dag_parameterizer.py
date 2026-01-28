@@ -121,7 +121,7 @@ def parameterize_dag(
             )
             llm_responses_df["scenario_idx"] = scenario_idx
             # Save the LLM responses DataFrame for this iteration but silence print since others will print it
-            display(llm_responses_df, "llm_resp_df", exp_id=exp_id, silence_print=True)
+            display(llm_responses_df, "llm_resp_df", exp_id=exp_id, silence_print=True, append_mode=True)
 
             # timestamp = datetime.now().strftime("%Y%m%d_%H%M")
             # llm_responses_df.to_csv(f'llm_responses_{scenario_idx}_{timestamp}.csv', index=False) # Keep this for saving individual responses for debugging if needed
@@ -281,16 +281,16 @@ def parameterize_dag(
             print(
                 f"[EFFECT_SIZES {scenario_idx}] Extracted for scenario:", effect_sizes
             )
-            print(
-                f"\n[VISUALIZATION {scenario_idx}] --- Parent-Child Relationship with Effect Sizes ---"
-            )
-            display(
-                prompt_generator.visualize_parent_child_relationship(
-                    effect_sizes=effect_sizes
-                ),
-                output_file_postfix="viz_par_chil",
-                exp_id=exp_id,
-            )
+            # print(
+            #     f"\n[VISUALIZATION {scenario_idx}] --- Parent-Child Relationship with Effect Sizes ---"
+            # )
+            # display(
+            #     prompt_generator.visualize_parent_child_relationship(
+            #         effect_sizes=effect_sizes
+            #     ),
+            #     output_file_postfix="viz_par_chil",
+            #     exp_id=exp_id,
+            # )
         else:
             print(
                 f"[SCENARIO {scenario_idx}] No valid or last-resort coefficients obtained for this scenario after all retries, skipping visualization."
