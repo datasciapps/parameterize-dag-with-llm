@@ -47,6 +47,49 @@ def visualize_full_dag_effects(
 
     # Calculate statistics to be displayed as a label
     stats_result = compute_graph_statistics(all_effect_sizes_map, dag_data)
+    # Compute relative_order_count (M_4)
+    relative_order_count = 0
+    total_multi_parent_nodes = 0
+    for node_name in dag_data.all_nodes:
+        # Find scenario data for the current node as target
+        current_scenario = next(
+            (s for s in all_scenarios if s["target_variable_name"] == node_name), None
+        )
+        if current_scenario:
+            direct_parents = current_scenario["direct_parent_variables"]
+        else:
+            direct_parents = []
+        if len(direct_parents) > 1:
+            current_target_gt_effects_for_node = {
+                p: gt_effects_by_target[node_name].get(p) for p in direct_parents
+            }
+            current_target_llm_effects_for_node = {
+                p: llm_effects_by_target[node_name].get(p) for p in direct_parents
+            }
+            # Filter out parents for which we don't have both GT and LLM effects
+            comparable_parents = [
+                p
+                for p in direct_parents
+                if current_target_gt_effects_for_node[p] is not None
+                and current_target_llm_effects_for_node[p] is not None
+            ]
+            if len(comparable_parents) >= 2:
+                sorted_gt_parents = sorted(
+                    comparable_parents,
+                    key=lambda p: current_target_gt_effects_for_node[p],
+                    reverse=True,
+                )
+                sorted_llm_parents = sorted(
+                    comparable_parents,
+                    key=lambda p: current_target_llm_effects_for_node[p],
+                    reverse=True,
+                )
+                total_multi_parent_nodes += 1
+                if sorted_gt_parents == sorted_llm_parents:
+                    relative_order_count += 1
+
+    stats_result["relative_order_count"] = relative_order_count
+    stats_result["total_multi_parent_nodes"] = total_multi_parent_nodes
     df_stats_result = pd.DataFrame(stats_result, index=[0])
     display(df_stats_result, output_file_postfix="gt_llm_stat_df", exp_id=exp_id)
 
@@ -55,11 +98,14 @@ def visualize_full_dag_effects(
     l2_norm_normalized_without_single_parent_edges_value = stats_result.get(
         "l2_norm_normalized_without_single_parent_edges", "N/A"
     )
+    relative_order_count_value = stats_result.get("relative_order_count", "N/A")
+    total_multi_parent_nodes_value = stats_result.get("total_multi_parent_nodes", "N/A")
     statistics_label_text = (
         f"Model: {model_name}"
         f"L2 Norm distance (LLM-elicited vs GT): {l2_norm_value}\n"
         f"L2 Norm distance with node-wise normalization (LLM-elicited vs GT): {l2_norm_normalized_value}\n"
         f"L2 Norm differences with node-wise normalization, single-parent edges excluded (LLM-elicited vs GT): {l2_norm_normalized_without_single_parent_edges_value}\n"
+        f"Relative order count (M_4): {relative_order_count_value} / {total_multi_parent_nodes_value}\n"
         f"* indicates that parametrization feedback loop failed within loop budget.\n"
         f"Node Color Scheme:\n"
         f"- Lightgreen: Correct order of effect sizes from LLM vs GT (for >1 parents)\n"
