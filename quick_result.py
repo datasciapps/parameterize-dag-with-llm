@@ -24,6 +24,7 @@ import pandas as pd
 from pathlib import Path
 import re
 import matplotlib.pyplot as plt
+import argparse
 
 # --- Configuration ---
 # Set the base directory and the pattern for the files you want to find
@@ -158,7 +159,7 @@ def calculate_and_print_statistics(
     return pd.DataFrame(stats_data)
 
 
-def create_bar_plot(stats_df: pd.DataFrame, timestamp: str = None):
+def create_bar_plot(stats_df: pd.DataFrame, timestamp: str = None, label: str = None):
     """Generates a bar plot with error bars for the statistics and saves it."""
 
     if stats_df.empty:
@@ -191,13 +192,17 @@ def create_bar_plot(stats_df: pd.DataFrame, timestamp: str = None):
     from datetime import datetime
     if not timestamp:
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    plot_filename = BASE_DIR / f"{timestamp}_statistics_bar_plot.png"
+    
+    if label:
+        plot_filename = BASE_DIR / f"{timestamp}_{label}_statistics_bar_plot.png"
+    else:
+        plot_filename = BASE_DIR / f"{timestamp}_statistics_bar_plot.png"
     plt.savefig(plot_filename)
     plt.close()
     print(f"\nBar plot successfully saved to: {plot_filename}")
 
 
-def create_distribution_plots(df: pd.DataFrame, columns: list[str], timestamp: str = None):
+def create_distribution_plots(df: pd.DataFrame, columns: list[str], timestamp: str = None, label: str = None):
     """Generates and saves a histogram for each specified column."""
     if df.empty:
         print("Cannot create distribution plots: DataFrame is empty.")
@@ -250,7 +255,10 @@ def create_distribution_plots(df: pd.DataFrame, columns: list[str], timestamp: s
             # Save the plot
             # Create a safe filename
             safe_col_name = col.replace(".", "_")
-            plot_filename = BASE_DIR / f"{timestamp}_distribution_plot_{safe_col_name}.png"
+            if label:
+                plot_filename = BASE_DIR / f"{timestamp}_{label}_distribution_plot_{safe_col_name}.png"
+            else:
+                plot_filename = BASE_DIR / f"{timestamp}_distribution_plot_{safe_col_name}.png"
             plt.savefig(plot_filename)
             plt.close()  # Close the figure to free up memory
             print(f"  > Distribution plot for '{col}' saved to: {plot_filename.name}")
@@ -337,6 +345,27 @@ def prompt_user_for_experiment(experiments: dict) -> str:
 # --- Main Execution ---
 
 if __name__ == "__main__":
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(
+        description="Aggregate and visualize LLM evaluation statistics",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--bulk",
+        type=str,
+        help="Comma-separated list of experiment IDs to aggregate (e.g., '20260128120000,20260128130000')"
+    )
+    parser.add_argument(
+        "--label",
+        type=str,
+        help="Label name for output files (required when using --bulk)"
+    )
+    args = parser.parse_args()
+    
+    # Validate that --label is provided when --bulk is used
+    if args.bulk and not args.label:
+        parser.error("--label is required when using --bulk mode")
+    
     # 1. Extract available experiment IDs
     experiments = extract_experiment_ids()
     
@@ -344,30 +373,59 @@ if __name__ == "__main__":
         print("No experiments found. Exiting.")
         exit(0)
     
-    # 2. Prompt user to select an experiment
-    selected_exp_id = prompt_user_for_experiment(experiments)
-    
-    if selected_exp_id is None:
-        print("No experiment selected. Exiting.")
-        exit(0)
-    
-    # 3. Get the files to process based on user selection
-    if selected_exp_id == "all":
+    # 2. Determine which experiments to process
+    if args.bulk:
+        # CLI mode: process specified experiment IDs
+        bulk_ids = [exp_id.strip() for exp_id in args.bulk.split(",")]
+        
+        # Assert that exactly 25 experiment IDs are provided
+        assert len(bulk_ids) == 25, f"Bulk mode requires exactly 25 experiment IDs, but {len(bulk_ids)} were provided."
+        
+        print(f"\nBulk mode: Processing {len(bulk_ids)} specified experiments")
+        
         files_to_process = []
-        for exp_files in experiments.values():
-            files_to_process.extend(exp_files)
+        valid_ids = []
+        for exp_id in bulk_ids:
+            if exp_id in experiments:
+                files_to_process.extend(experiments[exp_id])
+                valid_ids.append(exp_id)
+                print(f"  ✓ {exp_id} ({len(experiments[exp_id])} files)")
+            else:
+                print(f"  ✗ {exp_id} (not found, skipping)")
+        
+        if not files_to_process:
+            print("\nNo valid experiments found. Exiting.")
+            exit(0)
+        
         files_to_process = sorted(files_to_process, key=lambda f: f.name)
-        print(f"\nProcessing ALL experiments ({len(files_to_process)} files total)")
+        selected_exp_id = "bulk_" + "_".join(valid_ids[:3]) + ("_etc" if len(valid_ids) > 3 else "")
+        print(f"\nTotal files to process: {len(files_to_process)}")
     else:
-        files_to_process = experiments[selected_exp_id]
-        print(f"\nProcessing experiment {selected_exp_id} ({len(files_to_process)} files)")
+        # Interactive mode: prompt user to select
+        selected_exp_id = prompt_user_for_experiment(experiments)
+        
+        if selected_exp_id is None:
+            print("No experiment selected. Exiting.")
+            exit(0)
+        
+        # 3. Get the files to process based on user selection
+        if selected_exp_id == "all":
+            files_to_process = []
+            for exp_files in experiments.values():
+                files_to_process.extend(exp_files)
+            files_to_process = sorted(files_to_process, key=lambda f: f.name)
+            print(f"\nProcessing ALL experiments ({len(files_to_process)} files total)")
+        else:
+            files_to_process = experiments[selected_exp_id]
+            print(f"\nProcessing experiment {selected_exp_id} ({len(files_to_process)} files)")
     
     # 4. Combine the data
     final_dataframe = combine_csv_files(files_to_process)
 
     # 5. Calculate statistics
     stats_df = pd.DataFrame()
-    timestamp = selected_exp_id if selected_exp_id != "all" else None
+    timestamp = selected_exp_id if selected_exp_id not in ["all"] and not selected_exp_id.startswith("bulk_") else None
+    label = args.label if args.bulk else None
     
     if not final_dataframe.empty:
         stats_df = calculate_and_print_statistics(final_dataframe, STAT_COLUMNS)
@@ -377,15 +435,20 @@ if __name__ == "__main__":
         # Use the selected experiment ID as timestamp, or generate new one for 'all'
         if not timestamp:
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        agg_csv_name = f"{timestamp}_aggregated_stats.csv"
+        
+        # Build filename with label if provided
+        if label:
+            agg_csv_name = f"{timestamp}_{label}_aggregated_stats.csv"
+        else:
+            agg_csv_name = f"{timestamp}_aggregated_stats.csv"
         agg_csv_path = BASE_DIR / agg_csv_name
         stats_df.to_csv(agg_csv_path, index=False)
         print(f"\nAggregated statistics saved to: {agg_csv_path}")
 
     # 6. Create and save the bar plot (RE-INCLUDED)
     if not stats_df.empty:
-        create_bar_plot(stats_df, timestamp)
+        create_bar_plot(stats_df, timestamp, label)
 
     # 7. Create and save the distribution plots
     if not final_dataframe.empty:
-        create_distribution_plots(final_dataframe, STAT_COLUMNS, timestamp)
+        create_distribution_plots(final_dataframe, STAT_COLUMNS, timestamp, label)
