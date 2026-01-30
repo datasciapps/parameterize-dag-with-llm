@@ -21,6 +21,12 @@ MODEL_CONFIGS = {
         "temperature": 0.0,
         "config": None,  # groq doesn't need special config
     },
+    "groq/llama-3.3-70b-versatile": {
+        "provider": "groq",
+        "model_name": "groq/llama-3.3-70b-versatile",
+        "temperature": 0.0,
+        "config": None,  # groq doesn't need special config
+    },
     "google/gemini-2.5-flash": {
         "provider": "google",
         "model_name": "google/gemini-2.5-flash",
@@ -43,7 +49,7 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
         dag_yaml_path (str): Path to a YAML DAG file (required).
         model_name (str): Name of the LLM model to use (required).
                          Available models: groq/llama-3.1-8b-instant, 
-                         google/gemini-2.5-flash, google/gemini-2.0-flash
+                         groq/llama-3.3-70b-versatile, google/gemini-2.5-flash
         num_loops (int): Number of parameterization cycles to run (required).
         loop_retry_max (int): Maximum number of retries per loop on failure (default: 3).
         label (str): Optional custom label for the experiment (default: None).
@@ -177,7 +183,7 @@ Available models:
         "--model",
         "-m",
         required=True,
-        help="LLM model to use (e.g., groq/llama-3.1-8b-instant, google/gemini-2.5-flash)"
+        help="LLM model to use (e.g., groq/llama-3.1-8b-instant, groq/llama-3.3-70b-versatile, google/gemini-2.5-flash)"
     )
     
     parser.add_argument(
