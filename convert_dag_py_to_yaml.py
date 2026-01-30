@@ -98,5 +98,5 @@ def convert_all_dags_to_yaml(dags_directory):
 
 
 if __name__ == "__main__":
-    dags_dir = "/home/ykanta/pj/llm-scm/dags"
+    dags_dir = "~/pj/llm-scm/dags"
     convert_all_dags_to_yaml(dags_dir)

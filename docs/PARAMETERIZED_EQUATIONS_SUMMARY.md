@@ -272,7 +272,7 @@ Experience (Years of work experience):
 
 Run:
 ```bash
-cd /home/ykanta/pj/llm-scm
+cd ~/pj/llm-scm
 python test_parameterized_equations.py
 ```
 

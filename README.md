@@ -1,7 +1,5 @@
 ## LLM-SCM Parameterizer
 
-**Author: Kanta Yamaoka, related to AI4Nof1 project**
-
 An evaluation pipeline to see given a DAG, how well/poorly LLMs can parameterize SCM/Bayesian Network in linear and continuous domains. 
 
 - The pipeline comes with multiple DAGs and their learned ground-truth paramters thanks to bnRep repository.  

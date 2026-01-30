@@ -81,7 +81,7 @@ These contain modified versions and are stored together in one YAML file for now
 ## File Structure
 
 ```
-/home/ykanta/pj/llm-scm/
+~/pj/llm-scm/
 ├── dag_yaml_loader.py              # NEW: YAML loader utility
 ├── verify_dag_conversion.py         # NEW: Verification script
 ├── YAML_DAG_GUIDE.md               # NEW: Complete guide
