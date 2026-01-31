@@ -68,6 +68,6 @@ algal2 = {
         ("Colour", "Cyanobacteria"): -0.024,
         ("TP_PS", "TP"): 0.61,
     },
-    "phenomenon_overview": "This network describes relationships between various environmental factors and algal blooms in a body of water.",
+    "phenomenon_overview": "You are going to identify internal dynamics of a phenomena, Algal Blooms. Various environmental factors and algal blooms in a body of water interact through complex relationships.",
     "include_parent_relationships": False,
 }
