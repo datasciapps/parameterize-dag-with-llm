@@ -1,0 +1,41 @@
+name: foodsecurity
+all_nodes:
+- Cost
+- Educational_Attainment
+- Health
+- Social_Cohesion
+raw_edges:
+- - Educational_Attainment
+  - Social_Cohesion
+- - Health
+  - Cost
+- - Health
+  - Educational_Attainment
+- - Health
+  - Social_Cohesion
+node_descriptions:
+  Cost: Available budget assigned to food security issues (percent).
+  Educational_Attainment: Pupils passing a combination of UK school examinations (percent).
+  Health: Overall health status monitored by doctors and public health experts (percent).
+  Social_Cohesion: Community ties and social support strength (percent).
+primary_domain_name: Public Health
+secondary_domain_name: Socioeconomics
+node_lower_bound:
+  Cost: 0.0
+  Educational_Attainment: 0.0
+  Health: 0.0
+  Social_Cohesion: 0.0
+node_upper_bound:
+  Cost: 100.0
+  Educational_Attainment: 100.0
+  Health: 100.0
+  Social_Cohesion: 100.0
+ground_truth_effect_sizes:
+  Educational_Attainment->Social_Cohesion: 10.0
+  Health->Cost: 10.0
+  Health->Educational_Attainment: 7.0
+  Health->Social_Cohesion: 17.0
+phenomenon_overview: You are going to identify dynamics of a phenomena, Food Security
+  in UK. Food security reflects the availability and stability of access to food and
+  is influenced by broader social and economic conditions and related community factors.
+include_parent_relationships: false
