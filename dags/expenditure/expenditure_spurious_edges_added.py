@@ -1,6 +1,6 @@
 # Added edge: ('Owner', 'Expenditure')
 expenditure_sp_owner_expenditure = {
-    "name": "expenditure_phenomena_informed_crafted_bounds_modified_Owner_to_Expenditure",
+    "name": "expenditure_sp_owner_expenditure",
     "all_nodes": {
         "Active",
         "Age",
@@ -111,7 +111,7 @@ expenditure_sp_owner_expenditure = {
 
 # Added edge: ('Majorcards', 'Dependents')
 expenditure_sp_majorcards_dependents = {
-    "name": "expenditure_phenomena_informed_crafted_bounds_modified_Majorcards_to_Dependents",
+    "name": "expenditure_sp_majorcards_dependents",
     "all_nodes": {
         "Active",
         "Age",
@@ -222,7 +222,7 @@ expenditure_sp_majorcards_dependents = {
 
 # Added edge: ('Owner', 'Share')
 expenditure_sp_owner_share = {
-    "name": "expenditure_phenomena_informed_crafted_bounds_modified_Owner_to_Share",
+    "name": "expenditure_sp_owner_share",
     "all_nodes": {
         "Active",
         "Age",
@@ -333,7 +333,7 @@ expenditure_sp_owner_share = {
 
 # Added edge: ('Majorcards', 'Selfemp')
 expenditure_sp_majorcards_selfemp = {
-    "name": "expenditure_phenomena_informed_crafted_bounds_modified_Majorcards_to_Selfemp",
+    "name": "expenditure_sp_majorcards_selfemp",
     "all_nodes": {
         "Active",
         "Age",
