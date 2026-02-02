@@ -8,7 +8,7 @@ import glob
 from pathlib import Path
 
 # Labels from bulk_quick_result.sh
-labels = [
+labels_direct_estimation = [
     "foo_llama31_25_5",
     "foo_llama33_25_5",
     "foo_gemini25_25_5",
@@ -25,6 +25,24 @@ labels = [
     "sto_llama33_25_5",
     "sto_gemini25_25_5",
 ]
+
+labels_misspecification = [
+    "exp_sp_owner_expenditure_llama31_25_5",
+    "exp_sp_owner_expenditure_llama33_25_5",
+    "exp_sp_owner_expenditure_gemini25_25_5",
+    "exp_sp_majorcards_dependents_llama31_25_5",
+    "exp_sp_majorcards_dependents_llama33_25_5",
+    "exp_sp_majorcards_dependents_gemini25_25_5",
+    "exp_sp_owner_share_llama31_25_5",
+    "exp_sp_owner_share_llama33_25_5",
+    "exp_sp_owner_share_gemini25_25_5",
+    "exp_sp_majorcards_selfemp_llama31_25_5",
+    "exp_sp_majorcards_selfemp_llama33_25_5",
+    "exp_sp_majorcards_selfemp_gemini25_25_5",
+]
+
+# labels = labels_direct_estimation
+labels = labels_misspecification
 
 def main():
     output_dir = Path("output")
@@ -61,7 +79,7 @@ def main():
     combined_df = pd.concat(all_dfs, ignore_index=True)
     
     # Save to output file
-    output_file = output_dir / "combined_aggregated_stats.csv"
+    output_file = output_dir / "missp_combined_aggregated_stats.csv"
     combined_df.to_csv(output_file, index=False)
     
     print(f"\n✓ Successfully saved combined statistics to: {output_file}")
