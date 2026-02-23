@@ -1,0 +1,134 @@
+name: stocks_pe
+all_nodes:
+- AEFES
+- AKSEN
+- CCOLA
+- ENJSA
+- KERVT
+- LKMNH
+- MPARK
+- ODAS
+- PENGD
+- TUKAS
+- ULKER
+- ULUUN
+- ZOREN
+raw_edges:
+- - AEFES
+  - CCOLA
+- - AEFES
+  - ENJSA
+- - AEFES
+  - MPARK
+- - AKSEN
+  - ENJSA
+- - AKSEN
+  - MPARK
+- - KERVT
+  - ENJSA
+- - KERVT
+  - PENGD
+- - KERVT
+  - TUKAS
+- - KERVT
+  - ULKER
+- - LKMNH
+  - MPARK
+- - LKMNH
+  - ULUUN
+- - ODAS
+  - AKSEN
+- - ODAS
+  - MPARK
+- - ODAS
+  - ZOREN
+- - PENGD
+  - TUKAS
+- - TUKAS
+  - ODAS
+- - ULKER
+  - CCOLA
+- - ULKER
+  - MPARK
+- - ULUUN
+  - KERVT
+- - ZOREN
+  - AEFES
+- - ZOREN
+  - AKSEN
+- - ZOREN
+  - ENJSA
+- - ZOREN
+  - ULKER
+node_descriptions:
+  AEFES: AEFES (Daily % Return)
+  AKSEN: AKSEN (Daily % Return)
+  CCOLA: CCOLA (Daily % Return)
+  ENJSA: ENJSA (Daily % Return)
+  KERVT: KERVT (Daily % Return)
+  LKMNH: LKMNH (Daily % Return)
+  MPARK: MPARK (Daily % Return)
+  ODAS: ODAS (Daily % Return)
+  PENGD: PENGD (Daily % Return)
+  TUKAS: TUKAS (Daily % Return)
+  ULKER: ULKER (Daily % Return)
+  ULUUN: ULUUN (Daily % Return)
+  ZOREN: ZOREN (Daily % Return)
+primary_domain_name: Finance
+secondary_domain_name: Market Analysis
+node_lower_bound:
+  AEFES: -0.106
+  AKSEN: -0.106
+  CCOLA: -0.0761
+  ENJSA: -0.0737
+  KERVT: -0.1445
+  LKMNH: -0.137
+  MPARK: -0.1081
+  ODAS: -0.1074
+  PENGD: -0.1509
+  TUKAS: -0.1117
+  ULKER: -0.0789
+  ULUUN: -0.1678
+  ZOREN: -0.1154
+node_upper_bound:
+  AEFES: 0.1353
+  AKSEN: 0.1353
+  CCOLA: 0.0969
+  ENJSA: 0.0931
+  KERVT: 0.1192
+  LKMNH: 0.1374
+  MPARK: 0.1193
+  ODAS: 0.124
+  PENGD: 0.1825
+  TUKAS: 0.1242
+  ULKER: 0.0842
+  ULUUN: 0.1554
+  ZOREN: 0.1226
+ground_truth_effect_sizes:
+  AEFES->CCOLA: 0.351159
+  AEFES->ENJSA: 0.148784
+  AEFES->MPARK: 0.205706
+  AKSEN->ENJSA: 0.134633
+  AKSEN->MPARK: 0.117322
+  KERVT->ENJSA: 0.113066
+  KERVT->PENGD: 0.680582
+  KERVT->TUKAS: 0.355931
+  KERVT->ULKER: 0.206911
+  LKMNH->MPARK: 0.29696
+  LKMNH->ULUUN: 0.235237
+  ODAS->AKSEN: 0.232151
+  ODAS->MPARK: 0.0683476
+  ODAS->ZOREN: 0.450508
+  PENGD->TUKAS: 0.110216
+  TUKAS->ODAS: 0.324198
+  ULKER->CCOLA: 0.225405
+  ULKER->MPARK: 0.192566
+  ULUUN->KERVT: 0.284235
+  ZOREN->AEFES: 0.28504
+  ZOREN->AKSEN: 0.296668
+  ZOREN->ENJSA: 0.184162
+  ZOREN->ULKER: 0.191251
+phenomenon_overview: You are going to identify internal dynamics of a phenomena, Stock
+  Market Analysis. Healthcare, food and energy sectors in the pandemic in Turkiye
+  during covid period.
+include_parent_relationships: true

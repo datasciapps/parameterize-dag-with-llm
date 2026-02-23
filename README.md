@@ -2,9 +2,32 @@
 
 An evaluation pipeline to see given a DAG, how well/poorly LLMs can parameterize SCM/Bayesian Network in linear and continuous domains. 
 
-- The pipeline comes with multiple DAGs and their learned ground-truth paramters thanks to bnRep repository.  
-- The LLM calling part is implemented via general instructor pagkage, so you can easily switch LLM to your favorite ones. Structured output, call-retry etc are handled by the instructor package.  
+- The pipeline comes with multiple DAGs and their learned ground-truth parameters thanks to bnRep repository.  
+- The LLM calling part is implemented via general instructor package, so you can easily switch LLM to your favorite ones. Structured output, call-retry etc are handled by the instructor package.  
 - The codebase is adapted to CLI environment, which will output all the artifacts (csv and pdf) into ./output directory. 
+
+
+## Call to action: Please help us improve the tooling to further investigate quantitative causal reasoning of LLMs! 
+
+The tooling's improvement is ongoing, and I want your feedback. Feel free to report bugs, feature requests via this github repo. 
+
+The tool is actively being developed along with our arxiv preprint.
+
+[**Linear-LLM-SCM: Benchmarking LLMs for Coefficient Elicitation in Linear-Gaussian Causal Models**](https://arxiv.org/abs/2602.10282v1)
+
+If you utilize our tooling for your future publications, please kindly cite us via the following bibtex:
+
+```
+@misc{yamaoka2026linearllmscmbenchmarkingllmscoefficient,
+      title={Linear-LLM-SCM: Benchmarking LLMs for Coefficient Elicitation in Linear-Gaussian Causal Models}, 
+      author={Kanta Yamaoka and Sumantrak Mukherjee and Thomas Gärtner and David Antony Selby and Stefan Konigorski and Eyke Hüllermeier and Viktor Bengs and Sebastian Josef Vollmer},
+      year={2026},
+      eprint={2602.10282},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2602.10282}, 
+}
+```
 
 ## Setup 
 

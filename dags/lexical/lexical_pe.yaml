@@ -1,0 +1,89 @@
+name: lexical_pe
+all_nodes:
+- aoa
+- area
+- genre_disp
+- log_freq
+- log_range
+- prev_heard
+- prev_used
+- social_disp
+raw_edges:
+- - aoa
+  - genre_disp
+- - aoa
+  - prev_heard
+- - aoa
+  - social_disp
+- - area
+  - social_disp
+- - log_freq
+  - genre_disp
+- - log_freq
+  - log_range
+- - log_range
+  - genre_disp
+- - prev_heard
+  - area
+- - prev_heard
+  - genre_disp
+- - prev_heard
+  - log_freq
+- - prev_heard
+  - prev_used
+- - prev_used
+  - area
+- - prev_used
+  - log_freq
+- - prev_used
+  - log_range
+node_descriptions:
+  aoa: Subjective age-of-acquisition estimate (years).
+  area: Proxy for geographic area a word is known, based on coordinate extremes (area
+    index).
+  genre_disp: Dispersion across genres as entropy of token frequencies (entropy).
+  log_freq: Normalized word frequency, log-transformed (log-frequency).
+  log_range: Dispersion across texts as log-transformed text count (log-count).
+  prev_heard: Passive lexical prevalence as fraction of speakers who have heard a
+    word (proportion).
+  prev_used: Active lexical prevalence as fraction of speakers who have used a word
+    (proportion).
+  social_disp: Social dispersion as entropy of participants' educational status (entropy).
+primary_domain_name: Linguistics
+secondary_domain_name: Cognitive Science
+node_lower_bound:
+  aoa: 5.78
+  area: 0.0
+  genre_disp: 0.0
+  log_freq: -3.93
+  log_range: 0.0
+  prev_heard: 0.0
+  prev_used: 0.0
+  social_disp: 0.0
+node_upper_bound:
+  aoa: 21.0
+  area: 61.33
+  genre_disp: 1.89
+  log_freq: 1.05
+  log_range: 5.6
+  prev_heard: 1.0
+  prev_used: 0.99
+  social_disp: 1.78
+ground_truth_effect_sizes:
+  aoa->genre_disp: 0.1493371
+  aoa->prev_heard: -0.422608
+  aoa->social_disp: -0.1212857
+  area->social_disp: 0.604543
+  log_freq->genre_disp: 0.1369712
+  log_freq->log_range: 0.453501
+  log_range->genre_disp: 0.2290909
+  prev_heard->area: 1.279619
+  prev_heard->genre_disp: 0.4137189
+  prev_heard->log_freq: -0.2389613
+  prev_heard->prev_used: 0.9072148
+  prev_used->area: -0.5456541
+  prev_used->log_freq: 0.6522685
+  prev_used->log_range: 0.2927989
+phenomenon_overview: You are going to identify internal dynamics of a phenomena, Lexical
+  Properties. Lexical properties exhibit various interconnected relationships.
+include_parent_relationships: true

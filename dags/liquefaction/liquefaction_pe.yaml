@@ -1,0 +1,98 @@
+name: liquefaction_pe
+all_nodes:
+- Ds
+- GWT
+- Mw
+- N160
+- S
+- Sigmav
+- Ts
+- lnR
+- lnamax
+- lnt
+raw_edges:
+- - Ds
+  - S
+- - Ds
+  - Sigmav
+- - GWT
+  - S
+- - GWT
+  - Sigmav
+- - lnamax
+  - S
+- - lnR
+  - lnamax
+- - lnR
+  - lnt
+- - lnR
+  - S
+- - lnt
+  - S
+- - Mw
+  - lnamax
+- - Mw
+  - lnt
+- - Mw
+  - S
+- - N160
+  - S
+- - Sigmav
+  - N160
+- - Ts
+  - S
+node_descriptions:
+  Ds: Depth of the liquefiable layer (m).
+  GWT: Groundwater table (m).
+  lnamax: 'Natural log of peak ground acceleration (base unit: g).'
+  lnR: 'Natural log of epicentral distance (base unit: km).'
+  lnt: Natural log of earthquake duration (s).
+  Mw: Moment magnitude of the earthquake (dimensionless).
+  N160: Normalized SPT blow counts (blows per foot).
+  S: Seismic liquefaction-induced settlement (m).
+  Sigmav: Vertical effective stress (kPa).
+  Ts: Thickness of the liquefiable layer (m).
+primary_domain_name: Geotechnical Engineering
+secondary_domain_name: Seismology
+node_lower_bound:
+  Ds: 0.4
+  GWT: 0.2
+  lnamax: 0.15
+  lnR: 13.0
+  lnt: 3.54
+  Mw: 6.7
+  N160: 2.72
+  S: 0.01
+  Sigmav: 13.6
+  Ts: 1.35
+node_upper_bound:
+  Ds: 15.2
+  GWT: 7.3
+  lnamax: 0.836
+  lnR: 400.68
+  lnt: 140.3
+  Mw: 9.2
+  N160: 19.7
+  S: 0.5
+  Sigmav: 172.41
+  Ts: 25.4
+ground_truth_effect_sizes:
+  Ds->S: -0.00832616014865797
+  Ds->Sigmav: 8.65954393507753
+  GWT->S: 0.000777814682337057
+  GWT->Sigmav: 8.63429241267473
+  Mw->S: 0.0534088869851398
+  Mw->lnamax: 0.41908404951763
+  Mw->lnt: 1.91326821221389
+  N160->S: -0.00871964886165512
+  Sigmav->N160: 0.00907224603603644
+  Ts->S: 0.0164373806481002
+  lnR->S: -0.00306747566719272
+  lnR->lnamax: -0.307873843121311
+  lnR->lnt: -0.729126859129163
+  lnamax->S: 0.0938939306816531
+  lnt->S: -0.010246146273104
+phenomenon_overview: You are going to identify internal dynamics of a phenomena, Liquefaction-Induced
+  Settlement. Liquefaction-induced settlement in free-field ground is estimated through
+  various geotechnical parameters.
+include_parent_relationships: true
