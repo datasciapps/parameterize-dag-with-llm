@@ -1,6 +1,9 @@
+### This is the list of commands we used for parent-parent relation informed prompts. 
+### The labels are useful to retrieve results. 
+
 # Foodsecurity PE
-# python main.py dags/foodsecurity/foodsecurity_pe.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label foo_pe_l3_8b
-# python main.py dags/foodsecurity/foodsecurity_pe.yaml -m groq/llama-3.3-70b-versatile -l 25 --loop-retry-max 5 --label foo_pe_l3_70b
+python main.py dags/foodsecurity/foodsecurity_pe.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label foo_pe_l3_8b
+python main.py dags/foodsecurity/foodsecurity_pe.yaml -m groq/llama-3.3-70b-versatile -l 25 --loop-retry-max 5 --label foo_pe_l3_70b
 python main.py dags/foodsecurity/foodsecurity_pe.yaml -m google/gemini-2.5-flash -l 25 --loop-retry-max 5 --label foo_pe_gem25
 
 # Algal2 PE

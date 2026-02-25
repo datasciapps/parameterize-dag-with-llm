@@ -8,16 +8,39 @@ What it does
     the pattern `*gt_llm_stat_df*.csv`.
 - Reads and concatenates those CSVs into a single Pandas
     DataFrame (adds a `source_file` column to identify origin).
-- Computes mean and standard deviation for a set of L2-norm
-    metrics defined in `STAT_COLUMNS`.
-- Produces and saves a bar plot with error bars (`statistics_bar_plot.png`)
-    and per-column distribution histograms named
-    `distribution_plot_<column>.png` inside the `output` directory.
+- Computes mean, standard deviation, and 95% confidence interval for
+    L2-norm metrics defined in `STAT_COLUMNS`.
+- Produces and saves:
+    * Bar plot with error bars (`<timestamp>_<label>_statistics_bar_plot.png`)
+    * Per-column distribution histograms (`<timestamp>_<label>_distribution_plot_<column>.png`)
+    * Aggregated statistics CSV (`<timestamp>_<label>_aggregated_stats.csv`)
+- Supports both interactive mode and bulk processing mode.
 
 Usage
-- Run as a script: `python quick_result.py` from the repository root.
-- Ensure the `output` directory exists and contains the expected
-    CSV files. Requires `pandas` and `matplotlib`.
+Interactive mode:
+    python quick_result.py
+    - Prompts user to select from available experiment IDs
+    - Process single experiment or all experiments
+
+Bulk mode (batch processing):
+    python quick_result.py --bulk "ID1,ID2,ID3,..." --label "experiment_name"
+    - Process exactly 25 comma-separated experiment IDs
+    - Requires --label argument for output file naming
+    - Example: python quick_result.py --bulk "20260128120000,20260128130000,..." --label "my_experiment"
+
+Arguments:
+    --bulk: Comma-separated list of experiment IDs (14-digit timestamps) to aggregate.
+            Must provide exactly 25 IDs.
+    --label: Required label for output files when using --bulk mode. Used as suffix
+             in output filenames (e.g., {timestamp}_{label}_aggregated_stats.csv).
+
+Output files:
+    - {timestamp}_{label}_aggregated_stats.csv: Mean, StdDev, and 95% CI for each metric
+    - {timestamp}_{label}_statistics_bar_plot.png: Bar chart with error bars
+    - {timestamp}_{label}_distribution_plot_{metric}.png: Histogram for each metric
+
+Requirements:
+    pandas, matplotlib, numpy
 """
 
 import pandas as pd
