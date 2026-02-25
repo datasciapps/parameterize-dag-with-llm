@@ -60,7 +60,6 @@ def load_dag_from_yaml(yaml_path: str) -> dict:
 
 if __name__ == "__main__":
     import sys
-    import json
     
     if len(sys.argv) < 2:
         print("Usage: python dag_yaml_loader.py <path_to_yaml>")

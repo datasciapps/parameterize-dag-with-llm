@@ -2,6 +2,10 @@
 """
 Quick reference and examples for using YAML DAGs in the LLM-SCM project.
 """
+from dag_yaml_loader import load_dag_from_yaml
+import os
+from dag_traversal_utility import GeneralDAGData
+from pathlib import Path
 
 # ============================================================================
 # EXAMPLE 1: Load Default DAG (Backward Compatible)
@@ -18,7 +22,6 @@ Quick reference and examples for using YAML DAGs in the LLM-SCM project.
 # python main.py dags/expenditure/expenditure_phenomena_informed_crafted_bounds.yaml
 
 # In Python code:
-from dag_yaml_loader import load_dag_from_yaml
 
 dag = load_dag_from_yaml('dags/expenditure/expenditure_phenomena_informed_crafted_bounds.yaml')
 print(dag['name'])
@@ -44,10 +47,6 @@ print(f"Edges: {dag['raw_edges']}")
 # ============================================================================
 # EXAMPLE 4: Using Loaded DAG with GeneralDAGData
 # ============================================================================
-
-from dag_yaml_loader import load_dag_from_yaml
-from dag_traversal_utility import GeneralDAGData
-from llm_dag_parameterizer import parameterize_dag
 
 # Load from YAML
 yaml_dag = load_dag_from_yaml('dags/expenditure/expenditure_phenomena_informed_crafted_bounds.yaml')
@@ -117,9 +116,6 @@ ground_truth_effect_sizes:
 # EXAMPLE 7: Checking if DAG Was Loaded from YAML vs Python
 # ============================================================================
 
-from pathlib import Path
-from dag_yaml_loader import load_dag_from_yaml
-
 yaml_path = 'dags/expenditure/expenditure_phenomena_informed_crafted_bounds.yaml'
 
 if Path(yaml_path).exists():
@@ -183,7 +179,6 @@ include_parent_relationships: false
 
 # Problem: FileNotFoundError when loading YAML
 # Solution: Check the path is correct relative to current working directory
-import os
 print(os.getcwd())  # Check current directory
 print(os.path.exists('dags/expenditure/expenditure_phenomena_informed_crafted_bounds.yaml'))
 

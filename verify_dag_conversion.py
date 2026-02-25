@@ -3,7 +3,6 @@ Helper script to verify that DAG Python files and their YAML counterparts contai
 Checks for consistency between .py and .yaml versions of DAG definitions.
 """
 
-import os
 import sys
 from pathlib import Path
 import yaml

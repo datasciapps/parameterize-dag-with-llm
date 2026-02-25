@@ -3,10 +3,8 @@
 Check success status of parent relationships PE experiments and enumerate experiment IDs.
 """
 
-import subprocess
 import re
 from pathlib import Path
-from collections import defaultdict
 
 # Labels for all PE experiments
 PE_LABELS = [
@@ -138,7 +136,7 @@ def main():
     
     print(f"\n✓ Saved bulk commands to: {output_file}")
     print("\nYou can now run:")
-    print(f"  bash pe_experiment_ids.txt")
+    print("  bash pe_experiment_ids.txt")
     print("or copy the commands from the file to execute them individually.")
 
 if __name__ == "__main__":

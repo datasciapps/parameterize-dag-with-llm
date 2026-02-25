@@ -1,6 +1,6 @@
 import pandas as pd
-from custom_display_utility import display, export_graph_snapshot_to_json
-from dag_traversal_utility import GeneralDAGData
+from src.custom_display_utility import display, export_graph_snapshot_to_json
+from src.dag_traversal_utility import GeneralDAGData
 import numpy as np
 import graphviz
 

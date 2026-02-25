@@ -5,7 +5,6 @@ Handles tuples in raw_edges and ground_truth_effect_sizes.
 
 import os
 import yaml
-import json
 import importlib.util
 from pathlib import Path
 

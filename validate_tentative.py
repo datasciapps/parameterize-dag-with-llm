@@ -2,7 +2,6 @@
 """
 Validate the experiment ID mapping in tentative.txt against log files
 """
-import os
 import re
 import glob
 
@@ -64,7 +63,7 @@ def main():
             print(f"  IDs: {experiments[0]} - {experiments[-1]}")
             all_experiments.extend([(exp_id, name) for exp_id in experiments])
         else:
-            print(f"  IDs: None found")
+            print("  IDs: None found")
         print()
     
     print("=" * 80)

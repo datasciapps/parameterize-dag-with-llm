@@ -4,7 +4,6 @@ Concatenate all aggregated_stats CSV files from bulk quick_result runs.
 """
 
 import pandas as pd
-import glob
 from pathlib import Path
 
 # Labels from bulk_quick_result.sh

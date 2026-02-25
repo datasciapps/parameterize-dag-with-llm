@@ -3,7 +3,7 @@
 
 from collections import deque
 import graphviz
-from custom_display_utility import display
+from src.custom_display_utility import display
 
 
 class DAGNode:

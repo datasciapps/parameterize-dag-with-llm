@@ -1,7 +1,7 @@
 import pandas as pd
 import re
 import json
-from custom_display_utility import display
+from src.custom_display_utility import display
 
 
 def split_equation(equation_str_to_split, verbose=False):  # Renamed for clarity
