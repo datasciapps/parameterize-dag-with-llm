@@ -95,3 +95,8 @@ Available options:
 
 Logs are saved to `output/logs/` with filenames like `{timestamp}_{label}_loop_{N}.log`
 
+### How to handle experimental artifacts
+
+Please refer to ARTIFACTS.md, where we are trying to summarize the artifacts in output folder. At this point, there are different types of files and some have inconsistent naming schemes. We try to make it more consistent. 
+
+Further, some analysis script are more manual to specify experiment ids to peform bulk analysis opeartions. In the future, we will make it more smooth and user-friendly without juggling different scripts with various args. 
