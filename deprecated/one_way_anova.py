@@ -1,5 +1,4 @@
 """one_way_anova.py
-
 Command-line utility to perform a one-way ANOVA on a specified
 metric/column across three archived result directories.
 

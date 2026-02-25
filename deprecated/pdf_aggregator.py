@@ -1,7 +1,6 @@
 import argparse
 from pathlib import Path
 import matplotlib.pyplot as plt
-
 # You will need to install 'pdf2image' and 'Pillow' for this script to run.
 # You will also need 'poppler' installed on your system for pdf2image to work.
 try:

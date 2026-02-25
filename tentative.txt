@@ -1,0 +1,34 @@
+# Foodsecurity PE
+# python main.py dags/foodsecurity/foodsecurity_pe.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label foo_pe_l3_8b
+# python main.py dags/foodsecurity/foodsecurity_pe.yaml -m groq/llama-3.3-70b-versatile -l 25 --loop-retry-max 5 --label foo_pe_l3_70b
+python main.py dags/foodsecurity/foodsecurity_pe.yaml -m google/gemini-2.5-flash -l 25 --loop-retry-max 5 --label foo_pe_gem25
+
+# Algal2 PE
+python main.py dags/algal2/algal2_pe.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label alg_pe_l3_8b
+python main.py dags/algal2/algal2_pe.yaml -m groq/llama-3.3-70b-versatile -l 25 --loop-retry-max 5 --label alg_pe_l3_70b
+python main.py dags/algal2/algal2_pe.yaml -m google/gemini-2.5-flash -l 25 --loop-retry-max 5 --label alg_pe_gem25
+
+# Lexical PE
+python main.py dags/lexical/lexical_pe.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label lex_pe_l3_8b
+python main.py dags/lexical/lexical_pe.yaml -m groq/llama-3.3-70b-versatile -l 25 --loop-retry-max 5 --label lex_pe_l3_70b
+python main.py dags/lexical/lexical_pe.yaml -m google/gemini-2.5-flash -l 25 --loop-retry-max 5 --label lex_pe_gem25
+
+# Liquefaction PE
+python main.py dags/liquefaction/liquefaction_pe.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label liq_pe_l3_8b
+python main.py dags/liquefaction/liquefaction_pe.yaml -m groq/llama-3.3-70b-versatile -l 25 --loop-retry-max 5 --label liq_pe_l3_70b
+python main.py dags/liquefaction/liquefaction_pe.yaml -m google/gemini-2.5-flash -l 25 --loop-retry-max 5 --label liq_pe_gem25
+
+# Stocks PE
+python main.py dags/stocks/stocks_pe.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label sto_pe_l3_8b
+python main.py dags/stocks/stocks_pe.yaml -m groq/llama-3.3-70b-versatile -l 25 --loop-retry-max 5 --label sto_pe_l3_70b
+python main.py dags/stocks/stocks_pe.yaml -m google/gemini-2.5-flash -l 25 --loop-retry-max 5 --label sto_pe_gem25
+
+# Expenditure PE
+python main.py dags/expenditure/expenditure_phenomena_informed_crafted_bounds_pe.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label ex_pe_l3_8b
+python main.py dags/expenditure/expenditure_phenomena_informed_crafted_bounds_pe.yaml -m groq/llama-3.3-70b-versatile -l 25 --loop-retry-max 5 --label ex_pe_l3_70b
+python main.py dags/expenditure/expenditure_phenomena_informed_crafted_bounds_pe.yaml -m google/gemini-2.5-flash -l 25 --loop-retry-max 5 --label ex_pe_gem25
+
+# Cachexia PE
+python main.py dags/chachexia1/disease_informed_real_bounds_and_units_pe.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label cha_pe_l3_8b
+python main.py dags/chachexia1/disease_informed_real_bounds_and_units_pe.yaml -m groq/llama-3.3-70b-versatile -l 25 --loop-retry-max 5 --label cha_pe_l3_70b
+python main.py dags/chachexia1/disease_informed_real_bounds_and_units_pe.yaml -m google/gemini-2.5-flash -l 25 --loop-retry-max 5 --label cha_pe_gem25
