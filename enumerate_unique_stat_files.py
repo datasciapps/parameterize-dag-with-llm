@@ -147,8 +147,10 @@ def main():
                 print(f"\nTo aggregate these 25 experiments, run:")
                 print(f"python quick_result.py --bulk {','.join(stat_ids_for_bulk)}\n")
             elif len(stat_ids_for_bulk) > 0:
-                # Print warning in red if not 25
+                # Print warning in red if not 25, but still show the command
                 print(f"\033[91m[WARNING] {len(stat_ids_for_bulk)} success indicators found (expected 25). Proceed with caution!\033[0m")
+                print(f"\nTo aggregate these {len(stat_ids_for_bulk)} experiments, run:")
+                print(f"python quick_result.py --bulk {','.join(stat_ids_for_bulk)}\n")
     print(f"\n{sum(len(files) for files in id_to_files.values())} stat files found after filtering.")
 
     # Dump command if requested

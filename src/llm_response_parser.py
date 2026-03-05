@@ -199,6 +199,9 @@ def convert_terms_to_coeffient_df(
                 f"Missing coefficient for parent variable '{parent_var_name}' in LLM response: {terms}"
             )
 
+        if "beta_0" not in coefficients:
+            coefficients["beta_0"] = 0.0
+
         coefficients_list.append(coefficients)
 
     coefficients_df = pd.DataFrame(coefficients_list)

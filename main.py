@@ -10,6 +10,7 @@ from src.logging_utility import ExperimentLogger
 from google.genai import types
 import argparse
 from pathlib import Path
+import traceback
 
 
 # Model configurations
@@ -138,13 +139,22 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
                     
                 except Exception as e:
                     retry_num += 1
+                    error_type = type(e).__name__
+                    error_message = str(e).strip() or repr(e).strip() or "(empty exception message)"
+                    traceback_text = traceback.format_exc().strip()
+                    traceback_preview = "\n".join(traceback_text.splitlines()[-10:]) if traceback_text else "(no traceback available)"
                     
                     if retry_num <= loop_retry_max:
-                        print(f"\n[Loop {loop_num}/{num_loops}] ✗ Failed on attempt {retry_num}: {str(e)[:200]}")
+                        print(f"\n[Loop {loop_num}/{num_loops}] ✗ Failed on attempt {retry_num}")
+                        print(f"[Error Type] {error_type}")
+                        print(f"[Error Message] {error_message[:500]}")
+                        print(f"[Traceback - last 10 lines]\n{traceback_preview}")
                         print(f"[Retries remaining] {loop_retry_max - retry_num + 1}")
                     else:
                         print(f"\n[Loop {loop_num}/{num_loops}] ✗ Failed after {loop_retry_max} retries")
-                        print(f"[Error] {str(e)}")
+                        print(f"[Error Type] {error_type}")
+                        print(f"[Error Message] {error_message}")
+                        print(f"[Traceback]\n{traceback_text if traceback_text else '(no traceback available)'}")
                         print(f"[Status] SKIPPING loop {loop_num} and continuing to next loop\n")
                         break
         
