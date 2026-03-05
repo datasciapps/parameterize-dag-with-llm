@@ -93,6 +93,9 @@ Available options:
 - `--label`: Custom label for the experiment, used in log filenames (required). Spaces will be converted to underscores and converted to lowercase.
 - `--loop-retry-max`: Maximum retries per loop on failure (default: 3)
 
+**Important Note on `--loop-retry-max`:**
+This parameter controls retries for the **outer loop** (entire parameterization cycle) in case of catastrophic failures (API errors, crashes, etc.). It does **NOT** control the iterative feedback mechanism within each parameterization. The iterative feedback loop that validates and refines LLM responses has a separate, hardcoded limit of 5 iterations per scenario (`MAX_RETRIES = 5` in `llm_dag_parameterizer.py`). If validation fails after 5 feedback iterations, the system will use the last proposal even if invalid.
+
 Logs are saved to `output/logs/` with filenames like `{timestamp}_{label}_loop_{N}.log`
 
 ### How to handle experimental artifacts
