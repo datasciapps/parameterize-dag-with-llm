@@ -39,6 +39,15 @@ MODEL_CONFIGS = {
             response_mime_type="application/json",
         ),
     },
+    "openai/gpt-5.4": {
+        "provider": "openai",
+        "model_name": "openai/gpt-5.4",
+        "temperature": 0.0,
+        "config": None,  # openai doesn't need special config
+        "extra_params": {
+            "reasoning": {"effort": "none"},
+        },
+    },
 }
 
 
@@ -49,7 +58,8 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
         dag_yaml_path (str): Path to a YAML DAG file (required).
         model_name (str): Name of the LLM model to use (required).
                          Available models: groq/llama-3.1-8b-instant, 
-                         groq/llama-3.3-70b-versatile, google/gemini-2.5-flash
+                         groq/llama-3.3-70b-versatile, google/gemini-2.5-flash,
+                         openai/gpt-5.4
         num_loops (int): Number of parameterization cycles to run (required).
         loop_retry_max (int): Maximum number of retries per loop on failure (default: 3).
         label (str): Optional custom label for the experiment (default: None).
@@ -81,7 +91,13 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
     model_config = MODEL_CONFIGS[model_name]
     
     # Initialize instructor client with selected model
-    client: Instructor.AsyncInstructor = instructor.from_provider(model_name)
+    if model_config["provider"] == "openai" and model_name.startswith("openai/gpt-"):
+        client: Instructor.AsyncInstructor = instructor.from_provider(
+            model_name,
+            mode=instructor.Mode.RESPONSES_TOOLS,
+        )
+    else:
+        client: Instructor.AsyncInstructor = instructor.from_provider(model_name)
     
     # Prepare model-dependent config
     if model_config["config"] is not None:
@@ -90,9 +106,10 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
             "config": model_config["config"]
         }
     else:
-        # For models with simple config (like Groq)
+        # For models with simple config (like Groq/OpenAI)
         model_dependent_config = {
             "temperature": model_config["temperature"],
+            **model_config.get("extra_params", {}),
         }
 
     # Run parameterization in a loop with retry logic
@@ -178,8 +195,10 @@ Examples:
 
 Available models:
   - groq/llama-3.1-8b-instant
+  - groq/llama-3.3-70b-versatile
   - google/gemini-2.5-flash
   - google/gemini-2.0-flash
+  - openai/gpt-5.4
         """
     )
     
