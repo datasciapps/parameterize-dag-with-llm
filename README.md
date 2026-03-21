@@ -39,9 +39,11 @@ Developer's environment:
 - Via the instructor package, you can use multiple LLM models from different providers.
 - Supported models:
   - `groq/llama-3.1-8b-instant` (Groq provider)
+  - `groq/llama-3.3-70b-versatile` (Groq provider)
   - `google/gemini-2.5-flash` (Google provider)
   - `google/gemini-2.0-flash` (Google provider)
-- API keys must be set as environment variables (e.g., `GROQ_API_KEY`, `GOOGLE_API_KEY`)
+  - `openai/gpt-5.4` (OpenAI provider)
+- API keys must be set as environment variables (e.g., `GROQ_API_KEY`, `GOOGLE_API_KEY`, `OPENAI_API_KEY`)
 - Model configuration is handled via the `model_dependent_config` dictionary passed to `parameterize_dag()`.
 
 Example usage in code:

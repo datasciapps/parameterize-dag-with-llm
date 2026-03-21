@@ -4,6 +4,11 @@ import json
 from src.custom_display_utility import display
 
 
+def normalize_rhs_operators(equation_rhs: str) -> str:
+    normalized_rhs = re.sub(r"\+\s*-\s*", "-", equation_rhs)
+    return normalized_rhs
+
+
 def split_equation(equation_str_to_split, verbose=False):  # Renamed for clarity
     if verbose:
         print(
@@ -121,6 +126,9 @@ def split_equations_to_terms(
 
         # Remove the matched error term (group 0 is the full match including operator if any)
         equation_cleaned_rhs = re.sub(error_term_pattern, "", equation_rhs_full).strip()
+
+        # Normalize operator sequences produced by some LLMs (e.g., '+ -0.12*F' -> '-0.12*F')
+        equation_cleaned_rhs = normalize_rhs_operators(equation_cleaned_rhs)
 
         # Clean up any potential trailing operators that might be left (e.g., "TERM + ")
         # Re-use the robust operator matching pattern for trailing operators
