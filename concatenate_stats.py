@@ -3,12 +3,32 @@
 Concatenate all aggregated_stats CSV files from bulk quick_result runs.
 When running quick_result.py, you need to specify consistent labels using --labels.
 To create create latex labels, after running this, you need to run another latex script.
+
+
+In the author's local output/ directory, there are many log files and artifacts with labels.
+Currently concatenate_stats.py is hardcoded with such labels. 
+
+For now we try to record the steps for us to obtain tables in our paper as in predefined sets. 
+
+For example,
+```
+python concatenate_stats.py --predefined_label_set parent_parent_prompts
+```
+
+FYI: The previous quick_result, if used with --bulk, then usually 25 runs are garanteed during aggregation. 
+Usually you don't need to worry about this as long as concatanate_stats.py is able to find the files.
+
+Also if you aggreate files using quick_result.py multiple times, concatenate_stats.py will pick the most recent one based on filename timestamp
+
+If you want to add a new predefined label set, add entry to PREDEFINED_LABEL_SETS with a list of labels.
 """
 
 import pandas as pd
 from pathlib import Path
+import argparse
 
-# Labels from bulk_quick_result.sh
+
+# [Main experiments - direct estimation prompts for seven DAGs]
 labels_direct_estimation = [
     "foo_llama31_25_5",
     "foo_llama33_25_5",
@@ -27,11 +47,7 @@ labels_direct_estimation = [
     "sto_gemini25_25_5",
 ]
 
-
-## I can't see them from history along with quick_result.py, why? Maybe I wrapped into a shellscript? 
-## I can see main.py along with these labels though
-## Found bulk_quick_result.sh in the repo
-## Okay, let's update bulk script with new available entries
+# [Main experiments - misspecification prompts for Expenditure DAG]
 labels_misspecification = [
     "exp_sp_owner_expenditure_llama31_25_5",
     "exp_sp_owner_expenditure_llama33_25_5",
@@ -47,8 +63,7 @@ labels_misspecification = [
     "exp_sp_majorcards_selfemp_gemini25_25_5",
 ]
 
-# TODO create labels for parent-parent prompts
-
+# [Appendix - parent-parent effect prompts]
 labels_parent_parent_prompts = [
     "pp_cac_llama31_25_5",
     "pp_cac_llama33_25_5",
@@ -77,12 +92,30 @@ labels_parent_parent_prompts = [
 
 
 
+PREDEFINED_LABEL_SETS = {
+    "direct_estimation": labels_direct_estimation,
+    "misspecification": labels_misspecification,
+    "parent_parent_prompts": labels_parent_parent_prompts,
+}
 
-# labels = labels_direct_estimation
-# labels = labels_misspecification
-labels = labels_parent_parent_prompts
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Concatenate aggregated stats for a predefined experiment label set."
+    )
+    parser.add_argument(
+        "--predefined_label_set",
+        choices=sorted(PREDEFINED_LABEL_SETS.keys()),
+        required=True,
+        help="Which predefined label set to concatenate.",
+    )
+    return parser.parse_args()
+
 
 def main():
+    args = parse_args()
+    labels = PREDEFINED_LABEL_SETS[args.predefined_label_set]
+
     output_dir = Path("output")
     all_dfs = []
     
@@ -117,7 +150,7 @@ def main():
     combined_df = pd.concat(all_dfs, ignore_index=True)
     
     # Save to output file
-    output_file = output_dir / "pp_combined_aggregated_stats.csv"
+    output_file = output_dir / f"{args.predefined_label_set}_combined_aggregated_stats.csv"
     combined_df.to_csv(output_file, index=False)
     
     print(f"\n✓ Successfully saved combined statistics to: {output_file}")

@@ -23,6 +23,8 @@ In perfect world where program does not deplete timeout limit, but sometimes tha
 
 The script `enumerate_unique_stat_files.py` was created to identify truly successful experiment runs and to export ready-to-use `quick_result.py` commands.
 
+On error, it helps to manually check the id and metadata (dag yaml path etc), so we added `enumerate_unique_stat_files_single.py`. This helps to rerun a few experiments and collect success experiment ids during debug. Also, in some edge cases the `enumerate_unique_stat.py` miss parent experiment ids and downstream child experiments. This may be because if the retry happens in the first run, then downstream ids are not easily found. For short-term fix, you can find such runs via this single enumeration script. 
+
 ## Remaining Manual Steps
 
 After running the `quick_result.py` command, generating LaTeX files for tables may still require manual intervention if the `--label` argument was not remembered during quick result generation.
