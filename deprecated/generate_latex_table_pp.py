@@ -22,6 +22,11 @@ labels_parent_parent_prompts = [
     "pp_liq_llama33_25_5",
     "pp_sto_llama33_25_5",
     "pp_sto_gemini25_25_5",
+    # 2nd batch
+    "pp_exp_gemini25_25_5",
+    "pp_foo_gemini25_25_5",
+    "pp_alg_llama31_25_5",
+    "pp_alg_gemini25_25_5",
 ]
 
 
@@ -119,8 +124,8 @@ def main():
     ]
     
     # Sort by DAG in the requested order, then by Model
-    dag_order = ["cachexia", "expenditure", "foodsecurity", "lexical", "liquefaction", "stocks"]
-    model_order = ["Llama 3.1 8B", "Llama 3.3 70B", "Gemini 2.5 Flash"]
+    dag_order = ["cachexia", "expenditure", "foodsecurity", "algal2", "lexical", "liquefaction", "stocks"]
+    model_order = ["Gemini 2.5 Flash", "Llama 3.1 8B", "Llama 3.3 70B"]
     results_df["DAG"] = pd.Categorical(results_df["DAG"], categories=dag_order, ordered=True)
     results_df["Model"] = pd.Categorical(results_df["Model"], categories=model_order, ordered=True)
     results_df = results_df.sort_values(["DAG", "Model"]).reset_index(drop=True)
@@ -133,7 +138,8 @@ def main():
     # Generate LaTeX table rows
     output_latex = Path("output/pp_latex_table_stats.tex")
     with open(output_latex, 'w') as f:
-        for _, row in results_df.iterrows():
+        num_rows = len(results_df)
+        for idx, row in results_df.iterrows():
             latex_row = (
                 f"{row['Model']:<20} & {row['DAG']:<15} & "
                 f"{row['L2 Norm']} & "
@@ -143,6 +149,12 @@ def main():
             )
             f.write(latex_row + "\n")
             print(latex_row)
+            # Add \addlinespace after the last row for each DAG
+            is_last = idx == num_rows - 1
+            curr_dag = row['DAG']
+            next_dag = results_df.iloc[idx + 1]['DAG'] if not is_last else None
+            if is_last or curr_dag != next_dag:
+                f.write("\\addlinespace\n")
     
     print(f"\n✓ Saved LaTeX to: {output_latex}")
     print(f"  Total rows: {len(results_df)}")

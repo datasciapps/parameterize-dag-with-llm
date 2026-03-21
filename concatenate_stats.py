@@ -64,7 +64,17 @@ labels_parent_parent_prompts = [
     "pp_liq_llama33_25_5",
     "pp_sto_llama33_25_5",
     "pp_sto_gemini25_25_5",
+    # 2nd batch
+    "pp_exp_gemini25_25_5",
+    "pp_foo_gemini25_25_5",
+    "pp_alg_llama31_25_5",
+    "pp_alg_gemini25_25_5",
+    # 3rd batch
+    "pp_alg_llama33_25_5",
+    "pp_liq_gemini25_25_5",
+    "pp_sto_llama31_25_5"
 ]
+
 
 
 
