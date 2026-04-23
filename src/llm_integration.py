@@ -20,14 +20,60 @@ def run_llm_elicitation(
     debug_print=True,
     num_responses_per_prompt: int = 1,
 ) -> pd.DataFrame:
-    """Runs the LLM elicitation process for a single prompt multiple times to collect varied responses."""
+    """Runs the LLM elicitation process for a single prompt multiple times to collect varied responses.
+    
+    If model_dependent_config contains 'is_fake_baseline': True, returns a synthetic fixed-coefficient
+    response. This is used for baseline presets such as `baseline/zero-coeff`, `baseline/small-coeff`,
+    and `baseline/big-coeff`.
+    """
     assert len(elicitation_prompt) > 0
     assert scenario_to_process is not None
 
     if num_responses_per_prompt > 1:
         raise NotImplementedError("Currently only single response is supported.")
 
+    # Check if this is a fake baseline mode
+    is_fake_baseline = model_dependent_config.get("is_fake_baseline", False)
+    
     response_history: list[dict] = []
+    
+    # Handle fake baseline mode: synthesize response with a fixed coefficient value
+    if is_fake_baseline:
+        baseline_coefficient = model_dependent_config.get("baseline_coefficient", 0.0)
+        baseline_label = model_dependent_config.get("baseline_label", "Baseline")
+
+        if debug_print:
+            print(f"[BASELINE MODE] {baseline_label} baseline activated.")
+            print(f"[BASELINE MODE] Target variable: {scenario_to_process['target_variable_name']}")
+        
+        target_var = scenario_to_process["target_variable_name"]
+        parent_vars = scenario_to_process["direct_parent_variables"]
+        
+        intercept_term = f"{baseline_coefficient}*1"
+        parent_terms = [f"{baseline_coefficient}*{parent}" for parent in parent_vars]
+        equation_terms = " + ".join([intercept_term] + parent_terms)
+        proposed_lin_str_eq = f"{target_var} = {equation_terms} + E_{target_var}"
+        
+        if debug_print:
+            print("[BASELINE MODE] Synthetic equation:")
+            print(proposed_lin_str_eq)
+        
+        response_json = {
+            "plausibility": (
+                f"Baseline: All coefficients fixed to {baseline_coefficient} for preset testing."
+            ),
+            "proposed_lin_str_eq": proposed_lin_str_eq,
+        }
+        response_history.append(response_json)
+        
+        if debug_print:
+            print("*****MODEL (BASELINE SYNTHETIC RESPONSE)*****")
+            print(json.dumps(response_json, indent=2))
+        
+        df = pd.DataFrame(response_history)
+        return df
+    
+    # Real LLM mode (not baseline)
     for i in range(num_responses_per_prompt):
         # raise NotImplementedError("_create_llm_dynamic_validator_class is not implemented")
         if wait_sec_per_chat != 0:

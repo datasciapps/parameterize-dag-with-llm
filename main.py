@@ -48,6 +48,33 @@ MODEL_CONFIGS = {
             "reasoning": {"effort": "none"},
         },
     },
+    "baseline/zero-coeff": {
+        "provider": "baseline",
+        "model_name": "baseline/zero-coeff",
+        "temperature": 0.0,
+        "config": None,
+        "is_fake_baseline": True,
+        "baseline_coefficient": 0.0,
+        "baseline_label": "Zero-coefficient",
+    },
+    "baseline/small-coeff": {
+        "provider": "baseline",
+        "model_name": "baseline/small-coeff",
+        "temperature": 0.0,
+        "config": None,
+        "is_fake_baseline": True,
+        "baseline_coefficient": 0.0001,
+        "baseline_label": "Small-coefficient",
+    },
+    "baseline/big-coeff": {
+        "provider": "baseline",
+        "model_name": "baseline/big-coeff",
+        "temperature": 0.0,
+        "config": None,
+        "is_fake_baseline": True,
+        "baseline_coefficient": 10000.0,
+        "baseline_label": "Big-coefficient",
+    },
 }
 
 
@@ -91,7 +118,11 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
     model_config = MODEL_CONFIGS[model_name]
     
     # Initialize instructor client with selected model
-    if model_config["provider"] == "openai" and model_name.startswith("openai/gpt-"):
+    if model_config.get("is_fake_baseline"):
+        # Baseline preset: no real LLM client needed
+        client = None
+        print("[Baseline Mode] Skipping LLM client initialization.")
+    elif model_config["provider"] == "openai" and model_name.startswith("openai/gpt-"):
         client: Instructor.AsyncInstructor = instructor.from_provider(
             model_name,
             mode=instructor.Mode.RESPONSES_TOOLS,
@@ -100,7 +131,14 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
         client: Instructor.AsyncInstructor = instructor.from_provider(model_name)
     
     # Prepare model-dependent config
-    if model_config["config"] is not None:
+    if model_config.get("is_fake_baseline"):
+        # Baseline preset: pass flag through so run_llm_elicitation can detect it
+        model_dependent_config = {
+            "is_fake_baseline": True,
+            "baseline_coefficient": model_config["baseline_coefficient"],
+            "baseline_label": model_config["baseline_label"],
+        }
+    elif model_config["config"] is not None:
         # For models with special config (like Google)
         model_dependent_config = {
             "config": model_config["config"]
@@ -199,6 +237,9 @@ Available models:
   - google/gemini-2.5-flash
   - google/gemini-2.0-flash
   - openai/gpt-5.4
+    - baseline/zero-coeff
+    - baseline/small-coeff
+    - baseline/big-coeff
         """
     )
     

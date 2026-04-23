@@ -42,13 +42,22 @@ class ExperimentLogger:
         self.num_loops = num_loops
         self.loop_retry_max = loop_retry_max
         
+        # Detect if this is a baseline run
+        self.is_baseline = "baseline" in model_name.lower()
+        
         # Create experiment ID from timestamp and label (or dag name if no label)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         if label:
             # Normalize label: lowercase and replace spaces with underscores
             identifier = label.lower().replace(" ", "_")
+            # Tag baseline runs in the identifier
+            if self.is_baseline:
+                identifier = f"BASELINE_{identifier}"
         else:
             identifier = Path(dag_yaml_path).stem
+            # Tag baseline runs
+            if self.is_baseline:
+                identifier = f"BASELINE_{identifier}"
         self.experiment_id = f"{timestamp}_{identifier}"
         
         # Create output directory if it doesn't exist
