@@ -9,6 +9,14 @@ def normalize_rhs_operators(equation_rhs: str) -> str:
     return normalized_rhs
 
 
+def normalize_parenthesized_numeric_literals(equation_rhs: str) -> str:
+    return re.sub(
+        r"\(\s*([+-]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*\)",
+        r"\1",
+        equation_rhs,
+    )
+
+
 def split_equation(equation_str_to_split, verbose=False):  # Renamed for clarity
     if verbose:
         print(
@@ -127,6 +135,11 @@ def split_equations_to_terms(
         # Remove the matched error term (group 0 is the full match including operator if any)
         equation_cleaned_rhs = re.sub(error_term_pattern, "", equation_rhs_full).strip()
 
+        # Normalize redundant parentheses around numeric literals (e.g., '(-0.12)*F' -> '-0.12*F')
+        equation_cleaned_rhs = normalize_parenthesized_numeric_literals(
+            equation_cleaned_rhs
+        )
+
         # Normalize operator sequences produced by some LLMs (e.g., '+ -0.12*F' -> '-0.12*F')
         equation_cleaned_rhs = normalize_rhs_operators(equation_cleaned_rhs)
 
@@ -218,3 +231,38 @@ def convert_terms_to_coeffient_df(
     else:
         display(coefficients_df.head(), "coeff_df_head", exp_id=exp_id)
     return coefficients_df
+
+
+def _run_self_test() -> None:
+    test_df = pd.DataFrame(
+        {
+            "proposed_lin_str_eq": [
+                "lnt = 1.20 + (-0.0020)*lnR + 0.35*Mw + E_Y",
+                "lnt = (777) + 2*lnR + E_Y",
+            ]
+        }
+    )
+
+    split_terms = split_equations_to_terms(
+        test_df, target_variable_name="lnt", verbose=False
+    )
+    assert split_terms[0] == ["1.20", "-0.0020*lnR", "+0.35*Mw"], split_terms[0]
+    assert split_terms[1] == ["777", "+2*lnR"], split_terms[1]
+
+    coeff_df = convert_terms_to_coeffient_df(
+        split_terms=[split_terms[0]],
+        scenario_parents=["lnR", "Mw"],
+        exp_id="self_test",
+        verbose=False,
+    )
+
+    row = coeff_df.iloc[0]
+    assert row["beta_0"] == 1.2, row.to_dict()
+    assert row["beta_lnR"] == -0.002, row.to_dict()
+    assert row["beta_Mw"] == 0.35, row.to_dict()
+
+    print("llm_response_parser self-test passed")
+
+
+if __name__ == "__main__":
+    _run_self_test()

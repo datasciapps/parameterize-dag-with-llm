@@ -1,0 +1,39 @@
+
+\begin{table}[t]
+\caption{Robustness under DAG misspecification for the expenditure DAG (Averaged $n=25$, Temp 0). Values after $\pm$ indicate 95\% CIs. $M1$: L2 distance; $M2$: normalized L2; $M3$: normalized L2 excluding single-parent edges; $M4$: Effect relative order count. For $M1$--$M3$, lower is better ($\downarrow$); for $M4$, higher is better ($\uparrow$). Misspec: (O)=Original DAG, (S1)-(S4)=Spurious edges added.}
+\label{tab:dag_misspecification_robustness_results}
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcccccc}
+\toprule
+	\textbf{MODEL} & \textbf{MISSPEC.} & \textbf{M1} $\downarrow$ & \textbf{M2} $\downarrow$ & \textbf{M3} $\downarrow$ & \textbf{M4} $\uparrow$ \\
+\midrule
+Gemini 2.5 Flash & O & $148084.559 \pm 22359.281$ & $\textbf{0.998} \pm 0.226$ & $\textbf{0.998} \pm 0.226$ & $\textbf{7.520} \pm 0.200$ \\
+                 & S1 & $\textbf{81587.682} \pm 20626.822$ & $1.372 \pm 0.282$ & $1.372 \pm 0.282$ & $6.200 \pm 0.299$ \\
+                 & S2 & $138770.541 \pm 21002.249$ & $1.235 \pm 0.267$ & $1.235 \pm 0.267$ & $6.400 \pm 0.253$ \\
+                 & S3 & $120240.669 \pm 20548.802$ & $1.355 \pm 0.253$ & $1.355 \pm 0.253$ & $6.560 \pm 0.255$ \\
+                 & S4 & $106012.716 \pm 23004.372$ & $1.988 \pm 0.189$ & $1.988 \pm 0.189$ & $7.320 \pm 0.271$ \\
+\addlinespace
+Llama 3.1 8B     & O & $\textbf{2463.377} \pm 0.000$ & $\textbf{2.053} \pm 0.000$ & $\textbf{2.053} \pm 0.000$ & $\textbf{7.000} \pm 0.000$ \\
+                 & S1 & $20151.134 \pm 0.000$ & $2.483 \pm 0.000$ & $2.483 \pm 0.000$ & $6.000 \pm 0.000$ \\
+                 & S2 & $\textbf{2463.377} \pm 0.000$ & $2.063 \pm 0.001$ & $2.063 \pm 0.001$ & $6.000 \pm 0.000$ \\
+                 & S3 & $\textbf{2463.377} \pm 0.000$ & $2.106 \pm 0.000$ & $2.106 \pm 0.000$ & $6.000 \pm 0.000$ \\
+                 & S4 & $\textbf{2463.377} \pm 0.000$ & $2.413 \pm 0.000$ & $2.413 \pm 0.000$ & $\textbf{7.000} \pm 0.000$ \\
+\addlinespace
+Llama 3.3 70B    & O & $27137.540 \pm 12574.354$ & $\textbf{1.548} \pm 0.234$ & $\textbf{1.548} \pm 0.234$ & $6.560 \pm 0.199$ \\
+                 & S1 & $25843.000 \pm 13086.141$ & $1.703 \pm 0.217$ & $1.703 \pm 0.217$ & $5.520 \pm 0.230$ \\
+                 & S2 & $29202.638 \pm 13299.788$ & $1.918 \pm 0.186$ & $1.918 \pm 0.186$ & $5.920 \pm 0.251$ \\
+                 & S3 & $24257.613 \pm 11979.590$ & $2.038 \pm 0.118$ & $2.038 \pm 0.118$ & $5.360 \pm 0.192$ \\
+                 & S4 & $\textbf{12524.332} \pm 7698.439$ & $2.222 \pm 0.138$ & $2.222 \pm 0.138$ & $\textbf{6.680} \pm 0.271$ \\
+
+\addlinespace
+GPT-5.4            & O & $\textbf{83376.520} \pm 26482.403$ & $1.960 \pm 0.076$ & $1.960 \pm 0.076$ & $6.360 \pm 0.192$ \\
+                   & S1 & $132030.159 \pm 25271.455$ & $\textbf{0.902} \pm 0.025$ & $\textbf{0.902} \pm 0.025$ & $6.000 \pm 0.000$ \\
+                   & S2 & $107136.488 \pm 28206.749$ & $1.020 \pm 0.077$ & $1.020 \pm 0.077$ & $6.000 \pm 0.000$ \\
+                   & S3 & $91970.954 \pm 28957.569$ & $1.010 \pm 0.095$ & $1.010 \pm 0.095$ & $6.120 \pm 0.130$ \\
+                   & S4 & $100496.485 \pm 26558.895$ & $1.738 \pm 0.085$ & $1.738 \pm 0.085$ & $\textbf{6.960} \pm 0.078$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}

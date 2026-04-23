@@ -63,6 +63,14 @@ labels_misspecification = [
     "exp_sp_majorcards_selfemp_gemini25_25_5",
 ]
 
+
+labels_misspecification_gpt54 = [
+    "exp_sp_owner_expenditure_gpt54_25_5",
+    "exp_sp_majorcards_dependents_gpt54_25_5",
+    "exp_sp_owner_share_gpt54_25_5",
+    "exp_sp_majorcards_selfemp_gpt54_25_5",
+]
+
 # [Appendix - parent-parent effect prompts]
 labels_parent_parent_prompts = [
     "pp_cac_llama31_25_5",
@@ -91,11 +99,24 @@ labels_parent_parent_prompts = [
 ]
 
 
+labels_direct_estimation_gpt54 = [
+    "cac_gpt54_25_5",
+    "exp_gpt54_25_5",
+    "foo_gpt54_25_5",
+    "alg_gpt54_25_5",
+    "lex_gpt54_25_5",
+    "liq_gpt54_25_5",
+    "sto_gpt54_25_5"
+]
+
+
 
 PREDEFINED_LABEL_SETS = {
     "direct_estimation": labels_direct_estimation,
     "misspecification": labels_misspecification,
     "parent_parent_prompts": labels_parent_parent_prompts,
+    "direct_estimation_gpt54": labels_direct_estimation_gpt54,
+    "misspecification_gpt54": labels_misspecification_gpt54,
 }
 
 

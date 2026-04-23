@@ -5,6 +5,7 @@ Generate LaTeX table from combined aggregated statistics with 95% CI.
 
 import pandas as pd
 from pathlib import Path
+import argparse
 
 # Parent-Parent labels
 labels_parent_parent_prompts = [
@@ -29,12 +30,37 @@ labels_parent_parent_prompts = [
     "pp_alg_gemini25_25_5",
 ]
 
+labels_direct_estimation_gpt54 = [
+    "cac_gpt54_25_5",
+    "exp_gpt54_25_5",
+    "foo_gpt54_25_5",
+    "alg_gpt54_25_5",
+    "lex_gpt54_25_5",
+    "liq_gpt54_25_5",
+    "sto_gpt54_25_5"
+]
+
+labels_misspecification_gpt54 = [
+    "exp_sp_owner_expenditure_gpt54_25_5",
+    "exp_sp_majorcards_dependents_gpt54_25_5",
+    "exp_sp_owner_share_gpt54_25_5",
+    "exp_sp_majorcards_selfemp_gpt54_25_5",
+]
+
+
+PREDEFINED_LABEL_SETS = {
+    "parent_parent_prompts": labels_parent_parent_prompts,
+    "direct_estimation_gpt54": labels_direct_estimation_gpt54,
+    "misspecification_gpt54": labels_misspecification_gpt54,
+}
+
 
 # Model name mapping
 MODEL_MAP = {
     "llama31": "Llama 3.1 8B",
     "llama33": "Llama 3.3 70B",
     "gemini25": "Gemini 2.5 Flash",
+    "gpt54": "GPT-5.4",
 }
 
 # DAG name mapping
@@ -49,19 +75,23 @@ DAG_MAP = {
 }
 
 def parse_label(label):
-    """Extract DAG and model from label like 'pp_cac_llama31_25_5'"""
+    """Extract DAG and model from labels like 'pp_cac_llama31_25_5' or 'cac_gpt54_25_5'."""
     parts = label.split('_')
-    
+
     # Handle 'pp_dag_model_...' format
-    if parts[0] == 'pp':
+    if len(parts) >= 3 and parts[0] == 'pp':
         dag_code = parts[1]
         model_code = parts[2]
+    # Handle 'dag_model_...' format
+    elif len(parts) >= 2:
+        dag_code = parts[0]
+        model_code = parts[1]
     else:
-        raise ValueError(f"Label '{label}' does not have 'pp_' prefix. Only parent-parent labels are handled by this script.")
-    
+        raise ValueError(f"Label '{label}' has an unsupported format.")
+
     dag_name = DAG_MAP.get(dag_code, dag_code)
     model_name = MODEL_MAP.get(model_code, model_code)
-    
+
     return model_name, dag_name
 
 def format_with_ci(mean, ci, precision=4):
@@ -71,9 +101,52 @@ def format_with_ci(mean, ci, precision=4):
     ci_str = format_str.format(ci)
     return f"${mean_str} \\pm {ci_str}$"
 
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Generate LaTeX table rows from combined aggregated stats CSV."
+    )
+    parser.add_argument(
+        "--predefined_label_set",
+        choices=sorted(PREDEFINED_LABEL_SETS.keys()),
+        required=True,
+        help="Predefined label set used for labels and default I/O naming.",
+    )
+    parser.add_argument(
+        "--input-file",
+        type=Path,
+        default=None,
+        help="Optional override input CSV path. Default: output/{set}_combined_aggregated_stats.csv",
+    )
+    parser.add_argument(
+        "--output-csv",
+        type=Path,
+        default=None,
+        help="Optional override output CSV path. Default: output/{set}_latex_table_stats.csv",
+    )
+    parser.add_argument(
+        "--output-latex",
+        type=Path,
+        default=None,
+        help="Optional override output .tex path. Default: output/{set}_latex_table_stats.tex",
+    )
+    parser.add_argument(
+        "--labels",
+        nargs="+",
+        default=None,
+        help="Optional explicit label list to include and order labels.",
+    )
+    return parser.parse_args()
+
 def main():
+    args = parse_args()
+
+    set_name = args.predefined_label_set
+    input_file = args.input_file or Path(f"output/{set_name}_combined_aggregated_stats.csv")
+    output_csv = args.output_csv or Path(f"output/{set_name}_latex_table_stats.csv")
+    output_latex = args.output_latex or Path(f"output/{set_name}_latex_table_stats.tex")
+
     # Read the combined CSV
-    input_file = Path("output/pp_combined_aggregated_stats.csv")
     df = pd.read_csv(input_file)
     
     # Pivot the data to have one row per label with metrics as columns
@@ -85,10 +158,18 @@ def main():
     ]
     
     results = []
+
+    if args.labels is not None:
+        labels_to_process = args.labels
+    else:
+        labels_to_process = PREDEFINED_LABEL_SETS[set_name]
     
     # Group by label
-    for label in df['label'].unique():
+    for label in labels_to_process:
         label_data = df[df['label'] == label]
+        if label_data.empty:
+            print(f"WARNING: Label '{label}' not found in input file. Skipping.")
+            continue
         model_name, dag_name = parse_label(label)
         
         row = {
@@ -125,18 +206,18 @@ def main():
     
     # Sort by DAG in the requested order, then by Model
     dag_order = ["cachexia", "expenditure", "foodsecurity", "algal2", "lexical", "liquefaction", "stocks"]
-    model_order = ["Gemini 2.5 Flash", "Llama 3.1 8B", "Llama 3.3 70B"]
+    model_order = ["Gemini 2.5 Flash", "Llama 3.1 8B", "Llama 3.3 70B", "GPT-5.4"]
     results_df["DAG"] = pd.Categorical(results_df["DAG"], categories=dag_order, ordered=True)
     results_df["Model"] = pd.Categorical(results_df["Model"], categories=model_order, ordered=True)
     results_df = results_df.sort_values(["DAG", "Model"]).reset_index(drop=True)
     
     # Save to CSV
-    output_csv = Path("output/pp_latex_table_stats.csv")
+    output_csv.parent.mkdir(parents=True, exist_ok=True)
     results_df.to_csv(output_csv, index=False)
     print(f"✓ Saved CSV to: {output_csv}")
     
     # Generate LaTeX table rows
-    output_latex = Path("output/pp_latex_table_stats.tex")
+    output_latex.parent.mkdir(parents=True, exist_ok=True)
     with open(output_latex, 'w') as f:
         num_rows = len(results_df)
         for idx, row in results_df.iterrows():
