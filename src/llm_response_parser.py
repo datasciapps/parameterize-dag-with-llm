@@ -4,6 +4,9 @@ import json
 from src.custom_display_utility import display
 
 
+TERM_OPERATOR_PATTERN = r"(\s*(?<![eE])\+\s*|\s*(?<![eE])-\s*)"
+
+
 def normalize_rhs_operators(equation_rhs: str) -> str:
     normalized_rhs = re.sub(r"\+\s*-\s*", "-", equation_rhs)
     return normalized_rhs
@@ -32,7 +35,7 @@ def split_equation(equation_str_to_split, verbose=False):  # Renamed for clarity
     # Split by ' + ' or ' - ' but capture the delimiter as well.
     # This regex ensures that signs attached to numbers (e.g., -0.5) are not split,
     # but operators between terms are.
-    split_parts = re.split(r"(\s*(?<![\d.])\+\s*|\s*(?<![\d.])-\s*)", equation_rhs)
+    split_parts = re.split(TERM_OPERATOR_PATTERN, equation_rhs)
     split_parts = [
         p.strip() for p in split_parts if p.strip()
     ]  # Remove any empty strings resulting from the split
@@ -123,7 +126,7 @@ def split_equations_to_terms(
 
         # Find and remove the error term (e.g., E_GM) and its preceding operator
         # The pattern now explicitly re-uses the robust operator matching and captures the error term separately
-        error_term_pattern = r"(\s*(?<![\d.])\+\s*|\s*(?<![\d.])-\s*)?(E_[A-Za-z0-9_]+)"
+        error_term_pattern = rf"{TERM_OPERATOR_PATTERN}?(E_[A-Za-z0-9_]+)"
         error_term_match = re.search(error_term_pattern, equation_rhs_full)
 
         if not error_term_match:
@@ -146,7 +149,7 @@ def split_equations_to_terms(
         # Clean up any potential trailing operators that might be left (e.g., "TERM + ")
         # Re-use the robust operator matching pattern for trailing operators
         equation_cleaned_rhs = re.sub(
-            r"(\s*(?<![\d.])\+\s*|\s*(?<![\d.])-\s*)$", "", equation_cleaned_rhs
+            rf"{TERM_OPERATOR_PATTERN}$", "", equation_cleaned_rhs
         ).strip()
 
         # Now pass the cleaned equation string (which should only contain numerical terms) to split_equation
@@ -239,6 +242,7 @@ def _run_self_test() -> None:
             "proposed_lin_str_eq": [
                 "lnt = 1.20 + (-0.0020)*lnR + 0.35*Mw + E_Y",
                 "lnt = (777) + 2*lnR + E_Y",
+                "lnt = 2.0e-07*lnR + 3.5e+02*Mw + E_Y",
             ]
         }
     )
@@ -248,6 +252,7 @@ def _run_self_test() -> None:
     )
     assert split_terms[0] == ["1.20", "-0.0020*lnR", "+0.35*Mw"], split_terms[0]
     assert split_terms[1] == ["777", "+2*lnR"], split_terms[1]
+    assert split_terms[2] == ["2.0e-07*lnR", "+3.5e+02*Mw"], split_terms[2]
 
     coeff_df = convert_terms_to_coeffient_df(
         split_terms=[split_terms[0]],
@@ -260,6 +265,17 @@ def _run_self_test() -> None:
     assert row["beta_0"] == 1.2, row.to_dict()
     assert row["beta_lnR"] == -0.002, row.to_dict()
     assert row["beta_Mw"] == 0.35, row.to_dict()
+
+    coeff_df_scientific = convert_terms_to_coeffient_df(
+        split_terms=[split_terms[2]],
+        scenario_parents=["lnR", "Mw"],
+        exp_id="self_test",
+        verbose=False,
+    )
+    row_scientific = coeff_df_scientific.iloc[0]
+    assert row_scientific["beta_0"] == 0.0, row_scientific.to_dict()
+    assert row_scientific["beta_lnR"] == 2.0e-07, row_scientific.to_dict()
+    assert row_scientific["beta_Mw"] == 3.5e+02, row_scientific.to_dict()
 
     print("llm_response_parser self-test passed")
 

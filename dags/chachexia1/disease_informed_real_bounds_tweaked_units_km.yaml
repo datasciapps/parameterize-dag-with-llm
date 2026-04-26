@@ -1,0 +1,62 @@
+name: cachexia1_disease_informed_real_bounds_tweaked_units_km
+all_nodes:
+- A
+- B
+- F
+- GC
+- GM
+- V
+raw_edges:
+- - A
+  - GC
+- - B
+  - V
+- - F
+  - GM
+- - GC
+  - B
+- - GC
+  - V
+- - GM
+  - A
+- - GM
+  - B
+- - GM
+  - V
+node_descriptions:
+  A: Adipate (kilomolar, kM)
+  B: Betaine  (kilomolar, kM)
+  F: Fumarate  (kilomolar, kM)
+  GC: Glucose  (kilomolar, kM)
+  GM: Glutamine  (kilomolar, kM)
+  V: Valine  (kilomolar, kM)
+primary_domain_name: metabolic systems
+secondary_domain_name: biochemistry
+node_lower_bound:
+  A: 1.6e-09
+  B: 2.3e-09
+  F: 8.0e-10
+  GC: 2.69e-08
+  GM: 1.51e-08
+  V: 4.1e-09
+node_upper_bound:
+  A: 3.256e-07
+  B: 7.888e-07
+  F: 9.66e-08
+  GC: 8.7248e-06
+  GM: 1.684e-06
+  V: 1.601e-07
+ground_truth_effect_sizes:
+  A->GC: 13.4753
+  B->V: 0.1104
+  F->GM: 10.7348
+  GC->B: 0.0181
+  GC->V: 0.0068
+  GM->A: 0.0674
+  GM->B: 0.1104
+  GM->V: 0.0436
+phenomenon_overview: You are going to identify internal dynamics of a phenomena, Cachexia.
+  Cachexia is a complicated metabolic syndrome related to underlying illness and characterized
+  by muscle mass loss with or without fat mass loss that is often associated with
+  anorexia, an inflammatory process, insulin resistance, and increased protein turnover.
+include_parent_relationships: false
