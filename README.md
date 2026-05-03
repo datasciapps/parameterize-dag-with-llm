@@ -7,27 +7,9 @@ An evaluation pipeline to see given a DAG, how well/poorly LLMs can parameterize
 - The codebase is adapted to CLI environment, which will output all the artifacts (csv and pdf) into ./output directory. 
 
 
-## Call to action: Please help us improve the tooling to further investigate quantitative causal reasoning of LLMs! 
+## Project status
 
-The tooling's improvement is ongoing, and I want your feedback. Feel free to report bugs, feature requests via this github repo. 
-
-The tool is actively being developed along with our arxiv preprint.
-
-[**Linear-LLM-SCM: Benchmarking LLMs for Coefficient Elicitation in Linear-Gaussian Causal Models**](https://arxiv.org/abs/2602.10282v1)
-
-If you utilize our tooling for your future publications, please kindly cite us via the following bibtex:
-
-```
-@misc{yamaoka2026linearllmscmbenchmarkingllmscoefficient,
-      title={Linear-LLM-SCM: Benchmarking LLMs for Coefficient Elicitation in Linear-Gaussian Causal Models}, 
-      author={Kanta Yamaoka and Sumantrak Mukherjee and Thomas Gärtner and David Antony Selby and Stefan Konigorski and Eyke Hüllermeier and Viktor Bengs and Sebastian Josef Vollmer},
-      year={2026},
-      eprint={2602.10282},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2602.10282}, 
-}
-```
+The tooling is under active development. Feedback, bug reports, and feature requests are welcome via this GitHub repository.
 
 ## Setup 
 
