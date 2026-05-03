@@ -109,6 +109,13 @@ labels_direct_estimation_gpt54 = [
     "sto_gpt54_25_5"
 ]
 
+labels_milli_cachexia = [
+    "mill_cac_gemini25",
+    "mill_cac_gpt54",
+    "mill_cac_llama31",
+    "mill_cac_llama33",
+]
+
 
 
 PREDEFINED_LABEL_SETS = {
@@ -117,6 +124,7 @@ PREDEFINED_LABEL_SETS = {
     "parent_parent_prompts": labels_parent_parent_prompts,
     "direct_estimation_gpt54": labels_direct_estimation_gpt54,
     "misspecification_gpt54": labels_misspecification_gpt54,
+    "milli_cachexia": labels_milli_cachexia,
 }
 
 
