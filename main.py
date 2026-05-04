@@ -78,7 +78,7 @@ MODEL_CONFIGS = {
 }
 
 
-def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: int = 3, label: str = None):
+def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: int = 3, label: str = None, iterative_budget: int = 5):
     """#### Main Loops for DAG Parameterization
     
     Args:
@@ -90,6 +90,7 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
         num_loops (int): Number of parameterization cycles to run (required).
         loop_retry_max (int): Maximum number of retries per loop on failure (default: 3).
         label (str): Optional custom label for the experiment (default: None).
+        iterative_budget (int): Max iterative feedback rounds per scenario (default: 5). 0 disables feedback entirely.
     """
     if not Path(dag_yaml_path).exists():
         raise FileNotFoundError(f"DAG YAML file not found: {dag_yaml_path}")
@@ -114,6 +115,7 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
     print(f"[LLM Model] {model_name}")
     print(f"[Number of Loops] {num_loops}")
     print(f"[Retry Budget per Loop] {loop_retry_max}")
+    print(f"[Iterative Feedback Budget] {iterative_budget} {'(disabled)' if iterative_budget == 0 else 'iterations per scenario'}")
     
     model_config = MODEL_CONFIGS[model_name]
     
@@ -187,6 +189,7 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
                         client=client,
                         model_dependent_config=model_dependent_config,
                         instructor_model_name=model_name,
+                        iterative_budget=iterative_budget,
                     )
                     
                     loop_success = True
@@ -277,5 +280,12 @@ Available models:
         help="Custom label for the experiment (used in log filenames)"
     )
     
+    parser.add_argument(
+        "--iterative-budget",
+        type=int,
+        default=5,
+        help="Max iterative feedback rounds per scenario (default: 5). Set to 0 to disable feedback entirely."
+    )
+    
     args = parser.parse_args()
-    main(dag_yaml_path=args.dag_yaml, model_name=args.model, num_loops=args.loop, loop_retry_max=args.loop_retry_max, label=args.label)
+    main(dag_yaml_path=args.dag_yaml, model_name=args.model, num_loops=args.loop, loop_retry_max=args.loop_retry_max, label=args.label, iterative_budget=args.iterative_budget)

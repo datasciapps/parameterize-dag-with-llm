@@ -17,6 +17,7 @@ def parameterize_dag(
     client: instructor.AsyncInstructor,
     model_dependent_config: dict,
     instructor_model_name: str,
+    iterative_budget: int = 5,
 ) -> dict:
     all_llm_responses_dfs = []  # This will store the *final* LLM response for each scenario (after validation passes)
     all_coefficients_dfs = []  # This will store the *final* coefficients for each scenario (after validation passes)
@@ -41,6 +42,12 @@ def parameterize_dag(
     print(f"[*****Experiment ID: {exp_id} started.****")
     print(f"Using Instructor Model: {instructor_model_name}")
 
+    # When iterative_budget=0, run exactly once with no validation/feedback loop.
+    # Otherwise, MAX_RETRIES is the total number of attempts (1 initial + iterative_budget retries).
+    MAX_RETRIES = 1 if iterative_budget == 0 else iterative_budget
+
+    print(f"[Iterative Feedback Budget] {iterative_budget} {'(disabled - accepting first response without validation)' if iterative_budget == 0 else f'iterations per scenario'}")
+
     education_wage_dag = DAG(
         education_wage_data.all_nodes,
         education_wage_data.raw_edges,
@@ -60,10 +67,6 @@ def parameterize_dag(
     # Build a mapping of parameterized equations as we process scenarios
     # This will store the final validated equations for each node
     parameterized_equations = {}
-
-    MAX_RETRIES = (
-        5  # Set the maximum number of retries for LLM elicitation per scenario
-    )
 
     for scenario_idx, scenario_to_process in enumerate(scenarios):
         print(f"\n{'=' * 80}")
@@ -152,6 +155,28 @@ def parameterize_dag(
             assert len(coefficients_df.columns.to_list()) == (
                 len(scenario_to_process["direct_parent_variables"]) + 1
             )
+
+            # When iterative_budget=0, skip validation/feedback entirely and accept the first response
+            if iterative_budget == 0:
+                print(
+                    f"[SCENARIO {scenario_idx}, ITERATION {iteration_count}] iterative_budget=0: Skipping validation, accepting first response."
+                )
+                proposed_equation_str = llm_responses_df.iloc[0]["proposed_lin_str_eq"]
+                all_llm_responses_dfs.append(llm_responses_df)
+                all_coefficients_dfs.append(coefficients_df)
+                last_validated_coefficients_df = coefficients_df
+                last_validated_llm_responses_df = llm_responses_df
+                parameterized_equations[scenario_to_process["target_variable_name"]] = proposed_equation_str
+                current_scenario_succeeded = True
+                scenario_iteration_history.append(
+                    {
+                        "iteration_num": iteration_count,
+                        "llm_response_df": llm_responses_df.copy(),
+                        "coefficients_df": coefficients_df.copy(),
+                        "validation_result": {"validation_message": "Skipped (iterative_budget=0)", "validated": True, "summary_message": "Skipped (iterative_budget=0)"},
+                    }
+                )
+                break
 
             if not coefficients_df.empty:
                 proposed_equation_str = llm_responses_df.iloc[0]["proposed_lin_str_eq"]

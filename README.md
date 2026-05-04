@@ -76,9 +76,13 @@ Available options:
 - `-l, --loop`: Number of parameterization cycles to run (required)
 - `--label`: Custom label for the experiment, used in log filenames (required). Spaces will be converted to underscores and converted to lowercase.
 - `--loop-retry-max`: Maximum retries per loop on failure (default: 3)
+- `--iterative-budget`: Max iterative feedback rounds per scenario (default: 5). Set to `0` to disable feedback entirely and accept the first LLM response without validation.
 
 **Important Note on `--loop-retry-max`:**
-This parameter controls retries for the **outer loop** (entire parameterization cycle) in case of catastrophic failures (API errors, crashes, etc.). It does **NOT** control the iterative feedback mechanism within each parameterization. The iterative feedback loop that validates and refines LLM responses has a separate, hardcoded limit of 5 iterations per scenario (`MAX_RETRIES = 5` in `llm_dag_parameterizer.py`). If validation fails after 5 feedback iterations, the system will use the last proposal even if invalid.
+This parameter controls retries for the **outer loop** (entire parameterization cycle) in case of catastrophic failures (API errors, crashes, etc.). It does **NOT** control the iterative feedback mechanism within each parameterization.
+
+**Iterative feedback budget (`--iterative-budget`):**
+Controls how many times the system will re-prompt the LLM with validation feedback per scenario before accepting a proposal. When set to `0`, the system skips validation entirely and accepts the first LLM response as-is. When set to `N > 0`, the system attempts up to `N` LLM calls per scenario, using validation feedback to refine the response. Default is `5`.
 
 Logs are saved to `output/logs/` with filenames like `{timestamp}_{label}_loop_{N}.log`
 
