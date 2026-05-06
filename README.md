@@ -23,8 +23,11 @@ Developer's environment:
   - `groq/llama-3.1-8b-instant` (Groq provider)
   - `groq/llama-3.3-70b-versatile` (Groq provider)
   - `google/gemini-2.5-flash` (Google provider)
-  - `google/gemini-2.0-flash` (Google provider)
   - `openai/gpt-5.4` (OpenAI provider)
+  - `baseline/zero-coeff` (deterministic synthetic baseline)
+  - `baseline/small-coeff` (deterministic synthetic baseline)
+  - `baseline/big-coeff` (deterministic synthetic baseline)
+  - `baseline/constraint-saturating` (deterministic constraint-aware synthetic baseline)
 - API keys must be set as environment variables (e.g., `GROQ_API_KEY`, `GOOGLE_API_KEY`, `OPENAI_API_KEY`)
 - Model configuration is handled via the `model_dependent_config` dictionary passed to `parameterize_dag()`.
 
@@ -77,6 +80,11 @@ With custom retry settings:
 python main.py dags/expenditure/expenditure_phenomena_informed_crafted_bounds.yaml -m google/gemini-2.5-flash -l 10 --loop-retry-max 0 --label "exp baseline"
 ```
 
+Baseline run example:
+```bash
+python main.py dags/expenditure/expenditure_phenomena_informed_crafted_bounds.yaml -m baseline/constraint-saturating -l 1 --loop-retry-max 0 --iterative-budget 1 --label "exp_sat_bl"
+```
+
 Available options:
 - `dag_yaml`: Path to the DAG YAML file (required)
 - `-m, --model`: LLM model to use (required)
@@ -92,6 +100,20 @@ This parameter controls retries for the **outer loop** (entire parameterization 
 Controls how many times the system will re-prompt the LLM with validation feedback per scenario before accepting a proposal. When set to `0`, the system skips validation entirely and accepts the first LLM response as-is. When set to `N > 0`, the system attempts up to `N` LLM calls per scenario, using validation feedback to refine the response. Default is `5`.
 
 Logs are saved to `output/logs/` with filenames like `{timestamp}_{label}_loop_{N}.log`
+
+### Baseline presets
+
+This repository includes deterministic baseline presets that skip external LLM calls and still pass through the same parsing/validation/evaluation pipeline.
+
+- `baseline/zero-coeff`: fixed coefficient `0.0` for intercept and all parent effects
+- `baseline/small-coeff`: fixed coefficient `1e-4` for intercept and all parent effects
+- `baseline/big-coeff`: fixed coefficient `1e4` for intercept and all parent effects
+- `baseline/constraint-saturating`: equal-share initialization with global coefficient scaling and midpoint-centering to respect hard range constraints
+
+Detailed baseline documentation:
+- `docs/BASELINE_ZERO_COEFF_PRESET.md`
+- `docs/BASELINE_CONSTRAINT_SATURATING_PRESET.md`
+- `docs/constraint_saturating_baseline_note.tex` (paper-style mathematical note)
 
 ### How to handle experimental artifacts
 

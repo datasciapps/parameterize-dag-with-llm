@@ -160,6 +160,17 @@ labels_noreason = [
 "alg_noreason_gem25"]
 
 
+labels_baseline_sat = [
+    "cac_sat_bl",
+    "exp_sat_bl",
+    "foo_sat_bl",
+    "alg_sat_bl",
+    "lex_sat_bl",
+    "liq_sat_bl",
+    "sto_sat_bl",
+]
+
+
 
 PREDEFINED_LABEL_SETS = {
     "direct_estimation": labels_direct_estimation,
@@ -170,6 +181,7 @@ PREDEFINED_LABEL_SETS = {
     "milli_cachexia": labels_milli_cachexia,
     "noiter": labels_noiter,
     "noreason": labels_noreason,
+    "baseline_sat": labels_baseline_sat,
 }
 
 
