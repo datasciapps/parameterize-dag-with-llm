@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 import pandas as pd
 import instructor
 import time
@@ -8,6 +8,10 @@ import json
 # Pydantic model for LLM response
 class LLMParamResponse(BaseModel):
     plausibility: str
+    proposed_lin_str_eq: str
+
+
+class LLMParamResponseNoReasoning(BaseModel):
     proposed_lin_str_eq: str
 
 
@@ -34,6 +38,9 @@ def run_llm_elicitation(
 
     # Check if this is a fake baseline mode
     is_fake_baseline = model_dependent_config.get("is_fake_baseline", False)
+    disable_reasoning_tokens = model_dependent_config.get(
+        "disable_reasoning_tokens", False
+    )
     
     response_history: list[dict] = []
     
@@ -58,12 +65,17 @@ def run_llm_elicitation(
             print("[BASELINE MODE] Synthetic equation:")
             print(proposed_lin_str_eq)
         
-        response_json = {
-            "plausibility": (
-                f"Baseline: All coefficients fixed to {baseline_coefficient} for preset testing."
-            ),
-            "proposed_lin_str_eq": proposed_lin_str_eq,
-        }
+        if disable_reasoning_tokens:
+            response_json = {
+                "proposed_lin_str_eq": proposed_lin_str_eq,
+            }
+        else:
+            response_json = {
+                "plausibility": (
+                    f"Baseline: All coefficients fixed to {baseline_coefficient} for preset testing."
+                ),
+                "proposed_lin_str_eq": proposed_lin_str_eq,
+            }
         response_history.append(response_json)
         
         if debug_print:
@@ -74,6 +86,18 @@ def run_llm_elicitation(
         return df
     
     # Real LLM mode (not baseline)
+    provider_call_config = {
+        key: value
+        for key, value in model_dependent_config.items()
+        if key
+        not in {
+            "disable_reasoning_tokens",
+            "is_fake_baseline",
+            "baseline_coefficient",
+            "baseline_label",
+        }
+    }
+
     for i in range(num_responses_per_prompt):
         # raise NotImplementedError("_create_llm_dynamic_validator_class is not implemented")
         if wait_sec_per_chat != 0:
@@ -86,15 +110,20 @@ def run_llm_elicitation(
 
         try:
             # Use instructor to create the response, leveraging the Pydantic model
+            response_model_class = (
+                LLMParamResponseNoReasoning
+                if disable_reasoning_tokens
+                else LLMParamResponse
+            )
             response_obj = client.create(
-                response_model=LLMParamResponse,
+                response_model=response_model_class,
                 messages=[
                     {
                         "role": "user",
                         "content": elicitation_prompt,
                     }
                 ],
-                **model_dependent_config,
+                **provider_call_config,
             )
             # Convert the Pydantic model instance to a dictionary for history storage
             response_json = response_obj.model_dump()
@@ -119,10 +148,15 @@ def run_llm_elicitation(
                 f"Error during LLM elicitation with instructor (iteration {i + 1}): {e}"
             )
             # Appending an error dict to maintain DataFrame structure and signal the issue
-            response_json = {
-                "plausibility": "Error: " + str(e),
-                "proposed_lin_str_eq": "Error during LLM call",
-            }
+            if disable_reasoning_tokens:
+                response_json = {
+                    "proposed_lin_str_eq": "Error during LLM call",
+                }
+            else:
+                response_json = {
+                    "plausibility": "Error: " + str(e),
+                    "proposed_lin_str_eq": "Error during LLM call",
+                }
 
         if debug_print:
             print("*****MODEL (parsed by instructor)*****")

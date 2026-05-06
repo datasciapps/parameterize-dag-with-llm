@@ -116,6 +116,49 @@ labels_milli_cachexia = [
     "mill_cac_llama33",
 ]
 
+labels_noiter = [
+    "foo_noitr_l3_8b",
+    "foo_noitr_l3_70b",
+    "foo_noitr_gem25",
+    "alg_noitr_l3_8b",
+    "alg_noitr_l3_70b",
+    "alg_noitr_gem25",
+    "lex_noitr_l3_8b",
+    "lex_noitr_l3_70b",
+    "lex_noitr_gem25",
+    "liq_noitr_l3_8b",
+    "liq_noitr_l3_70b",
+    "liq_noitr_gem25",
+    "sto_noitr_l3_8b",
+    "sto_noitr_l3_70b",
+    "sto_noitr_gem25",
+    "ex_noitr_l3_70b",
+    "ex_noitr_gem25",
+    "cha_noitr_l3_8b",
+    "cha_noitr_l3_70b",
+    "cha_noitr_gem25",
+    "ex_noitr_l3_8b",
+]
+
+
+labels_noreason = [
+"foo_noreason_l3_8b",
+"foo_noreason_l3_70b",
+"foo_noreason_gem25",
+"alg_noreason_l3_70b",
+"lex_noreason_l3_8b",
+"lex_noreason_l3_70b",
+"lex_noreason_gem25",
+"liq_noreason_l3_70b",
+"liq_noreason_gem25",
+"sto_noreason_l3_70b",
+"ex_noreason_l3_8b",
+"ex_noreason_gem25",
+"cha_noreason_l3_8b",
+"cha_noreason_l3_70b",
+"cha_noreason_gem25",
+"alg_noreason_gem25"]
+
 
 
 PREDEFINED_LABEL_SETS = {
@@ -125,7 +168,10 @@ PREDEFINED_LABEL_SETS = {
     "direct_estimation_gpt54": labels_direct_estimation_gpt54,
     "misspecification_gpt54": labels_misspecification_gpt54,
     "milli_cachexia": labels_milli_cachexia,
+    "noiter": labels_noiter,
+    "noreason": labels_noreason,
 }
+
 
 
 def parse_args() -> argparse.Namespace:

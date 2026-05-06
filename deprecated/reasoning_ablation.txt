@@ -1,0 +1,188 @@
+echo "[1/21] Running: foo_noreason_l3_8b"
+python main.py dags/foodsecurity/foodsecurity.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label foo_noreason_l3_8b --disable_reasoning_tokens;
+echo "[2/21] Running: foo_noreason_l3_70b"
+python main.py dags/foodsecurity/foodsecurity.yaml -m groq/llama-3.3-70b-versatile -l 25 --loop-retry-max 5 --label foo_noreason_l3_70b --disable_reasoning_tokens;
+echo "[3/21] Running: foo_noreason_gem25"
+python main.py dags/foodsecurity/foodsecurity.yaml -m google/gemini-2.5-flash -l 25 --loop-retry-max 5 --label foo_noreason_gem25 --disable_reasoning_tokens;
+echo "[4/21] Running: alg_noreason_l3_8b"
+python main.py dags/algal2/algal2.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label alg_noreason_l3_8b --disable_reasoning_tokens;
+echo "[5/21] Running: alg_noreason_l3_70b"
+python main.py dags/algal2/algal2.yaml -m groq/llama-3.3-70b-versatile -l 25 --loop-retry-max 5 --label alg_noreason_l3_70b --disable_reasoning_tokens;
+echo "[6/21] Running: alg_noreason_gem25"
+python main.py dags/algal2/algal2.yaml -m google/gemini-2.5-flash -l 25 --loop-retry-max 5 --label alg_noreason_gem25 --disable_reasoning_tokens;
+echo "[7/21] Running: lex_noreason_l3_8b"
+python main.py dags/lexical/lexical.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label lex_noreason_l3_8b --disable_reasoning_tokens;
+echo "[8/21] Running: lex_noreason_l3_70b"
+python main.py dags/lexical/lexical.yaml -m groq/llama-3.3-70b-versatile -l 25 --loop-retry-max 5 --label lex_noreason_l3_70b --disable_reasoning_tokens;
+echo "[9/21] Running: lex_noreason_gem25"
+python main.py dags/lexical/lexical.yaml -m google/gemini-2.5-flash -l 25 --loop-retry-max 5 --label lex_noreason_gem25 --disable_reasoning_tokens;
+echo "[10/21] Running: liq_noreason_l3_8b"
+python main.py dags/liquefaction/liquefaction.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label liq_noreason_l3_8b --disable_reasoning_tokens;
+echo "[11/21] Running: liq_noreason_l3_70b"
+python main.py dags/liquefaction/liquefaction.yaml -m groq/llama-3.3-70b-versatile -l 25 --loop-retry-max 5 --label liq_noreason_l3_70b --disable_reasoning_tokens;
+echo "[12/21] Running: liq_noreason_gem25"
+python main.py dags/liquefaction/liquefaction.yaml -m google/gemini-2.5-flash -l 25 --loop-retry-max 5 --label liq_noreason_gem25 --disable_reasoning_tokens;
+echo "[13/21] Running: sto_noreason_l3_8b"
+python main.py dags/stocks/stocks.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label sto_noreason_l3_8b --disable_reasoning_tokens;
+echo "[14/21] Running: sto_noreason_l3_70b"
+python main.py dags/stocks/stocks.yaml -m groq/llama-3.3-70b-versatile -l 25 --loop-retry-max 5 --label sto_noreason_l3_70b --disable_reasoning_tokens;
+echo "[15/21] Running: sto_noreason_gem25"
+python main.py dags/stocks/stocks.yaml -m google/gemini-2.5-flash -l 25 --loop-retry-max 5 --label sto_noreason_gem25 --disable_reasoning_tokens;
+echo "[16/21] Running: ex_noreason_l3_8b"
+python main.py dags/expenditure/expenditure_phenomena_informed_crafted_bounds.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label ex_noreason_l3_8b --disable_reasoning_tokens;
+echo "[17/21] Running: ex_noreason_l3_70b"
+python main.py dags/expenditure/expenditure_phenomena_informed_crafted_bounds.yaml -m groq/llama-3.3-70b-versatile -l 25 --loop-retry-max 5 --label ex_noreason_l3_70b --disable_reasoning_tokens;
+echo "[18/21] Running: ex_noreason_gem25"
+python main.py dags/expenditure/expenditure_phenomena_informed_crafted_bounds.yaml -m google/gemini-2.5-flash -l 25 --loop-retry-max 5 --label ex_noreason_gem25 --disable_reasoning_tokens;
+echo "[19/21] Running: cha_noreason_l3_8b"
+python main.py dags/chachexia1/disease_informed_real_bounds_and_units.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label cha_noreason_l3_8b --disable_reasoning_tokens;
+echo "[20/21] Running: cha_noreason_l3_70b"
+python main.py dags/chachexia1/disease_informed_real_bounds_and_units.yaml -m groq/llama-3.3-70b-versatile -l 25 --loop-retry-max 5 --label cha_noreason_l3_70b --disable_reasoning_tokens;
+echo "[21/21] Running: cha_noreason_gem25"
+python main.py dags/chachexia1/disease_informed_real_bounds_and_units.yaml -m google/gemini-2.5-flash -l 25 --loop-retry-max 5 --label cha_noreason_gem25 --disable_reasoning_tokens;
+
+
+# experiment ids
+
+
+(venv) ykanta@penguin:~/pj/llm-scm$ code .
+(venv) ykanta@penguin:~/pj/llm-scm$ python enumerate_unique_stat_files.py --start_id 20260505113538 | grep "25 ex" -A 2 -B 2
+    [SUCCESS] [Loop 25/25] ✓ Completed successfully [stat_id: 20260505113723 | DAG: dags/foodsecurity/foodsecurity.yaml | Model: groq/llama-3.1-8b-instant]
+
+To aggregate these 25 experiments, run:
+python quick_result.py --bulk 20260505113538,20260505113542,20260505113546,20260505113551,20260505113555,20260505113559,20260505113604,20260505113608,20260505113612,20260505113617,20260505113621,20260505113625,20260505113630,20260505113634,20260505113638,20260505113643,20260505113648,20260505113652,20260505113657,20260505113701,20260505113706,20260505113710,20260505113715,20260505113719,20260505113723 --label foo_noreason_l3_8b
+
+--
+    [SUCCESS] [Loop 25/25] ✓ Completed successfully [stat_id: 20260505113824 | DAG: dags/foodsecurity/foodsecurity.yaml | Model: groq/llama-3.3-70b-versatile]
+
+To aggregate these 25 experiments, run:
+python quick_result.py --bulk 20260505113733,20260505113736,20260505113738,20260505113740,20260505113742,20260505113744,20260505113746,20260505113748,20260505113750,20260505113752,20260505113754,20260505113756,20260505113758,20260505113800,20260505113802,20260505113804,20260505113806,20260505113808,20260505113811,20260505113813,20260505113815,20260505113817,20260505113819,20260505113821,20260505113824 --label foo_noreason_l3_70b
+
+--
+    [SUCCESS] [Loop 25/25] ✓ Completed successfully [stat_id: 20260505114019 | DAG: dags/foodsecurity/foodsecurity.yaml | Model: google/gemini-2.5-flash]
+
+To aggregate these 25 experiments, run:
+python quick_result.py --bulk 20260505113832,20260505113837,20260505113841,20260505113845,20260505113849,20260505113854,20260505113858,20260505113903,20260505113907,20260505113912,20260505113916,20260505113919,20260505113925,20260505113930,20260505113934,20260505113939,20260505113943,20260505113948,20260505113954,20260505114000,20260505114004,20260505114008,20260505114012,20260505114015,20260505114019 --label foo_noreason_gem25
+
+--
+    [SUCCESS] [Loop 25/25] ✓ Completed successfully [stat_id: 20260505114730 | DAG: dags/algal2/algal2.yaml | Model: groq/llama-3.3-70b-versatile]
+
+To aggregate these 25 experiments, run:
+python quick_result.py --bulk 20260505114521,20260505114526,20260505114532,20260505114537,20260505114542,20260505114547,20260505114552,20260505114558,20260505114603,20260505114609,20260505114614,20260505114620,20260505114625,20260505114630,20260505114635,20260505114640,20260505114646,20260505114651,20260505114657,20260505114702,20260505114707,20260505114713,20260505114718,20260505114724,20260505114730 --label alg_noreason_l3_70b
+
+--
+    [SUCCESS] [Loop 25/25] ✓ Completed successfully [stat_id: 20260505115613 | DAG: dags/lexical/lexical.yaml | Model: groq/llama-3.1-8b-instant]
+
+To aggregate these 25 experiments, run:
+python quick_result.py --bulk 20260505115241,20260505115250,20260505115259,20260505115307,20260505115316,20260505115325,20260505115333,20260505115342,20260505115351,20260505115400,20260505115409,20260505115419,20260505115428,20260505115438,20260505115446,20260505115455,20260505115504,20260505115513,20260505115522,20260505115531,20260505115539,20260505115547,20260505115556,20260505115604,20260505115613 --label lex_noreason_l3_8b
+
+--
+    [SUCCESS] [Loop 25/25] ✓ Completed successfully [stat_id: 20260505115837 | DAG: dags/lexical/lexical.yaml | Model: groq/llama-3.3-70b-versatile]
+
+To aggregate these 25 experiments, run:
+python quick_result.py --bulk 20260505115627,20260505115632,20260505115638,20260505115643,20260505115649,20260505115654,20260505115700,20260505115705,20260505115710,20260505115715,20260505115721,20260505115726,20260505115732,20260505115738,20260505115743,20260505115749,20260505115754,20260505115800,20260505115805,20260505115811,20260505115816,20260505115822,20260505115827,20260505115832,20260505115837 --label lex_noreason_l3_70b
+
+--
+    [SUCCESS] [Loop 25/25] ✓ Completed successfully [stat_id: 20260505120959 | DAG: dags/lexical/lexical.yaml | Model: google/gemini-2.5-flash]
+
+To aggregate these 25 experiments, run:
+python quick_result.py --bulk 20260505115849,20260505115902,20260505115922,20260505115943,20260505115958,20260505120013,20260505120031,20260505120049,20260505120103,20260505120129,20260505120145,20260505120157,20260505120214,20260505120233,20260505120248,20260505120305,20260505120322,20260505120335,20260505120348,20260505120831,20260505120849,20260505120909,20260505120927,20260505120940,20260505120959 --label lex_noreason_gem25
+
+--
+    [SUCCESS] [Loop 25/25] ✓ Completed successfully [stat_id: 20260505121856 | DAG: dags/liquefaction/liquefaction.yaml | Model: groq/llama-3.3-70b-versatile]
+
+To aggregate these 25 experiments, run:
+python quick_result.py --bulk 20260505121559,20260505121607,20260505121613,20260505121623,20260505121631,20260505121638,20260505121645,20260505121652,20260505121658,20260505121706,20260505121713,20260505121719,20260505121726,20260505121731,20260505121739,20260505121747,20260505121755,20260505121803,20260505121811,20260505121820,20260505121827,20260505121834,20260505121841,20260505121849,20260505121856 --label liq_noreason_l3_70b
+
+--
+    [SUCCESS] [Loop 25/25] ✓ Completed successfully [stat_id: 20260505122647 | DAG: dags/liquefaction/liquefaction.yaml | Model: google/gemini-2.5-flash]
+
+To aggregate these 25 experiments, run:
+python quick_result.py --bulk 20260505121908,20260505121931,20260505121952,20260505122015,20260505122037,20260505122052,20260505122112,20260505122125,20260505122142,20260505122202,20260505122217,20260505122232,20260505122246,20260505122310,20260505122328,20260505122345,20260505122404,20260505122438,20260505122457,20260505122514,20260505122537,20260505122552,20260505122612,20260505122627,20260505122647 --label liq_noreason_gem25
+
+--
+    [SUCCESS] [Loop 25/25] ✓ Completed successfully [stat_id: 20260505123921 | DAG: dags/stocks/stocks.yaml | Model: groq/llama-3.3-70b-versatile]
+
+To aggregate these 25 experiments, run:
+python quick_result.py --bulk 20260505123458,20260505123509,20260505123521,20260505123532,20260505123543,20260505123555,20260505123606,20260505123617,20260505123629,20260505123639,20260505123650,20260505123700,20260505123710,20260505123720,20260505123732,20260505123742,20260505123754,20260505123804,20260505123815,20260505123826,20260505123837,20260505123849,20260505123859,20260505123910,20260505123921 --label sto_noreason_l3_70b
+
+--
+    [SUCCESS] [Loop 25/25] ✓ Completed successfully [stat_id: 20260505125300 | DAG: dags/expenditure/expenditure_phenomena_informed_crafted_bounds.yaml | Model: groq/llama-3.1-8b-instant]
+
+To aggregate these 25 experiments, run:
+python quick_result.py --bulk 20260505124845,20260505124856,20260505124906,20260505124917,20260505124927,20260505124938,20260505124948,20260505125000,20260505125010,20260505125021,20260505125032,20260505125042,20260505125054,20260505125105,20260505125115,20260505125126,20260505125137,20260505125148,20260505125158,20260505125208,20260505125218,20260505125228,20260505125238,20260505125249,20260505125300 --label ex_noreason_l3_8b
+
+--
+    [SUCCESS] [Loop 25/25] ✓ Completed successfully [stat_id: 20260505130644 | DAG: dags/expenditure/expenditure_phenomena_informed_crafted_bounds.yaml | Model: google/gemini-2.5-flash]
+
+To aggregate these 25 experiments, run:
+python quick_result.py --bulk 20260505125638,20260505125700,20260505125727,20260505125748,20260505125810,20260505125850,20260505125913,20260505125932,20260505125955,20260505130027,20260505130048,20260505130110,20260505130136,20260505130159,20260505130226,20260505130256,20260505130318,20260505130338,20260505130358,20260505130420,20260505130448,20260505130513,20260505130551,20260505130614,20260505130644 --label ex_noreason_gem25
+
+--
+    [SUCCESS] [Loop 25/25] ✓ Completed successfully [stat_id: 20260505130932 | DAG: dags/chachexia1/disease_informed_real_bounds_and_units.yaml | Model: groq/llama-3.1-8b-instant]
+
+To aggregate these 25 experiments, run:
+python quick_result.py --bulk 20260505130709,20260505130715,20260505130720,20260505130727,20260505130733,20260505130739,20260505130745,20260505130751,20260505130757,20260505130802,20260505130808,20260505130815,20260505130821,20260505130827,20260505130834,20260505130840,20260505130845,20260505130851,20260505130858,20260505130904,20260505130909,20260505130915,20260505130920,20260505130926,20260505130932 --label cha_noreason_l3_8b
+
+--
+    [SUCCESS] [Loop 25/25] ✓ Completed successfully [stat_id: 20260505131122 | DAG: dags/chachexia1/disease_informed_real_bounds_and_units.yaml | Model: groq/llama-3.3-70b-versatile]
+
+To aggregate these 25 experiments, run:
+python quick_result.py --bulk 20260505130943,20260505130947,20260505130953,20260505130956,20260505130959,20260505131004,20260505131009,20260505131012,20260505131016,20260505131020,20260505131023,20260505131027,20260505131032,20260505131036,20260505131040,20260505131044,20260505131048,20260505131054,20260505131057,20260505131101,20260505131106,20260505131110,20260505131114,20260505131118,20260505131122 --label cha_noreason_l3_70b
+
+--
+    [SUCCESS] [Loop 25/25] ✓ Completed successfully [stat_id: 20260505132025 | DAG: dags/chachexia1/disease_informed_real_bounds_and_units.yaml | Model: google/gemini-2.5-flash]
+
+To aggregate these 25 experiments, run:
+python quick_result.py --bulk 20260505131131,20260505131142,20260505131158,20260505131206,20260505131220,20260505131230,20260505131244,20260505131300,20260505131309,20260505131319,20260505131328,20260505131344,20260505131355,20260505131415,20260505131425,20260505131433,20260505131456,20260505131507,20260505131519,20260505131528,20260505131535,20260505131545,20260505131555,20260505132016,20260505132025 --label cha_noreason_gem25
+
+
+
+# find logs
+
+(algal2, groq/llama-3.1-8b-instant) -> maybe missing for sure
+
+failure mode:
+E_Y ~ N(0, 1.0^2) 
+
+(venv) ykanta@penguin:~/pj/llm-scm$ python enumerate_unique_stat_files_single.py --start_id 20260504013538 | grep alg_noreason_l3_8b | wc -l
+0
+
+(algal2, google/gemini-2.5-flash)
+python main.py dags/algal2/algal2.yaml -m google/gemini-2.5-flash -l 25 --loop-retry-max 5 --label alg_noreason_gem25 --disable_reasoning_tokens;
+    [SUCCESS] [Loop 24/25] ✓ Completed successfully [stat_id: 20260505210302 | DAG: dags/algal2/algal2.yaml | Model: google/gemini-2.5-flash]
+    [SUCCESS] [Loop 25/25] ✓ Completed successfully [stat_id: 20260505210320 | DAG: dags/algal2/algal2.yaml | Model: google/gemini-2.5-flash]
+
+To aggregate these 25 experiments, run:
+python quick_result.py --bulk 20260505205758,20260505205807,20260505205820,20260505205831,20260505205841,20260505205858,20260505205908,20260505205923,20260505205939,20260505205953,20260505210006,20260505210015,20260505210029,20260505210041,20260505210055,20260505210110,20260505210122,20260505210137,20260505210156,20260505210210,20260505210222,20260505210232,20260505210248,20260505210302,20260505210320 --label alg_noreason_gem25
+
+
+
+# (liquefaction, groq/llama-3.1-8b-instant)
+python main.py dags/liquefaction/liquefaction.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label liq_noreason_l3_8b --disable_reasoning_tokens;
+# (stocks, groq/llama-3.1-8b-instant)
+python main.py dags/stocks/stocks.yaml -m groq/llama-3.1-8b-instant -l 25 --loop-retry-max 5 --label sto_noreason_l3_8b --disable_reasoning_tokens;
+# (stocks, google/gemini-2.5-flash)
+python main.py dags/stocks/stocks.yaml -m google/gemini-2.5-flash -l 25 --loop-retry-max 5 --label sto_noreason_gem25 --disable_reasoning_tokens;
+# (expenditure, groq/llama-3.3-70b-versatile)
+python main.py dags/expenditure/expenditure_phenomena_informed_crafted_bounds.yaml -m groq/llama-3.3-70b-versatile -l 25 --loop-retry-max 5 --label ex_noreason_l3_70b --disable_reasoning_tokens;
+
+
+### completed labels
+
+"foo_noreason_l3_8b",
+"foo_noreason_l3_70b",
+"foo_noreason_gem25",
+"alg_noreason_l3_70b",
+"lex_noreason_l3_8b",
+"lex_noreason_l3_70b",
+"lex_noreason_gem25",
+"liq_noreason_l3_70b",
+"liq_noreason_gem25",
+"sto_noreason_l3_70b",
+"ex_noreason_l3_8b",
+"ex_noreason_gem25",
+"cha_noreason_l3_8b",
+"cha_noreason_l3_70b",
+"cha_noreason_gem25",
+"alg_noreason_gem25",

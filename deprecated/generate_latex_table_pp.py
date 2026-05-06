@@ -47,26 +47,76 @@ labels_misspecification_gpt54 = [
     "exp_sp_majorcards_selfemp_gpt54_25_5",
 ]
 
+labels_noiter = [
+    "foo_noitr_l3_8b",
+    "foo_noitr_l3_70b",
+    "foo_noitr_gem25",
+    "alg_noitr_l3_8b",
+    "alg_noitr_l3_70b",
+    "alg_noitr_gem25",
+    "lex_noitr_l3_8b",
+    "lex_noitr_l3_70b",
+    "lex_noitr_gem25",
+    "liq_noitr_l3_8b",
+    "liq_noitr_l3_70b",
+    "liq_noitr_gem25",
+    "sto_noitr_l3_8b",
+    "sto_noitr_l3_70b",
+    "sto_noitr_gem25",
+    "ex_noitr_l3_70b",
+    "ex_noitr_gem25",
+    "cha_noitr_l3_8b",
+    "cha_noitr_l3_70b",
+    "cha_noitr_gem25",
+    "ex_noitr_l3_8b",
+]
+
+
+labels_noreason = [
+"foo_noreason_l3_8b",
+"foo_noreason_l3_70b",
+"foo_noreason_gem25",
+"alg_noreason_l3_70b",
+"lex_noreason_l3_8b",
+"lex_noreason_l3_70b",
+"lex_noreason_gem25",
+"liq_noreason_l3_70b",
+"liq_noreason_gem25",
+"sto_noreason_l3_70b",
+"ex_noreason_l3_8b",
+"ex_noreason_gem25",
+"cha_noreason_l3_8b",
+"cha_noreason_l3_70b",
+"cha_noreason_gem25",
+"alg_noreason_gem25"]
+
 
 PREDEFINED_LABEL_SETS = {
     "parent_parent_prompts": labels_parent_parent_prompts,
     "direct_estimation_gpt54": labels_direct_estimation_gpt54,
     "misspecification_gpt54": labels_misspecification_gpt54,
+    "noiter": labels_noiter,
+    "noreason": labels_noreason,
 }
 
 
 # Model name mapping
 MODEL_MAP = {
     "llama31": "Llama 3.1 8B",
+    "l3_8b": "Llama 3.1 8B",
     "llama33": "Llama 3.3 70B",
+    "l3_70b": "Llama 3.3 70B",
     "gemini25": "Gemini 2.5 Flash",
+    "gem25": "Gemini 2.5 Flash",
     "gpt54": "GPT-5.4",
 }
 
 # DAG name mapping
 DAG_MAP = {
     "cac": "cachexia",
+    "cha": "cachexia",
     "exp": "expenditure",
+    "ex": "expenditure",
     "foo": "foodsecurity",
     "alg": "algal2",
     "lex": "lexical",
@@ -75,19 +125,35 @@ DAG_MAP = {
 }
 
 def parse_label(label):
-    """Extract DAG and model from labels like 'pp_cac_llama31_25_5' or 'cac_gpt54_25_5'."""
+    """Extract DAG and model from labels such as:
+    - pp_cac_llama31_25_5
+    - cac_gpt54_25_5
+    - foo_noitr_l3_8b
+    - ex_noitr_gem25
+    - foo_noreason_l3_8b
+    - ex_noreason_gem25
+    """
     parts = label.split('_')
 
-    # Handle 'pp_dag_model_...' format
     if len(parts) >= 3 and parts[0] == 'pp':
         dag_code = parts[1]
-        model_code = parts[2]
-    # Handle 'dag_model_...' format
+        remainder = parts[2:]
     elif len(parts) >= 2:
         dag_code = parts[0]
-        model_code = parts[1]
+        remainder = parts[1:]
     else:
         raise ValueError(f"Label '{label}' has an unsupported format.")
+
+    # Skip modifier tokens like "noitr" or "noreason"
+    if remainder and remainder[0] in {"noitr", "noreason"}:
+        remainder = remainder[1:]
+
+    if len(remainder) >= 2 and remainder[0] == 'l3' and remainder[1] in {"8b", "70b"}:
+        model_code = f"{remainder[0]}_{remainder[1]}"
+    elif len(remainder) >= 1:
+        model_code = remainder[0]
+    else:
+        raise ValueError(f"Label '{label}' has no model token.")
 
     dag_name = DAG_MAP.get(dag_code, dag_code)
     model_name = MODEL_MAP.get(model_code, model_code)

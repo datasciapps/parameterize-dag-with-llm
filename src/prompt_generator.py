@@ -22,6 +22,7 @@ class PromptPerNode:
         dag=None,
         parameterized_equations: dict = None,
         include_parent_relationships: bool = True,
+        include_reasoning_tokens: bool = True,
     ):
         self.primary_domain_name = primary_domain_name
         self.secondary_domain_name = secondary_domain_name
@@ -46,6 +47,7 @@ class PromptPerNode:
             parameterized_equations if parameterized_equations is not None else {}
         )  # Existing parameterization results
         self.include_parent_relationships = include_parent_relationships  # Toggle for parent-parent relationship inclusion
+        self.include_reasoning_tokens = include_reasoning_tokens
 
         # Removed the alphabet limit as we're now using variable names directly
 
@@ -208,6 +210,12 @@ class PromptPerNode:
             self._generate_parameterized_parent_equations_section()
         )
 
+        reasoning_instruction = (
+            f"2.  For each coefficient (\\beta_0, {{betas}}), explain its {self.primary_domain_name.lower()} plausibility, its expected sign (positive/negative), and justify your chosen magnitude (unit-effect)."
+            if self.include_reasoning_tokens
+            else ""
+        )
+
         prompt_template = (
             r"""Given the direct causes, you must propose a linear structural equation for the target variable $Y$. Do not use non-linear functions (e.g., exponential, sigmoid). The coefficients of the linear equation are continuous variables in space $\mathbb{R}$.
 The target variable is $Y =$ {target_variable_formatted}.
@@ -217,7 +225,7 @@ The direct causes (Parents) are: {direct_causes_formatted}.
 {hard_constraints_text}
 1.  Explicitly define the error term $E_Y$ (e.g., standard normal noise, $E_Y \sim N(0, \sigma^2)$).
 
-2.  For each coefficient (\beta_0, {betas}), explain its {primary_domain_name_lower} plausibility, its expected sign (positive/negative), and justify your chosen magnitude (unit-effect).
+{reasoning_instruction}
 
 Given the DAG for variable "{target_variable_name}", please provide a plausible linear parameterisation.
 
@@ -229,6 +237,7 @@ Given the DAG for variable "{target_variable_name}", please provide a plausible 
             .replace("{feedback_text}", feedback_text)
             .replace("{parent_relationships_text}", parent_relationships_text)
             .replace("{parameterized_parent_equations_text}", parameterized_parent_equations_text)
+            .replace("{reasoning_instruction}", reasoning_instruction)
         )
 
         # Now using actual variable names for equation terms and betas
@@ -252,6 +261,11 @@ Given the DAG for variable "{target_variable_name}", please provide a plausible 
         return prompt_template
 
     def _generate_output_constraint_prompt(self) -> str:
+        if not self.include_reasoning_tokens:
+            return r"""Output format: Only respond in JSON format, with the following key:
+- proposed_lin_str_eq: str (Proposed Linear Structural Equation, *do not use placeholder betas like \\beta_0, use concrete numerical values*)
+"""
+
         plausibility_description = (
             f"{self.primary_domain_name.capitalize()} Plausibility"
         )

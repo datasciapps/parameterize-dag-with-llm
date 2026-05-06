@@ -78,7 +78,7 @@ MODEL_CONFIGS = {
 }
 
 
-def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: int = 3, label: str = None, iterative_budget: int = 5):
+def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: int = 3, label: str = None, iterative_budget: int = 5, disable_reasoning_tokens: bool = False):
     """#### Main Loops for DAG Parameterization
     
     Args:
@@ -91,6 +91,7 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
         loop_retry_max (int): Maximum number of retries per loop on failure (default: 3).
         label (str): Optional custom label for the experiment (default: None).
         iterative_budget (int): Max iterative feedback rounds per scenario (default: 5). 0 disables feedback entirely.
+        disable_reasoning_tokens (bool): If True, skip plausibility/reasoning field in structured LLM responses.
     """
     if not Path(dag_yaml_path).exists():
         raise FileNotFoundError(f"DAG YAML file not found: {dag_yaml_path}")
@@ -116,6 +117,7 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
     print(f"[Number of Loops] {num_loops}")
     print(f"[Retry Budget per Loop] {loop_retry_max}")
     print(f"[Iterative Feedback Budget] {iterative_budget} {'(disabled)' if iterative_budget == 0 else 'iterations per scenario'}")
+    print(f"[Disable Reasoning Tokens] {disable_reasoning_tokens}")
     
     model_config = MODEL_CONFIGS[model_name]
     
@@ -139,17 +141,20 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
             "is_fake_baseline": True,
             "baseline_coefficient": model_config["baseline_coefficient"],
             "baseline_label": model_config["baseline_label"],
+            "disable_reasoning_tokens": disable_reasoning_tokens,
         }
     elif model_config["config"] is not None:
         # For models with special config (like Google)
         model_dependent_config = {
-            "config": model_config["config"]
+            "config": model_config["config"],
+            "disable_reasoning_tokens": disable_reasoning_tokens,
         }
     else:
         # For models with simple config (like Groq/OpenAI)
         model_dependent_config = {
             "temperature": model_config["temperature"],
             **model_config.get("extra_params", {}),
+            "disable_reasoning_tokens": disable_reasoning_tokens,
         }
 
     # Run parameterization in a loop with retry logic
@@ -286,6 +291,20 @@ Available models:
         default=5,
         help="Max iterative feedback rounds per scenario (default: 5). Set to 0 to disable feedback entirely."
     )
+
+    parser.add_argument(
+        "--disable_reasoning_tokens",
+        action="store_true",
+        help="Disable reasoning/plausibility field in structured LLM output and only request equation field."
+    )
     
     args = parser.parse_args()
-    main(dag_yaml_path=args.dag_yaml, model_name=args.model, num_loops=args.loop, loop_retry_max=args.loop_retry_max, label=args.label, iterative_budget=args.iterative_budget)
+    main(
+        dag_yaml_path=args.dag_yaml,
+        model_name=args.model,
+        num_loops=args.loop,
+        loop_retry_max=args.loop_retry_max,
+        label=args.label,
+        iterative_budget=args.iterative_budget,
+        disable_reasoning_tokens=args.disable_reasoning_tokens,
+    )

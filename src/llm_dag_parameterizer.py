@@ -109,6 +109,7 @@ def parameterize_dag(
                 dag=education_wage_dag,  # Pass the DAG to detect parent-parent relationships
                 parameterized_equations=parameterized_equations,  # Pass already-parameterized equations
                 include_parent_relationships=scenario_to_process.get("include_parent_relationships", True),  # Pass toggle flag, default to True
+                include_reasoning_tokens=not model_dependent_config.get("disable_reasoning_tokens", False),
             )
             # --- LLM Loop ---
 

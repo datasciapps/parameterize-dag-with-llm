@@ -60,6 +60,13 @@ pip install -r requirements.txt
 
 The CLI requires a DAG YAML file, an LLM model, the number of loops to run, and a custom label for the experiment.
 
+To see all available options and examples:
+```bash
+python main.py -h
+```
+
+Most Python scripts in this repository also provide CLI help (typically via `-h`/`--help`).
+
 Basic run:
 ```bash
 python main.py dags/chachexia1/disease_informed_arbitrary_bounds.yaml -m groq/llama-3.1-8b-instant -l 5 --label exp1
