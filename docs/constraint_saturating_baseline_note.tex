@@ -1,0 +1,197 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, mathtools}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\title{Constraint-Saturating Baseline for DAG Parameterization}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Purpose}
+
+This note describes the \texttt{baseline/constraint-saturating} preset added to the DAG parameterization pipeline. The goal of the baseline is to provide a simple, deterministic, constraint-aware alternative to both zero-valued baselines and real LLM-generated coefficients.
+
+The baseline is intentionally lightweight: it uses only hard bounds from the DAG and reuses the same symbolic range mechanism already used for validation. This makes it easy to explain and easy to compare against the ordinary validation path.
+
+\section{Setup}
+
+Consider a target variable $Y$ with direct parents $X_1, \dots, X_k$. Assume each parent has hard bounds
+\[
+X_i \in [\ell_i, u_i],
+\]
+and the target has hard bounds
+\[
+Y \in [L_Y, U_Y].
+\]
+
+We seek a linear equation of the form
+\[
+Y = \beta_0 + \sum_{i=1}^k \beta_i X_i + E_Y.
+\]
+
+The baseline chooses $\beta_1, \dots, \beta_k$ by a deterministic rule and then sets $\beta_0$ to center the induced range.
+
+\section{Symbolic Range Propagation}
+
+The existing validator computes the induced range of $Y$ from parent bounds and coefficients. For each parent coefficient $\beta_i$, the contribution interval is
+\[
+\beta_i X_i \in
+\begin{cases}
+[\beta_i \ell_i,\; \beta_i u_i] & \text{if } \beta_i \ge 0, \\
+[\beta_i u_i,\; \beta_i \ell_i] & \text{if } \beta_i < 0.
+\end{cases}
+\]
+
+Summing these with the intercept gives the predicted target interval
+\[
+Y \in [\underline{Y}(\beta), \overline{Y}(\beta)].
+\]
+
+The validator accepts a proposal when
+\[
+\underline{Y}(\beta) \ge L_Y
+\qquad \text{and} \qquad
+\overline{Y}(\beta) \le U_Y,
+\]
+subject to a tiny numerical tolerance in code.
+
+\section{Baseline Construction}
+
+The constraint-saturating baseline uses the validation mechanism constructively.
+
+\subsection{Step 1: Equal-share initialization}
+
+Set each parent slope to the same initial value
+\[
+\beta_i^{(0)} = \frac{1}{k}, \qquad i=1,\dots,k,
+\]
+and start with intercept $\beta_0^{(0)} = 0$.
+
+This yields a provisional induced interval
+\[
+[\underline{Y}^{(0)}, \overline{Y}^{(0)}].
+\]
+
+Define its width as
+\[
+W^{(0)} = \overline{Y}^{(0)} - \underline{Y}^{(0)}.
+\]
+
+The target width is
+\[
+W_Y = U_Y - L_Y.
+\]
+
+\subsection{Step 2: Common shrink factor}
+
+If the equal-share interval is too wide, shrink all parent coefficients by one common factor
+\[
+s = \min\left(1, \frac{W_Y}{W^{(0)}}\right).
+\]
+
+The scaled coefficients are then
+\[
+\beta_i = s \beta_i^{(0)}.
+\]
+
+This is the key baseline idea: all slopes are treated symmetrically, and only one degree of freedom is used to enforce the hard-range width.
+
+\subsection{Step 3: Midpoint-centered intercept}
+
+After scaling, compute the midpoint of the parent contribution interval,
+\[
+m_C = \frac{\underline{C} + \overline{C}}{2},
+\]
+where $[\underline{C}, \overline{C}]$ is the induced range from the parent terms alone.
+
+Compute the midpoint of the target interval,
+\[
+m_Y = \frac{L_Y + U_Y}{2}.
+\]
+
+Set the intercept to
+\[
+\beta_0 = m_Y - m_C.
+\]
+
+This centers the final predicted interval within the target hard constraint.
+
+\section{Relation to Validation}
+
+The baseline is closely related to the validator:
+
+\begin{itemize}
+    \item The \emph{validator} asks: given $(\beta_0, \beta_1, \dots, \beta_k)$, does the induced interval fit inside $[L_Y, U_Y]$?
+    \item The \emph{constraint-saturating baseline} asks: can we choose a simple coefficient vector using the same interval computation so that the proposal passes validation by construction?
+\end{itemize}
+
+So the new baseline is not an unrelated heuristic. It is a direct reuse of the symbolic range logic already present in the codebase.
+
+In implementation terms, both the baseline generator and the validator call the same helper routine for interval propagation.
+
+\section{Interpretation}
+
+This baseline is more informative than purely fixed baselines such as all-zero or all-small coefficients because it uses the structural information encoded by hard bounds. At the same time, it remains weaker than an LLM-based proposal because it does not use:
+
+\begin{itemize}
+    \item sign inference,
+    \item domain semantics,
+    \item asymmetric parent importance,
+    \item or reasoning about parent-parent relationships.
+\end{itemize}
+
+Thus it is best interpreted as a \emph{constraint-aware structural baseline}.
+
+\section{Example}
+
+Suppose
+\[
+A \in [0,20], \qquad B \in [10,30], \qquad Y \in [0,8].
+\]
+
+With two parents, equal-share initialization gives
+\[
+\beta_A^{(0)} = \beta_B^{(0)} = \frac{1}{2}.
+\]
+
+This provisional interval is too wide, so the common shrink factor becomes
+\[
+s = 0.4.
+\]
+
+Hence
+\[
+\beta_A = \beta_B = 0.2.
+\]
+
+After midpoint-centering, the intercept becomes
+\[
+\beta_0 = -2,
+\]
+and the resulting synthetic equation is
+\[
+Y = -2 + 0.2A + 0.2B + E_Y.
+\]
+
+The induced interval is exactly
+\[
+Y \in [0,8],
+\]
+which passes validation.
+
+\section{Practical Value}
+
+This baseline is useful when we want to distinguish among three sources of performance:
+\begin{enumerate}
+    \item having no signal at all (zero baseline),
+    \item using hard-constraint structure only (constraint-saturating baseline),
+    \item using hard constraints plus semantic reasoning (LLM proposals).
+\end{enumerate}
+
+That comparison helps isolate how much of the final quality comes from generic structural constraints versus true model reasoning.
+
+\end{document}

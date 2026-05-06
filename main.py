@@ -54,6 +54,7 @@ MODEL_CONFIGS = {
         "temperature": 0.0,
         "config": None,
         "is_fake_baseline": True,
+        "baseline_strategy": "fixed-coefficient",
         "baseline_coefficient": 0.0,
         "baseline_label": "Zero-coefficient",
     },
@@ -63,6 +64,7 @@ MODEL_CONFIGS = {
         "temperature": 0.0,
         "config": None,
         "is_fake_baseline": True,
+        "baseline_strategy": "fixed-coefficient",
         "baseline_coefficient": 0.0001,
         "baseline_label": "Small-coefficient",
     },
@@ -72,8 +74,18 @@ MODEL_CONFIGS = {
         "temperature": 0.0,
         "config": None,
         "is_fake_baseline": True,
+        "baseline_strategy": "fixed-coefficient",
         "baseline_coefficient": 10000.0,
         "baseline_label": "Big-coefficient",
+    },
+    "baseline/constraint-saturating": {
+        "provider": "baseline",
+        "model_name": "baseline/constraint-saturating",
+        "temperature": 0.0,
+        "config": None,
+        "is_fake_baseline": True,
+        "baseline_strategy": "constraint-saturating",
+        "baseline_label": "Constraint-saturating",
     },
 }
 
@@ -139,10 +151,16 @@ def main(dag_yaml_path: str, model_name: str, num_loops: int, loop_retry_max: in
         # Baseline preset: pass flag through so run_llm_elicitation can detect it
         model_dependent_config = {
             "is_fake_baseline": True,
-            "baseline_coefficient": model_config["baseline_coefficient"],
+            "baseline_strategy": model_config.get(
+                "baseline_strategy", "fixed-coefficient"
+            ),
             "baseline_label": model_config["baseline_label"],
             "disable_reasoning_tokens": disable_reasoning_tokens,
         }
+        if "baseline_coefficient" in model_config:
+            model_dependent_config["baseline_coefficient"] = model_config[
+                "baseline_coefficient"
+            ]
     elif model_config["config"] is not None:
         # For models with special config (like Google)
         model_dependent_config = {
@@ -248,6 +266,7 @@ Available models:
     - baseline/zero-coeff
     - baseline/small-coeff
     - baseline/big-coeff
+    - baseline/constraint-saturating
         """
     )
     
