@@ -95,7 +95,7 @@ python quick_result.py --bulk 20260504193012,20260504193017,20260504193022,20260
 
 # concatenation intermediate results
 
-(venv) ykanta@penguin:~/pj/llm-scm$ python concatenate_stats.py --predefined_label_set noiter
+(venv) [redacted]@penguin:~/pj/llm-scm$ python concatenate_stats.py --predefined_label_set noiter
 Looking for aggregated_stats CSV files...
   Loading foo_noitr_l3_8b: 20260504220015_foo_noitr_l3_8b_aggregated_stats.csv
   Loading foo_noitr_l3_70b: 20260504220019_foo_noitr_l3_70b_aggregated_stats.csv

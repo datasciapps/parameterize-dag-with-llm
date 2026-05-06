@@ -45,8 +45,8 @@ python main.py dags/chachexia1/disease_informed_real_bounds_and_units.yaml -m go
 # experiment ids
 
 
-(venv) ykanta@penguin:~/pj/llm-scm$ code .
-(venv) ykanta@penguin:~/pj/llm-scm$ python enumerate_unique_stat_files.py --start_id 20260505113538 | grep "25 ex" -A 2 -B 2
+(venv) [redacted]@penguin:~/pj/llm-scm$ code .
+(venv) [redacted]@penguin:~/pj/llm-scm$ python enumerate_unique_stat_files.py --start_id 20260505113538 | grep "25 ex" -A 2 -B 2
     [SUCCESS] [Loop 25/25] ✓ Completed successfully [stat_id: 20260505113723 | DAG: dags/foodsecurity/foodsecurity.yaml | Model: groq/llama-3.1-8b-instant]
 
 To aggregate these 25 experiments, run:
@@ -145,7 +145,7 @@ python quick_result.py --bulk 20260505131131,20260505131142,20260505131158,20260
 failure mode:
 E_Y ~ N(0, 1.0^2) 
 
-(venv) ykanta@penguin:~/pj/llm-scm$ python enumerate_unique_stat_files_single.py --start_id 20260504013538 | grep alg_noreason_l3_8b | wc -l
+(venv) [redacted]@penguin:~/pj/llm-scm$ python enumerate_unique_stat_files_single.py --start_id 20260504013538 | grep alg_noreason_l3_8b | wc -l
 0
 
 (algal2, google/gemini-2.5-flash)

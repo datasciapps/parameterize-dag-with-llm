@@ -77,7 +77,7 @@ python quick_result.py --bulk 20260322134216,20260322134306,20260322134400,20260
 # --start_id 20260322121245
 
 
-(venv) ykanta@penguin:~/pj/llm-scm$ ### Expenditure misspecification commands
+(venv) [redacted]@penguin:~/pj/llm-scm$ ### Expenditure misspecification commands
 ## TODO [later run] - expenditure misspecification commands to be created
 # expenditure_sp_owner_expenditure
 # python main.py dags/expenditure/expenditure_sp_owner_expenditure.yaml --model openai/gpt-5.4 --loop 25 --loop-retry-max 7 --label "exp_sp_owner_expenditure_gpt54_25_5";
@@ -96,7 +96,7 @@ python quick_result.py --bulk 20260322132143,20260322132230,20260322132324,20260
 # expenditure_sp_majorcards_selfemp;
 # python main.py dags/expenditure/expenditure_sp_majorcards_selfemp.yaml --model openai/gpt-5.4 --loop 25 --loop-retry-max 7 --label "exp_sp_majorcards_selfemp_gpt54_25_5";
 python quick_result.py --bulk 20260322134216,20260322134306,20260322134400,20260322134449,20260322134540,20260322134638,20260322134717,20260322134801,20260322134848,20260322134939,20260322135029,20260322135116,20260322135201,20260322135243,20260322135333,20260322135426,20260322135511,20260322135559,20260322135646,20260322135731,20260322135811,20260322135859,20260322135947,20260322140033,20260322140122 --label "exp_sp_majorcards_selfemp_gpt54_25_5";
-Searching for experiment IDs in /home/ykanta/pj/llm-scm/output...
+Searching for experiment IDs in /home/[redacted]/pj/llm-scm/output...
 
 Bulk mode: Processing 25 specified experiments
   ✓ 20260322124150 (1 files)
@@ -214,7 +214,7 @@ Bar plot successfully saved to: output/20260322165209_exp_sp_owner_expenditure_g
   > Distribution plot for 'l2_norm_normalized' saved to: 20260322165209_exp_sp_owner_expenditure_gpt54_25_5_distribution_plot_l2_norm_normalized.png
   > Distribution plot for 'l2_norm_normalized_without_single_parent_edges' saved to: 20260322165209_exp_sp_owner_expenditure_gpt54_25_5_distribution_plot_l2_norm_normalized_without_single_parent_edges.png
   > Distribution plot for 'relative_order_count' saved to: 20260322165209_exp_sp_owner_expenditure_gpt54_25_5_distribution_plot_relative_order_count.png
-Searching for experiment IDs in /home/ykanta/pj/llm-scm/output...
+Searching for experiment IDs in /home/[redacted]/pj/llm-scm/output...
 
 Bulk mode: Processing 25 specified experiments
   ✓ 20260322130137 (1 files)
@@ -332,7 +332,7 @@ Bar plot successfully saved to: output/20260322165214_exp_sp_majorcards_dependen
   > Distribution plot for 'l2_norm_normalized' saved to: 20260322165214_exp_sp_majorcards_dependents_gpt54_25_5_distribution_plot_l2_norm_normalized.png
   > Distribution plot for 'l2_norm_normalized_without_single_parent_edges' saved to: 20260322165214_exp_sp_majorcards_dependents_gpt54_25_5_distribution_plot_l2_norm_normalized_without_single_parent_edges.png
   > Distribution plot for 'relative_order_count' saved to: 20260322165214_exp_sp_majorcards_dependents_gpt54_25_5_distribution_plot_relative_order_count.png
-Searching for experiment IDs in /home/ykanta/pj/llm-scm/output...
+Searching for experiment IDs in /home/[redacted]/pj/llm-scm/output...
 
 Bulk mode: Processing 25 specified experiments
   ✓ 20260322132143 (1 files)
@@ -450,7 +450,7 @@ Bar plot successfully saved to: output/20260322165218_exp_sp_owner_share_gpt54_2
   > Distribution plot for 'l2_norm_normalized' saved to: 20260322165218_exp_sp_owner_share_gpt54_25_5_distribution_plot_l2_norm_normalized.png
   > Distribution plot for 'l2_norm_normalized_without_single_parent_edges' saved to: 20260322165218_exp_sp_owner_share_gpt54_25_5_distribution_plot_l2_norm_normalized_without_single_parent_edges.png
   > Distribution plot for 'relative_order_count' saved to: 20260322165218_exp_sp_owner_share_gpt54_25_5_distribution_plot_relative_order_count.png
-Searching for experiment IDs in /home/ykanta/pj/llm-scm/output...
+Searching for experiment IDs in /home/[redacted]/pj/llm-scm/output...
 
 Bulk mode: Processing 25 specified experiments
   ✓ 20260322134216 (1 files)
